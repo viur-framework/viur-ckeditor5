@@ -47,7 +47,9 @@ module.exports = function checkPackagesCodeCoverage() {
 		.filter( fullPackageName => ![ ...EXCLUDED_PACKAGES, ...frameworkPackages ].includes( fullPackageName ) );
 
 	console.log( magenta( '\nVerifying CKEditor 5 Framework\n' ) );
-	[ 'ckeditor5', ...frameworkPackages ].forEach( fullPackageName => checkPackage( fullPackageName ) );
+
+	// [ 'ckeditor5', ...frameworkPackages ].forEach( fullPackageName => checkPackage( fullPackageName ) );
+	console.log( 'Skipping due to verifying "tsc"...' );
 
 	travisFolder.start( 'typescript-compilation', magenta( 'Compiling CKEditor 5 Framework TypeScript packages' ) );
 
@@ -69,7 +71,13 @@ module.exports = function checkPackagesCodeCoverage() {
 		const command = 'yarn run build --sourceMap';
 
 		console.log( '* ' + command );
-		childProcess.execSync( command, { cwd } );
+
+		try {
+			childProcess.execSync( command, { cwd } );
+		} catch ( err ) {
+			console.log( err );
+			throw err;
+		}
 
 		console.log( '* Updating the "main" field in `package.json`.' );
 		pkgJson.main = pkgJson.main.replace( /(?<=\.)ts$/, 'js' );
