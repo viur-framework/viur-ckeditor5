@@ -9,10 +9,11 @@ branches:
   - release
   - /^v\d+\.\d+\.\d+$/
   - /^(ck|cf|ci)\/epic\/\d+/
+  - travis-node-lts
 services:
 - xvfb
 node_js:
-- node
+- lts/*
 cache: false
 before_install:
 - export START_TIME=$( date +%s )
