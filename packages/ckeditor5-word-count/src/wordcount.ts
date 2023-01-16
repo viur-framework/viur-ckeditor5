@@ -124,7 +124,7 @@ export default class WordCount extends Plugin {
 		this.set( '_wordsLabel', undefined );
 		this.set( '_charactersLabel', undefined );
 
-		this._config = editor.config.get( 'wordCount' ) || {};
+		this._config = editor.config.get( 'wordCount' ) ?? {};
 
 		this._outputView = undefined;
 
@@ -167,10 +167,8 @@ export default class WordCount extends Plugin {
 	 * @inheritDoc
 	 */
 	public override destroy(): void {
-		if ( this._outputView ) {
-			this._outputView.element!.remove();
-			this._outputView.destroy();
-		}
+		this._outputView?.element!.remove();
+		this._outputView?.destroy();
 
 		super.destroy();
 	}
