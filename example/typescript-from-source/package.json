@@ -1,0 +1,28 @@
+{
+  "name": "poc",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack --mode development"
+  },
+  "dependencies": {
+    "@ckeditor/ckeditor5-basic-styles": "^37.0.0-alpha.3",
+    "@ckeditor/ckeditor5-dev-utils": "^35.0.3",
+    "@ckeditor/ckeditor5-editor-classic": "^37.0.0-alpha.3",
+    "@ckeditor/ckeditor5-essentials": "^37.0.0-alpha.3",
+    "@ckeditor/ckeditor5-inspector": "^4.1.0",
+    "@ckeditor/ckeditor5-paragraph": "^37.0.0-alpha.3",
+    "@ckeditor/ckeditor5-table": "^37.0.0-alpha.3",
+    "@ckeditor/ckeditor5-theme-lark": "^37.0.0-alpha.3",
+    "css-loader": "^5.2.7",
+    "postcss-loader": "^4.3.0",
+    "raw-loader": "^4.0.2",
+    "style-loader": "^2.0.0",
+    "webpack": "^5.76.1",
+    "webpack-cli": "^4.10.0"
+  },
+  "devDependencies": {
+    "ts-loader": "^9.4.2"
+  }
+}
