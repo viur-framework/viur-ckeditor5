@@ -201,6 +201,7 @@
   },
   "eslintIgnore": [
     "build/**",
+    "example/**",
     "packages/*/node_modules/**",
     "packages/*/build/**",
     "packages/*/src/lib/**",
