@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+      "strict": true,
+      "noImplicitAny": true,
+      "module": "ES6",
+      "target": "ES2019",
+      "moduleResolution": "node"
+  }
+}
