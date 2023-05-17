@@ -20,7 +20,7 @@ order: 50
 
 CKEditor 5 consists of the {@link installation/getting-started/predefined-builds ready-to-use editor builds} and the {@link framework/index CKEditor 5 Framework} upon which the builds are based.
 
-The easiest way to use CKEditor 5 in your Vue.js application is by choosing one of the {@link installation/getting-started/predefined-builds#available-builds rich text editor builds} and simply passing it to the configuration of the Vue.js component. Read more about this solution in the [Quick start](#quick-start) section of this guide.
+The easiest way to use CKEditor 5 in your Vue.js application is by choosing one of the {@link installation/getting-started/predefined-builds#available-builds rich text editor builds} and passing it to the configuration of the Vue.js component. Read more about this solution in the [Quick start](#quick-start) section of this guide.
 
 Additionally, you can [integrate CKEditor 5 from source](#using-ckeditor-5-from-source) which is a much more flexible and powerful solution, but requires some additional configuration.
 
@@ -39,7 +39,9 @@ Install the [CKEditor 5 WYSIWYG editor component for Vue.js](https://www.npmjs.c
 Assuming that you picked [`@ckeditor/ckeditor5-build-classic`](https://www.npmjs.com/package/@ckeditor/ckeditor5-build-classic):
 
 ```bash
-npm install --save @ckeditor/ckeditor5-vue @ckeditor/ckeditor5-build-classic
+npm install --save \
+    @ckeditor/ckeditor5-vue \
+		@ckeditor/ckeditor5-build-classic
 ```
 
 You now need to enable the CKEditor 5 component in your application. There are 2 ways to do so:
