@@ -14,7 +14,7 @@ import type {
 	ViewElement,
 	Writer
 } from 'ckeditor5/src/engine';
-import { cloneDeep } from 'lodash-es';
+import { startCase, cloneDeep } from 'lodash-es';
 
 export interface GHSViewAttributes {
 	attributes?: Record<string, unknown>;
@@ -203,4 +203,18 @@ export function modifyGhsAttribute(
 			writer.removeAttribute( ghsAttributeName, item );
 		}
 	}
+}
+
+/**
+ * Transforms passed string to PascalCase format. Examples: *
+ * * `div` => `Div`
+ * * `h1` => `H1`
+ * * `table` => `Table`
+ */
+export function toPascalCase( data: string ): string {
+	return startCase( data ).replace( / /g, '' );
+}
+
+export function getHtmlAttributeName( elementName: string ): string {
+	return `html${ toPascalCase( elementName ) }Attributes`;
 }

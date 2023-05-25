@@ -17,7 +17,11 @@ import type {
 } from 'ckeditor5/src/engine';
 import { Plugin } from 'ckeditor5/src/core';
 
-import { updateViewAttributes, type GHSViewAttributes } from '../utils';
+import {
+	updateViewAttributes,
+	getHtmlAttributeName,
+	type GHSViewAttributes
+} from '../utils';
 import DataFilter, { type DataFilterRegisterEvent } from '../datafilter';
 
 /**
@@ -59,7 +63,7 @@ export default class CodeBlockElementSupport extends Plugin {
 
 			// Extend codeBlock to allow attributes required by attribute filtration.
 			schema.extend( 'codeBlock', {
-				allowAttributes: [ 'htmlAttributes', 'htmlContentAttributes' ]
+				allowAttributes: [ getHtmlAttributeName( 'pre' ), 'htmlContentAttributes' ]
 			} );
 
 			conversion.for( 'upcast' ).add( viewToModelCodeBlockAttributeConverter( dataFilter ) );
@@ -74,7 +78,7 @@ export default class CodeBlockElementSupport extends Plugin {
  * View-to-model conversion helper preserving allowed attributes on {@link module:code-block/codeblock~CodeBlock Code Block}
  * feature model element.
  *
- * Attributes are preserved as a value of `htmlAttributes` model attribute.
+ * Attributes are preserved as a value of `htmlXAttributes` model attribute.
  * @param dataFilter
  * @returns Returns a conversion callback.
  */
@@ -88,7 +92,7 @@ function viewToModelCodeBlockAttributeConverter( dataFilter: DataFilter ) {
 				return;
 			}
 
-			preserveElementAttributes( viewPreElement, 'htmlAttributes' );
+			preserveElementAttributes( viewPreElement, getHtmlAttributeName( 'pre' ) );
 			preserveElementAttributes( viewCodeElement, 'htmlContentAttributes' );
 
 			function preserveElementAttributes( viewElement: ViewElement, attributeName: string ) {
@@ -109,22 +113,25 @@ function viewToModelCodeBlockAttributeConverter( dataFilter: DataFilter ) {
  */
 function modelToViewCodeBlockAttributeConverter() {
 	return ( dispatcher: DowncastDispatcher ) => {
-		dispatcher.on<DowncastAttributeEvent>( 'attribute:htmlAttributes:codeBlock', ( evt, data, conversionApi ) => {
-			if ( !conversionApi.consumable.consume( data.item, evt.name ) ) {
-				return;
+		dispatcher.on<DowncastAttributeEvent>(
+			`attribute:${ getHtmlAttributeName( 'pre' ) }:codeBlock`,
+			( evt, data, conversionApi ) => {
+				if ( !conversionApi.consumable.consume( data.item, evt.name ) ) {
+					return;
+				}
+
+				const { attributeOldValue, attributeNewValue } = data;
+				const viewCodeElement = conversionApi.mapper.toViewElement( data.item as Element )!;
+				const viewPreElement = viewCodeElement.parent as ViewElement;
+
+				updateViewAttributes(
+					conversionApi.writer,
+					attributeOldValue as GHSViewAttributes,
+					attributeNewValue as GHSViewAttributes,
+					viewPreElement
+				);
 			}
-
-			const { attributeOldValue, attributeNewValue } = data;
-			const viewCodeElement = conversionApi.mapper.toViewElement( data.item as Element )!;
-			const viewPreElement = viewCodeElement.parent as ViewElement;
-
-			updateViewAttributes(
-				conversionApi.writer,
-				attributeOldValue as GHSViewAttributes,
-				attributeNewValue as GHSViewAttributes,
-				viewPreElement
-			);
-		} );
+		);
 
 		dispatcher.on<DowncastAttributeEvent>( 'attribute:htmlContentAttributes:codeBlock', ( evt, data, conversionApi ) => {
 			if ( !conversionApi.consumable.consume( data.item, evt.name ) ) {

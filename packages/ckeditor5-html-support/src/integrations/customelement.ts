@@ -52,6 +52,7 @@ export default class CustomElementSupport extends Plugin {
 
 			schema.register( definition.model, definition.modelSchema );
 			schema.extend( definition.model, {
+				// TODO
 				allowAttributes: [ 'htmlElementName', 'htmlAttributes', 'htmlContent' ],
 				isContent: true
 			} );

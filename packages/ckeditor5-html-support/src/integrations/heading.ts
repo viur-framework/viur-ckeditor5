@@ -17,7 +17,7 @@ import {
 } from 'ckeditor5/src/enter';
 
 import DataSchema from '../dataschema';
-import { modifyGhsAttribute } from '../utils';
+import { getHtmlAttributeName, modifyGhsAttribute } from '../utils';
 
 /**
  * Provides the General HTML Support integration with {@link module:heading/heading~Heading Heading} feature.
@@ -80,7 +80,7 @@ export default class HeadingElementSupport extends Plugin {
 	}
 
 	/**
-	 * Removes css classes from "htmlAttributes" of new paragraph created when hitting "enter" in heading.
+	 * Removes css classes from "htmlXAttributes" of new paragraph created when hitting "enter" in heading.
 	 */
 	private removeClassesOnEnter( editor: Editor, options: Array<HeadingOption> ): void {
 		const enterCommand: EnterCommand = editor.commands.get( 'enter' )!;
@@ -93,7 +93,7 @@ export default class HeadingElementSupport extends Plugin {
 				modifyGhsAttribute(
 					data.writer,
 					positionParent as Item,
-					'htmlAttributes',
+					getHtmlAttributeName( positionParent.name! ),
 					'classes',
 					classes => classes.clear()
 				);
