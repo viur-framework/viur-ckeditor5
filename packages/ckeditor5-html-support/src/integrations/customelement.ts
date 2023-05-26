@@ -52,8 +52,7 @@ export default class CustomElementSupport extends Plugin {
 
 			schema.register( definition.model, definition.modelSchema );
 			schema.extend( definition.model, {
-				// TODO
-				allowAttributes: [ 'htmlElementName', 'htmlAttributes', 'htmlContent' ],
+				allowAttributes: [ 'htmlElementName', 'htmlCustomElementAttributes', 'htmlContent' ],
 				isContent: true
 			} );
 
@@ -93,7 +92,7 @@ export default class CustomElementSupport extends Plugin {
 					const htmlAttributes = dataFilter.processViewAttributes( viewElement, conversionApi );
 
 					if ( htmlAttributes ) {
-						conversionApi.writer.setAttribute( 'htmlAttributes', htmlAttributes, modelElement );
+						conversionApi.writer.setAttribute( 'htmlCustomElementAttributes', htmlAttributes, modelElement );
 					}
 
 					// Store the whole element in the attribute so that DomConverter will be able to use the pre like element context.
@@ -118,14 +117,18 @@ export default class CustomElementSupport extends Plugin {
 			conversion.for( 'editingDowncast' ).elementToElement( {
 				model: {
 					name: definition.model,
-					attributes: [ 'htmlElementName', 'htmlAttributes', 'htmlContent' ]
+					attributes: [ 'htmlElementName', 'htmlCustomElementAttributes', 'htmlContent' ]
 				},
 				view: ( modelElement, { writer } ) => {
 					const viewName = modelElement.getAttribute( 'htmlElementName' ) as string;
 					const viewElement = writer.createRawElement( viewName );
 
-					if ( modelElement.hasAttribute( 'htmlAttributes' ) ) {
-						setViewAttributes( writer, modelElement.getAttribute( 'htmlAttributes' ) as GHSViewAttributes, viewElement );
+					if ( modelElement.hasAttribute( 'htmlCustomElementAttributes' ) ) {
+						setViewAttributes(
+							writer,
+							modelElement.getAttribute( 'htmlCustomElementAttributes' ) as GHSViewAttributes,
+							viewElement
+						);
 					}
 
 					return viewElement;
@@ -135,7 +138,7 @@ export default class CustomElementSupport extends Plugin {
 			conversion.for( 'dataDowncast' ).elementToElement( {
 				model: {
 					name: definition.model,
-					attributes: [ 'htmlElementName', 'htmlAttributes', 'htmlContent' ]
+					attributes: [ 'htmlElementName', 'htmlCustomElementAttributes', 'htmlContent' ]
 				},
 				view: ( modelElement, { writer } ) => {
 					const viewName = modelElement.getAttribute( 'htmlElementName' ) as string;
@@ -155,8 +158,12 @@ export default class CustomElementSupport extends Plugin {
 						}
 					} );
 
-					if ( modelElement.hasAttribute( 'htmlAttributes' ) ) {
-						setViewAttributes( writer, modelElement.getAttribute( 'htmlAttributes' ) as GHSViewAttributes, viewElement );
+					if ( modelElement.hasAttribute( 'htmlCustomElementAttributes' ) ) {
+						setViewAttributes(
+							writer,
+							modelElement.getAttribute( 'htmlCustomElementAttributes' ) as GHSViewAttributes,
+							viewElement
+						);
 					}
 
 					return viewElement;

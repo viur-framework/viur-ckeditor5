@@ -290,7 +290,7 @@ describe( 'ImageElementSupport', () => {
 
 		it( 'should not consume attributes already consumed (downcast)', () => {
 			[
-				'htmlImageAttributes',
+				'htmlImgAttributes',
 				'htmlFigureAttributes'
 			].forEach( attributeName => {
 				editor.conversion.for( 'downcast' ).add( dispatcher => {

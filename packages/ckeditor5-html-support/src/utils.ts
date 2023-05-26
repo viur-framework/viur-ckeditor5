@@ -206,7 +206,7 @@ export function modifyGhsAttribute(
 }
 
 /**
- * Transforms passed string to PascalCase format. Examples: *
+ * Transforms passed string to PascalCase format. Examples:
  * * `div` => `Div`
  * * `h1` => `H1`
  * * `table` => `Table`
@@ -215,6 +215,9 @@ export function toPascalCase( data: string ): string {
 	return startCase( data ).replace( / /g, '' );
 }
 
-export function getHtmlAttributeName( elementName: string ): string {
-	return `html${ toPascalCase( elementName ) }Attributes`;
+/**
+ * Returns the attribute name of the model element that holds raw HTML attributes.
+ */
+export function getHtmlAttributeName( viewElementName: string ): string {
+	return `html${ toPascalCase( viewElementName ) }Attributes`;
 }

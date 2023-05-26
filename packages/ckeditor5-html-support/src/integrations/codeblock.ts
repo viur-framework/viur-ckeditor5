@@ -19,7 +19,6 @@ import { Plugin } from 'ckeditor5/src/core';
 
 import {
 	updateViewAttributes,
-	getHtmlAttributeName,
 	type GHSViewAttributes
 } from '../utils';
 import DataFilter, { type DataFilterRegisterEvent } from '../datafilter';
@@ -113,24 +112,22 @@ function viewToModelCodeBlockAttributeConverter( dataFilter: DataFilter ) {
  */
 function modelToViewCodeBlockAttributeConverter() {
 	return ( dispatcher: DowncastDispatcher ) => {
-		dispatcher.on<DowncastAttributeEvent>(
-			`attribute:${ getHtmlAttributeName( 'pre' ) }:codeBlock`,
-			( evt, data, conversionApi ) => {
-				if ( !conversionApi.consumable.consume( data.item, evt.name ) ) {
-					return;
-				}
-
-				const { attributeOldValue, attributeNewValue } = data;
-				const viewCodeElement = conversionApi.mapper.toViewElement( data.item as Element )!;
-				const viewPreElement = viewCodeElement.parent as ViewElement;
-
-				updateViewAttributes(
-					conversionApi.writer,
-					attributeOldValue as GHSViewAttributes,
-					attributeNewValue as GHSViewAttributes,
-					viewPreElement
-				);
+		dispatcher.on<DowncastAttributeEvent>( 'attribute:htmlPreAttributes:codeBlock', ( evt, data, conversionApi ) => {
+			if ( !conversionApi.consumable.consume( data.item, evt.name ) ) {
+				return;
 			}
+
+			const { attributeOldValue, attributeNewValue } = data;
+			const viewCodeElement = conversionApi.mapper.toViewElement( data.item as Element )!;
+			const viewPreElement = viewCodeElement.parent as ViewElement;
+
+			updateViewAttributes(
+				conversionApi.writer,
+				attributeOldValue as GHSViewAttributes,
+				attributeNewValue as GHSViewAttributes,
+				viewPreElement
+			);
+		}
 		);
 
 		dispatcher.on<DowncastAttributeEvent>( 'attribute:htmlContentAttributes:codeBlock', ( evt, data, conversionApi ) => {

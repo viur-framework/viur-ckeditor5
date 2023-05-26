@@ -501,7 +501,7 @@ export default class DataFilter extends Plugin {
 		}
 
 		schema.extend( definition.model, {
-			allowAttributes: [ 'htmlObjectAttributes', 'htmlContent' ]
+			allowAttributes: [ getHtmlAttributeName( viewName ), 'htmlContent' ]
 		} );
 
 		// Store element content in special `$rawContent` custom property to

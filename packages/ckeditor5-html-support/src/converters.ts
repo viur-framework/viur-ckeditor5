@@ -63,7 +63,6 @@ export function toObjectWidgetConverter(
 		const widgetLabel = t( 'HTML object' );
 
 		const viewElement = createObjectView( viewName!, modelElement, writer );
-
 		const viewAttributes = modelElement.getAttribute( getHtmlAttributeName( viewName! ) );
 
 		writer.addClass( 'html-object-embed__content', viewElement );
