@@ -63,7 +63,7 @@ export default class CodeBlockElementSupport extends Plugin {
 
 			// Extend codeBlock to allow attributes required by attribute filtration.
 			schema.extend( 'codeBlock', {
-				allowAttributes: [ getHtmlAttributeName( 'pre' ), 'htmlContentAttributes' ]
+				allowAttributes: [ 'htmlPreAttributes', 'htmlContentAttributes' ]
 			} );
 
 			conversion.for( 'upcast' ).add( viewToModelCodeBlockAttributeConverter( dataFilter ) );
@@ -92,7 +92,7 @@ function viewToModelCodeBlockAttributeConverter( dataFilter: DataFilter ) {
 				return;
 			}
 
-			preserveElementAttributes( viewPreElement, getHtmlAttributeName( 'pre' ) );
+			preserveElementAttributes( viewPreElement, 'htmlPreAttributes' );
 			preserveElementAttributes( viewCodeElement, 'htmlContentAttributes' );
 
 			function preserveElementAttributes( viewElement: ViewElement, attributeName: string ) {

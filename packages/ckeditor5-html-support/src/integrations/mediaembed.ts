@@ -75,7 +75,7 @@ export default class MediaEmbedElementSupport extends Plugin {
 
 			schema.extend( 'media', {
 				allowAttributes: [
-					getHtmlAttributeName( 'media' ),
+					'htmlMediaAttributes',
 					'htmlFigureAttributes'
 				]
 			} );
@@ -92,7 +92,7 @@ function viewToModelMediaAttributesConverter( dataFilter: DataFilter, mediaEleme
 	const upcastMedia: GetCallback<UpcastElementEvent> = ( evt, data, conversionApi ) => {
 		const viewMediaElement = data.viewItem;
 
-		preserveElementAttributes( viewMediaElement, getHtmlAttributeName( 'media' ) );
+		preserveElementAttributes( viewMediaElement, 'htmlMediaAttributes' );
 
 		function preserveElementAttributes( viewElement: ViewElement, attributeName: string ) {
 			const viewAttributes = dataFilter.processViewAttributes( viewElement, conversionApi );
@@ -133,7 +133,7 @@ function viewToModelFigureAttributesConverter( dataFilter: DataFilter ) {
 
 function modelToViewMediaAttributeConverter( mediaElementName: string ) {
 	return ( dispatcher: DowncastDispatcher ) => {
-		addAttributeConversionDispatcherHandler( mediaElementName, getHtmlAttributeName( 'media' ) );
+		addAttributeConversionDispatcherHandler( mediaElementName, 'htmlMediaAttributes' );
 		addAttributeConversionDispatcherHandler( 'figure', 'htmlFigureAttributes' );
 
 		function addAttributeConversionDispatcherHandler( elementName: string, attributeName: string ) {

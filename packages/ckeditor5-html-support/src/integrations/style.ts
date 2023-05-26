@@ -51,7 +51,7 @@ export default class StyleElementSupport extends Plugin {
 			schema.register( 'htmlStyle', definition.modelSchema );
 
 			schema.extend( 'htmlStyle', {
-				allowAttributes: [ getHtmlAttributeName( 'style' ), 'htmlContent' ],
+				allowAttributes: [ 'htmlStyleAttributes', 'htmlContent' ],
 				isContent: true
 			} );
 

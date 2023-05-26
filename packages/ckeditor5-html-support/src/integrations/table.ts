@@ -69,7 +69,7 @@ export default class TableElementSupport extends Plugin {
 
 			schema.extend( 'table', {
 				allowAttributes: [
-					getHtmlAttributeName( 'table' ),
+					'htmlTableAttributes',
 					// Figure, thead and tbody elements don't have model counterparts.
 					// We will be preserving attributes on table element using these attribute keys.
 					'htmlFigureAttributes', 'htmlTheadAttributes', 'htmlTbodyAttributes'
