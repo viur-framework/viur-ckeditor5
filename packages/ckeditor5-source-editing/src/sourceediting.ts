@@ -87,7 +87,7 @@ export default class SourceEditing extends Plugin {
 			const buttonView = new ButtonView( locale );
 
 			buttonView.set( {
-				label: t( 'Source' ),
+				//label: t( 'Source' ),
 				icon: sourceEditingIcon,
 				tooltip: true,
 				withText: true,

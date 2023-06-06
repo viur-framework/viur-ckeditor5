@@ -9,7 +9,7 @@ import ClassicEditorBase from '@ckeditor/ckeditor5-editor-classic/src/classicedi
 import { Essentials } from '@ckeditor/ckeditor5-essentials';
 import { UploadAdapter } from '@ckeditor/ckeditor5-adapter-ckfinder';
 import { Autoformat } from '@ckeditor/ckeditor5-autoformat';
-import { Bold, Italic } from '@ckeditor/ckeditor5-basic-styles';
+import { Bold, Italic, Underline } from '@ckeditor/ckeditor5-basic-styles';
 import { BlockQuote } from '@ckeditor/ckeditor5-block-quote';
 import { CKBox } from '@ckeditor/ckeditor5-ckbox';
 import { CKFinder } from '@ckeditor/ckeditor5-ckfinder';
@@ -25,6 +25,11 @@ import { PasteFromOffice } from '@ckeditor/ckeditor5-paste-from-office';
 import { Table, TableToolbar } from '@ckeditor/ckeditor5-table';
 import { TextTransformation } from '@ckeditor/ckeditor5-typing';
 import { CloudServices } from '@ckeditor/ckeditor5-cloud-services';
+import { Alignment } from '@ckeditor/ckeditor5-alignment';
+import { SourceEditing } from '@ckeditor/ckeditor5-source-editing';
+import { RemoveFormat } from '@ckeditor/ckeditor5-remove-format';
+
+import { ViURUploadAdapterPlugin } from '../../viur/viur-upload-adapter'
 
 export default class ClassicEditor extends ClassicEditorBase {
 	public static override builtinPlugins = [
@@ -53,17 +58,23 @@ export default class ClassicEditor extends ClassicEditorBase {
 		PictureEditing,
 		Table,
 		TableToolbar,
-		TextTransformation
+		TextTransformation,
+		Underline,
+		Alignment,
+		SourceEditing,
+		RemoveFormat
 	];
 
 	public static override defaultConfig = {
+		extraPlugins: [ViURUploadAdapterPlugin],
 		toolbar: {
 			items: [
-				'undo', 'redo',
-				'|', 'heading',
-				'|', 'bold', 'italic',
-				'|', 'link', 'uploadImage', 'insertTable', 'blockQuote', 'mediaEmbed',
-				'|', 'bulletedList', 'numberedList', 'outdent', 'indent'
+				'heading',
+				'|', 'bold', 'italic', 'unterline',
+				'|', 'alignment', 'numberedList', 'bulletedList', 'blockQuote',
+				'|', 'outdent', 'indent',
+				'|', 'link', 'insertTable', 'imageUpload',
+				'|', 'undo', 'redo', 'RemoveFormat', 'sourceEditing'
 			]
 		},
 		image: {
@@ -84,6 +95,7 @@ export default class ClassicEditor extends ClassicEditorBase {
 			]
 		},
 		// This value must be kept in sync with the language defined in webpack.config.js.
-		language: 'en'
+		language: 'de',
+		viur_api_url:'http://localhost:8080'
 	};
 }
