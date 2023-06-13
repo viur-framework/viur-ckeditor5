@@ -1,0 +1,48 @@
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+.viur-txt-align--left{
+	text-align: left;
+}
+.viur-txt-align--right{
+	text-align: right;
+}
+.viur-txt-align--center{
+	text-align: center;
+}
+.viur-txt-align--justify{
+	text-align: justify;
+}
+.viur-txt-indent--1{
+	margin-left: 1em;
+}
+.viur-txt-indent--2{
+	margin-left: 2em;
+}
+.viur-txt-indent--3{
+	margin-left: 3em;
+}
+.viur-txt-indent--4{
+	margin-left: 4em;
+}
+.viur-txt-indent--5{
+	margin-left: 5em;
+}
+.viur-txt-indent--6{
+	margin-left: 6em;
+}
+.viur-txt-indent--7{
+	margin-left: 7em;
+}
+.viur-txt-indent--8{
+	margin-left: 8em;
+}
+.viur-txt-indent--9{
+	margin-left: 9em;
+}
+.viur-txt-indent--10{
+	margin-left: 10em;
+}
+

@@ -1,39 +1,22 @@
+//@ts-nocheck
 function buildGetUrl(url, params) {
-      let requestUrl = new URL(url)
-      if (params && Object.keys(params).length > 0) {
-        const urlparams = new URLSearchParams()
-        for (const [key, value] of Object.entries(params)) {
-          if (Array.isArray(value)) {
-            for (const v of value) {
-              urlparams.append(key, v);
-            }
-          } else {
-            urlparams.append(key, value);
-          }
+  let requestUrl = new URL(url)
+  if (params && Object.keys(params).length > 0) {
+    const urlparams = new URLSearchParams()
+    for (const [key, value] of Object.entries(params)) {
+      if (Array.isArray(value)) {
+        for (const v of value) {
+          urlparams.append(key, v);
         }
-
-        requestUrl.search = urlparams.toString();
+      } else {
+        urlparams.append(key, value);
       }
-
-      return requestUrl.toString()
     }
 
-function buildFormdata(dataObj) {
-  if (dataObj instanceof FormData) {
-    return dataObj // we don't need to transform anything
+    requestUrl.search = urlparams.toString();
   }
 
-  const form = new FormData()
-  for (const key in dataObj) {
-    if (Array.isArray(dataObj[key])) {
-      for (let item of dataObj[key]) {
-        form.append(key, item);
-      }
-    } else {
-      form.append(key, dataObj[key]);
-    }
-  }
-  return form
+  return requestUrl.toString()
 }
 
 class ViURUploadAdapter {
@@ -60,6 +43,7 @@ class ViURUploadAdapter {
 			}).catch(error=>{
 				reject(error)
 		});
+		this.loader.uploaded = 10
 		return uploadUrlResp
 	}
 
@@ -67,11 +51,11 @@ class ViURUploadAdapter {
 		const uploadResp = await fetch(uploadDetails["values"]["uploadUrl"],{
 			mode: "no-cors",
 			method: "POST",
-			body:buildFormdata(file)
+			body:file
 		}).catch(error=>{
-				reject(error)
+			reject(error)
 		})
-
+		this.loader.uploaded = 50
 		const skeyResp = await fetch(this.api_url+"/vi/skey").catch(error=>{
 				reject(error)
 		});
@@ -88,18 +72,22 @@ class ViURUploadAdapter {
 			}).catch(error=>{
 				reject(error)
 		});
+		this.loader.uploaded = 75
 		return fileAddResp
 	}
 
 
 
 	async upload() {
+		this.loader.uploadTotal = 100
+		this.loader.uploaded = 0
 		return this.loader.file
 			.then(async file => new Promise((resolve, reject) => {
 				this._getUploadUrl(file, reject).then(async (uploadUrlResp)=>{
 					const uploadDetails = await uploadUrlResp.json()
 					this.fileUpload(file, uploadDetails, reject).then(async(fileAddResp)=>{
 						const uploadedData = await fileAddResp.json()
+						this.loader.uploaded = 100
 						resolve({
 							default: this.api_url+uploadedData["values"][ "downloadUrl"]
 						})

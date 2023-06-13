@@ -15,8 +15,16 @@ import { CKBox } from '@ckeditor/ckeditor5-ckbox';
 import { CKFinder } from '@ckeditor/ckeditor5-ckfinder';
 import { EasyImage } from '@ckeditor/ckeditor5-easy-image';
 import { Heading } from '@ckeditor/ckeditor5-heading';
-import { Image, ImageCaption, ImageStyle, ImageToolbar, ImageUpload, PictureEditing } from '@ckeditor/ckeditor5-image';
-import { Indent } from '@ckeditor/ckeditor5-indent';
+import {
+	Image,
+	ImageCaption,
+	ImageResizeButtons,
+	ImageStyle,
+	ImageToolbar,
+	ImageUpload,
+	PictureEditing
+} from '@ckeditor/ckeditor5-image';
+import {Indent, IndentBlock} from '@ckeditor/ckeditor5-indent';
 import { Link } from '@ckeditor/ckeditor5-link';
 import { List } from '@ckeditor/ckeditor5-list';
 import { MediaEmbed } from '@ckeditor/ckeditor5-media-embed';
@@ -30,32 +38,28 @@ import { SourceEditing } from '@ckeditor/ckeditor5-source-editing';
 import { RemoveFormat } from '@ckeditor/ckeditor5-remove-format';
 
 import { ViURUploadAdapterPlugin } from '../../viur/viur-upload-adapter'
+import { ViURSchemaPlugin } from "../../viur/viur-shema";
 
 export default class ClassicEditor extends ClassicEditorBase {
 	public static override builtinPlugins = [
 		Essentials,
 		UploadAdapter,
-		Autoformat,
+		CloudServices,
 		Bold,
 		Italic,
 		BlockQuote,
-		CKBox,
-		CKFinder,
-		CloudServices,
 		EasyImage,
 		Heading,
 		Image,
-		ImageCaption,
 		ImageStyle,
 		ImageToolbar,
 		ImageUpload,
+		ImageResizeButtons,
 		Indent,
+		IndentBlock,
 		Link,
 		List,
-		MediaEmbed,
 		Paragraph,
-		PasteFromOffice,
-		PictureEditing,
 		Table,
 		TableToolbar,
 		TextTransformation,
@@ -66,13 +70,13 @@ export default class ClassicEditor extends ClassicEditorBase {
 	];
 
 	public static override defaultConfig = {
-		extraPlugins: [ViURUploadAdapterPlugin],
+		extraPlugins: [ViURUploadAdapterPlugin, ViURSchemaPlugin],
 		toolbar: {
 			items: [
 				'heading',
-				'|', 'bold', 'italic', 'unterline',
+				'|', 'bold', 'italic', 'underline',
 				'|', 'alignment', 'numberedList', 'bulletedList', 'blockQuote',
-				'|', 'outdent', 'indent',
+				'|', 'indent', 'outdent',
 				'|', 'link', 'insertTable', 'imageUpload',
 				'|', 'undo', 'redo', 'RemoveFormat', 'sourceEditing'
 			]
@@ -83,9 +87,28 @@ export default class ClassicEditor extends ClassicEditorBase {
 				'imageStyle:block',
 				'imageStyle:side',
 				'|',
-				'toggleImageCaption',
+				'resizeImage:50',
+	            'resizeImage:75',
+	            'resizeImage:original',
 				'imageTextAlternative'
-			]
+			],
+			resizeOptions: [
+            {
+                name: 'resizeImage:original',
+                value: null,
+                icon: 'original'
+            },
+            {
+                name: 'resizeImage:50',
+                value: '50',
+                icon: 'medium'
+            },
+            {
+                name: 'resizeImage:75',
+                value: '75',
+                icon: 'large'
+            }
+        ],
 		},
 		table: {
 			contentToolbar: [
@@ -94,8 +117,43 @@ export default class ClassicEditor extends ClassicEditorBase {
 				'mergeTableCells'
 			]
 		},
+		heading: {
+            options: [
+				{ model: 'paragraph', title: 'Paragraph', class: 'ck-heading_paragraph' },
+				{ model: 'heading1', view: 'h1', title: 'Heading 1', class: 'ck-heading_heading1' },
+				{ model: 'heading2', view: 'h2', title: 'Heading 2', class: 'ck-heading_heading2' },
+				{ model: 'heading3', view: 'h3', title: 'Heading 3', class: 'ck-heading_heading3' },
+				{ model: 'heading4', view: 'h4', title: 'Heading 4', class: 'ck-heading_heading4' },
+				{ model: 'heading5', view: 'h5', title: 'Heading 5', class: 'ck-heading_heading5' },
+				{ model: 'heading6', view: 'h6', title: 'Heading 6', class: 'ck-heading_heading6' }
+			]
+        },
+		alignment: {
+			options: [
+				{ name: 'left', className: 'viur-txt-align--left' },
+				{ name: 'right', className: 'viur-txt-align--right' },
+				{ name: 'center', className: 'viur-txt-align--center' },
+				{ name: 'justify', className: 'viur-txt-align--justify' },
+			]
+		},
+		indentBlock: {
+            classes: [
+                'viur-txt-indent--1',
+                'viur-txt-indent--2',
+                'viur-txt-indent--3',
+                'viur-txt-indent--4',
+                'viur-txt-indent--5',
+                'viur-txt-indent--6',
+                'viur-txt-indent--7',
+                'viur-txt-indent--8',
+                'viur-txt-indent--9',
+                'viur-txt-indent--10',
+            ]
+        },
+
 		// This value must be kept in sync with the language defined in webpack.config.js.
 		language: 'de',
 		viur_api_url:'http://localhost:8080'
 	};
 }
+import '../../viur/theme.css'
