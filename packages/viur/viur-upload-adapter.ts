@@ -26,7 +26,7 @@ class ViURUploadAdapter {
 	}
 
 	async _getUploadUrl(file, reject){
-		const skeyResp = await fetch(this.api_url+"/vi/skey").catch(error=>{
+		const skeyResp = await fetch(this.api_url+"/vi/skey",{credentials:"include"}).catch(error=>{
 			reject(error)
 		});
 		const skey = await skeyResp.json();

@@ -1,6 +1,6 @@
 {
   "name": "@viur/ckeditor5-build-classic",
-  "version": "v1.0.0-v38.0.1",
+  "version": "v1.0.1-v38.0.1",
   "description": "The classic editor build of CKEditor 5 – the best browser-based rich text editor. Moddified for the ViUR-Framework",
   "keywords": [
     "ckeditor5-build",
