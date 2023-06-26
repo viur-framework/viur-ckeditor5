@@ -32,3 +32,4 @@ packages/*/src/**/*.js.map
 src/**/*.js
 src/**/*.js.map
 src/**/*.d.ts
+packages/ckeditor5-build-classic/build
