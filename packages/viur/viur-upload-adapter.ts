@@ -39,7 +39,8 @@ class ViURUploadAdapter {
         }
 
 		const uploadUrlResp = await fetch(buildGetUrl(this.api_url+"/vi/file/getUploadURL",data),{
-			method:"POST"
+			method:"POST",
+			credentials:"include"
 			}).catch(error=>{
 				reject(error)
 		});
@@ -56,7 +57,7 @@ class ViURUploadAdapter {
 			reject(error)
 		})
 		this.loader.uploaded = 50
-		const skeyResp = await fetch(this.api_url+"/vi/skey").catch(error=>{
+		const skeyResp = await fetch(this.api_url+"/vi/skey",{credentials:"include"}).catch(error=>{
 				reject(error)
 		});
 		const skey = await skeyResp.json();
@@ -69,6 +70,7 @@ class ViURUploadAdapter {
 
 		const fileAddResp = await fetch(buildGetUrl(this.api_url+"/vi/file/add",data),{
 			method:"POST",
+			credentials:"include"
 			}).catch(error=>{
 				reject(error)
 		});
