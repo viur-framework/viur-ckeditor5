@@ -1,3 +1,4 @@
+//@ts-nocheck
 export function ViURSchemaPlugin( editor ) {
 
 	//bold uses b Tag
