@@ -37,6 +37,7 @@ import { CloudServices } from '@ckeditor/ckeditor5-cloud-services';
 import { Alignment } from '@ckeditor/ckeditor5-alignment';
 import { SourceEditing } from '@ckeditor/ckeditor5-source-editing';
 import { RemoveFormat } from '@ckeditor/ckeditor5-remove-format';
+import { GeneralHtmlSupport } from '@ckeditor/ckeditor5-html-support';
 
 import { ViURUploadAdapterPlugin } from '../../viur/viur-upload-adapter'
 import { ViURSchemaPlugin } from "../../viur/viur-shema";
@@ -67,7 +68,8 @@ export default class ClassicEditor extends ClassicEditorBase {
 		Underline,
 		Alignment,
 		SourceEditing,
-		RemoveFormat
+		RemoveFormat,
+		GeneralHtmlSupport
 	];
 
 	public static override defaultConfig = {
@@ -152,9 +154,20 @@ export default class ClassicEditor extends ClassicEditorBase {
             ]
         },
 
+		htmlSupport: {
+			allow: [
+				{
+					name: 'a',
+					attributes: {
+						target: true,
+						rel: true
+					}
+				}
+			]
+		},
 		// This value must be kept in sync with the language defined in webpack.config.js.
 		language: 'de',
-		viur_api_url:'http://localhost:8080'
+		viur_api_url: 'http://localhost:8080'
 	};
 }
-import '../../viur/theme.css'
+import '../../viur/theme.css';
