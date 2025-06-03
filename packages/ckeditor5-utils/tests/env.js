@@ -1,14 +1,15 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 import env, {
-	isMac, isWindows, isGecko, isSafari, isiOS, isAndroid, isRegExpUnicodePropertySupported, isBlink, getUserAgent
-} from '../src/env';
+	isMac, isWindows, isGecko, isSafari, isiOS, isAndroid, isRegExpUnicodePropertySupported, isBlink, getUserAgent,
+	isMediaForcedColors, isMotionReduced
+} from '../src/env.js';
 
-import global from '../src/dom/global';
-import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils';
+import global from '../src/dom/global.js';
+import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils.js';
 
 function toLowerCase( str ) {
 	return str.toLowerCase();
@@ -61,6 +62,66 @@ describe( 'Env', () => {
 		it( 'is a boolean', () => {
 			expect( env.isBlink ).to.be.a( 'boolean' );
 		} );
+	} );
+
+	describe( 'isMediaForcedColors', () => {
+		let matchMediaStub;
+
+		beforeEach( () => {
+			matchMediaStub = sinon.stub( global.window, 'matchMedia' );
+		} );
+
+		it( 'is a boolean', () => {
+			mockMediaForcedColors();
+
+			expect( env.isMediaForcedColors ).to.be.true;
+		} );
+
+		it( 'should watch changes in forced colors setting', () => {
+			mockMediaForcedColors();
+
+			expect( env.isMediaForcedColors ).to.be.true;
+
+			mockMediaForcedColors( false );
+
+			expect( env.isMediaForcedColors ).to.be.false;
+		} );
+
+		function mockMediaForcedColors( enabled = true ) {
+			return matchMediaStub
+				.withArgs( '(forced-colors: active)' )
+				.returns( { matches: enabled } );
+		}
+	} );
+
+	describe( 'isMotionReduced', () => {
+		let matchMediaStub;
+
+		beforeEach( () => {
+			matchMediaStub = sinon.stub( global.window, 'matchMedia' );
+		} );
+
+		it( 'is a boolean', () => {
+			mockMotionReduced();
+
+			expect( env.isMotionReduced ).to.be.true;
+		} );
+
+		it( 'should watch changes in reduced motion setting', () => {
+			mockMotionReduced();
+
+			expect( env.isMotionReduced ).to.be.true;
+
+			mockMotionReduced( false );
+
+			expect( env.isMotionReduced ).to.be.false;
+		} );
+
+		function mockMotionReduced( enabled = true ) {
+			return matchMediaStub
+				.withArgs( '(prefers-reduced-motion)' )
+				.returns( { matches: enabled } );
+		}
 	} );
 
 	describe( 'features', () => {
@@ -136,7 +197,7 @@ describe( 'Env', () => {
 	} );
 
 	describe( 'isSafari()', () => {
-		/* eslint-disable max-len */
+		/* eslint-disable @stylistic/max-len */
 		it( 'returns true for Safari UA strings', () => {
 			expect( isSafari( toLowerCase(
 				'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/12.0.3 Safari/605.1.15'
@@ -160,11 +221,11 @@ describe( 'Env', () => {
 				'Mozilla/5.0 (Linux; Android 7.1; Mi A1 Build/N2G47H) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.83 Mobile Safari/537.36'
 			) ) ).to.be.false;
 		} );
-		/* eslint-enable max-len */
+		/* eslint-enable @stylistic/max-len */
 	} );
 
 	describe( 'isiOS()', () => {
-		/* eslint-disable max-len */
+		/* eslint-disable @stylistic/max-len */
 		it( 'returns true for Safari@iPhone UA string ("Request Mobile Website")', () => {
 			expect( isiOS( toLowerCase(
 				'Mozilla/5.0 (iPhone; CPU OS 15_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.1 Mobile/15E148 Safari/604.1'
@@ -206,11 +267,11 @@ describe( 'Env', () => {
 				'Mozilla/5.0 (Linux; Android 7.1; Mi A1 Build/N2G47H) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.83 Mobile Safari/537.36'
 			) ) ).to.be.false;
 		} );
-		/* eslint-enable max-len */
+		/* eslint-enable @stylistic/max-len */
 	} );
 
 	describe( 'isAndroid()', () => {
-		/* eslint-disable max-len */
+		/* eslint-disable @stylistic/max-len */
 		it( 'returns true for Android UA strings', () => {
 			// Strings taken from https://developer.chrome.com/multidevice/user-agent.
 			expect( isAndroid( toLowerCase(
@@ -235,11 +296,11 @@ describe( 'Env', () => {
 				'Mozilla/5.0 (Windows NT 6.3; WOW64; Trident/7.0; rv:11.0) like Gecko'
 			) ) ).to.be.false;
 		} );
-		/* eslint-enable max-len */
+		/* eslint-enable @stylistic/max-len */
 	} );
 
 	describe( 'isBlink()', () => {
-		/* eslint-disable max-len */
+		/* eslint-disable @stylistic/max-len */
 		it( 'returns true for Blink UA strings', () => {
 			expect( isBlink( toLowerCase(
 				'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.121 Safari/537.36'
@@ -271,7 +332,63 @@ describe( 'Env', () => {
 				'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.140 Safari/537.36 Edge/17.17134'
 			) ) ).to.be.false;
 		} );
-		/* eslint-enable max-len */
+		/* eslint-enable @stylistic/max-len */
+	} );
+
+	describe( 'isMediaForcedColors()', () => {
+		it( 'returns true if the document media query matches forced-colors', () => {
+			testUtils.sinon.stub( global.window, 'matchMedia' )
+				.withArgs( '(forced-colors: active)' )
+				.returns( { matches: true } );
+
+			expect( isMediaForcedColors() ).to.be.true;
+		} );
+
+		it( 'returns false if the document media query does not match forced-colors', () => {
+			testUtils.sinon.stub( global.window, 'matchMedia' )
+				.withArgs( '(forced-colors: active)' )
+				.returns( { matches: false } );
+
+			expect( isMediaForcedColors() ).to.be.false;
+		} );
+
+		it( 'returns false if window object is not available', () => {
+			// `global.window` is an empty object if `window` was not available in global space.
+			const _window = global.window;
+			global.window = {};
+
+			expect( isMediaForcedColors() ).to.be.false;
+
+			global.window = _window;
+		} );
+	} );
+
+	describe( 'isMotionReduced()', () => {
+		it( 'returns true if the document media query matches prefers-reduced-motion', () => {
+			testUtils.sinon.stub( global.window, 'matchMedia' )
+				.withArgs( '(prefers-reduced-motion)' )
+				.returns( { matches: true } );
+
+			expect( isMotionReduced() ).to.be.true;
+		} );
+
+		it( 'returns false if the document media query does not match prefers-reduced-motion', () => {
+			testUtils.sinon.stub( global.window, 'matchMedia' )
+				.withArgs( '(prefers-reduced-motion)' )
+				.returns( { matches: false } );
+
+			expect( isMotionReduced() ).to.be.false;
+		} );
+
+		it( 'returns false if window object is not available', () => {
+			// `global.window` is an empty object if `window` was not available in global space.
+			const _window = global.window;
+			global.window = {};
+
+			expect( isMotionReduced() ).to.be.false;
+
+			global.window = _window;
+		} );
 	} );
 
 	describe( 'isRegExpUnicodePropertySupported()', () => {

@@ -1,18 +1,23 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module mention/mentioncommand
  */
 
-import { Command, type Editor } from 'ckeditor5/src/core';
-import type { Range } from 'ckeditor5/src/engine';
-import { CKEditorError, toMap } from 'ckeditor5/src/utils';
+import { Command, type Editor } from 'ckeditor5/src/core.js';
+import type { Range } from 'ckeditor5/src/engine.js';
+import { CKEditorError, toMap } from 'ckeditor5/src/utils.js';
 
-import { _addMentionAttributes } from './mentionediting';
-import type { MentionAttribute } from './mention';
+import { _addMentionAttributes } from './mentionediting.js';
+
+const BRACKET_PAIRS = {
+	'(': ')',
+	'[': ']',
+	'{': '}'
+} as const;
 
 /**
  * The mention command.
@@ -84,7 +89,12 @@ export default class MentionCommand extends Command {
 	 * Note that the replaced range might be shorter than the inserted text with the mention attribute.
 	 * @fires execute
 	 */
-	public override execute( options: { mention: string | MentionAttribute; marker: string; text?: string; range?: Range } ): void {
+	public override execute( options: {
+		mention: string | { id: string; [ key: string ]: unknown };
+		marker: string;
+		text?: string;
+		range?: Range;
+	} ): void {
 		const model = this.editor.model;
 		const document = model.document;
 		const selection = document.selection;
@@ -103,27 +113,9 @@ export default class MentionCommand extends Command {
 
 		const mention = _addMentionAttributes( { _text: mentionText, id: mentionID }, mentionData );
 
-		if ( options.marker.length != 1 ) {
+		if ( !mentionID.startsWith( options.marker ) ) {
 			/**
-			 * The marker must be a single character.
-			 *
-			 * Correct markers: `'@'`, `'#'`.
-			 *
-			 * Incorrect markers: `'@@'`, `'[@'`.
-			 *
-			 * See {@link module:mention/mentionconfig~MentionConfig}.
-			 *
-			 * @error mentioncommand-incorrect-marker
-			 */
-			throw new CKEditorError(
-				'mentioncommand-incorrect-marker',
-				this
-			);
-		}
-
-		if ( mentionID.charAt( 0 ) != options.marker ) {
-			/**
-			 * The feed item ID must start with the marker character.
+			 * The feed item ID must start with the marker character(s).
 			 *
 			 * Correct mention feed setting:
 			 *
@@ -164,8 +156,30 @@ export default class MentionCommand extends Command {
 			attributesWithMention.set( 'mention', mention );
 
 			// Replace a range with the text with a mention.
-			model.insertContent( writer.createText( mentionText, attributesWithMention ), range );
-			model.insertContent( writer.createText( ' ', currentAttributes ), range!.start.getShiftedBy( mentionText.length ) );
+			const insertionRange = model.insertContent( writer.createText( mentionText, attributesWithMention ), range );
+			const nodeBefore = insertionRange.start.nodeBefore;
+			const nodeAfter = insertionRange.end.nodeAfter;
+
+			const isFollowedByWhiteSpace = nodeAfter && nodeAfter.is( '$text' ) && nodeAfter.data.startsWith( ' ' );
+			let isInsertedInBrackets = false;
+
+			if ( nodeBefore && nodeAfter && nodeBefore.is( '$text' ) && nodeAfter.is( '$text' ) ) {
+				const precedingCharacter = nodeBefore.data.slice( -1 );
+				const isPrecededByOpeningBracket = precedingCharacter in BRACKET_PAIRS;
+				const isFollowedByBracketClosure = isPrecededByOpeningBracket && nodeAfter.data.startsWith(
+					BRACKET_PAIRS[ precedingCharacter as keyof typeof BRACKET_PAIRS ]
+				);
+
+				isInsertedInBrackets = isPrecededByOpeningBracket && isFollowedByBracketClosure;
+			}
+
+			// Don't add a white space if either of the following is true:
+			// * there's already one after the mention;
+			// * the mention was inserted in the empty matching brackets.
+			// https://github.com/ckeditor/ckeditor5/issues/4651
+			if ( !isInsertedInBrackets && !isFollowedByWhiteSpace ) {
+				model.insertContent( writer.createText( ' ', currentAttributes ), range!.start.getShiftedBy( mentionText.length ) );
+			}
 		} );
 	}
 }

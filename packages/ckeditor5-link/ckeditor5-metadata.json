@@ -20,7 +20,7 @@
 				{
 					"type": "Button",
 					"name": "link",
-					"iconPath": "theme/icons/link.svg"
+					"iconPath": "@ckeditor/ckeditor5-icons/theme/icons/link.svg"
 				}
 			],
 			"htmlOutput": [
@@ -55,13 +55,13 @@
 			"path": "src/linkimage.js",
 			"requires": [
 				"Link",
-				"Image"
+				"ImageBlock"
 			],
 			"uiComponents": [
 				{
 					"type": "Button",
 					"name": "linkImage",
-					"iconPath": "theme/icons/link.svg",
+					"iconPath": "@ckeditor/ckeditor5-icons/theme/icons/link.svg",
 					"toolbars": [
 						"image.toolbar"
 					]

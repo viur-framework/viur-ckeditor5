@@ -1,23 +1,23 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-import DowncastWriter from '../../../src/view/downcastwriter';
-import Element from '../../../src/view/element';
-import ContainerElement from '../../../src/view/containerelement';
-import AttributeElement from '../../../src/view/attributeelement';
-import EmptyElement from '../../../src/view/emptyelement';
-import UIElement from '../../../src/view/uielement';
-import RawElement from '../../../src/view/rawelement';
-import Position from '../../../src/view/position';
-import Range from '../../../src/view/range';
-import Text from '../../../src/view/text';
+import DowncastWriter from '../../../src/view/downcastwriter.js';
+import Element from '../../../src/view/element.js';
+import ContainerElement from '../../../src/view/containerelement.js';
+import AttributeElement from '../../../src/view/attributeelement.js';
+import EmptyElement from '../../../src/view/emptyelement.js';
+import UIElement from '../../../src/view/uielement.js';
+import RawElement from '../../../src/view/rawelement.js';
+import Position from '../../../src/view/position.js';
+import Range from '../../../src/view/range.js';
+import Text from '../../../src/view/text.js';
 
-import { stringify, parse } from '../../../src/dev-utils/view';
-import Document from '../../../src/view/document';
-import { expectToThrowCKEditorError } from '@ckeditor/ckeditor5-utils/tests/_utils/utils';
-import { StylesProcessor } from '../../../src/view/stylesmap';
+import { stringify, parse } from '../../../src/dev-utils/view.js';
+import Document from '../../../src/view/document.js';
+import { expectToThrowCKEditorError } from '@ckeditor/ckeditor5-utils/tests/_utils/utils.js';
+import { StylesProcessor } from '../../../src/view/stylesmap.js';
 
 describe( 'DowncastWriter', () => {
 	describe( 'unwrap()', () => {
@@ -316,6 +316,42 @@ describe( 'DowncastWriter', () => {
 				'<attribute:b view-priority="1" style="position: relative;"></attribute:b>',
 				'<container:p>' +
 					'[<attribute:b view-priority="1" style="color:red;position:absolute;top:10px">test</attribute:b>]' +
+				'</container:p>'
+			);
+		} );
+
+		it( 'should not unwrap single element when styles are same but classes different', () => {
+			testUnwrap(
+				'<container:p>' +
+					'[<attribute:b view-priority="1" class="foo" style="color:red">test</attribute:b>]' +
+				'</container:p>',
+				'<attribute:b view-priority="1" style="color: red;"></attribute:b>',
+				'<container:p>' +
+					'[<attribute:b view-priority="1" class="foo">test</attribute:b>]' +
+				'</container:p>'
+			);
+		} );
+
+		it( 'should not unwrap single element when classes are same but styles different', () => {
+			testUnwrap(
+				'<container:p>' +
+					'[<attribute:b view-priority="1" class="foo bar" style="color:red">test</attribute:b>]' +
+				'</container:p>',
+				'<attribute:b view-priority="1" class="foo bar"></attribute:b>',
+				'<container:p>' +
+					'[<attribute:b view-priority="1" style="color:red">test</attribute:b>]' +
+				'</container:p>'
+			);
+		} );
+
+		it( 'should not unwrap single element when classes and styles are same but other attributes have different values', () => {
+			testUnwrap(
+				'<container:p>' +
+					'[<attribute:b view-priority="1" foo="bar" class="abc" style="color:red">test</attribute:b>]' +
+				'</container:p>',
+				'<attribute:b view-priority="1" foo="123" class="abc" style="color: red;"></attribute:b>',
+				'<container:p>' +
+					'[<attribute:b view-priority="1" class="abc" foo="bar" style="color:red">test</attribute:b>]' +
 				'</container:p>'
 			);
 		} );

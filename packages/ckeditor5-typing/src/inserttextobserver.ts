@@ -1,6 +1,6 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
@@ -12,13 +12,15 @@ import { env, EventInfo } from '@ckeditor/ckeditor5-utils';
 import {
 	DomEventData,
 	Observer,
-	type View,
+	FocusObserver,
+	type EditingView,
 	type ViewDocumentCompositionEndEvent,
 	type ViewDocumentInputEvent,
 	type ViewDocumentSelection,
-	type ViewRange,
 	type ViewSelection
 } from '@ckeditor/ckeditor5-engine';
+
+// @if CK_DEBUG_TYPING // const { _buildLogMessage } = require( '@ckeditor/ckeditor5-engine/src/dev-utils/utils.js' );
 
 const TYPING_INPUT_TYPES = [
 	// For collapsed range:
@@ -34,22 +36,33 @@ const TYPING_INPUT_TYPES = [
 	'insertReplacementText'
 ];
 
+const TYPING_INPUT_TYPES_ANDROID = [
+	...TYPING_INPUT_TYPES,
+	'insertCompositionText'
+];
+
 /**
  * Text insertion observer introduces the {@link module:engine/view/document~Document#event:insertText} event.
  */
 export default class InsertTextObserver extends Observer {
 	/**
+	 * Instance of the focus observer. Insert text observer calls
+	 * {@link module:engine/view/observer/focusobserver~FocusObserver#flush} to mark the latest focus change as complete.
+	 */
+	public readonly focusObserver: FocusObserver;
+
+	/**
 	 * @inheritDoc
 	 */
-	constructor( view: View ) {
+	constructor( view: EditingView ) {
 		super( view );
+
+		this.focusObserver = view.getObserver( FocusObserver );
 
 		// On Android composition events should immediately be applied to the model. Rendering is not disabled.
 		// On non-Android the model is updated only on composition end.
 		// On Android we can't rely on composition start/end to update model.
-		if ( env.isAndroid ) {
-			TYPING_INPUT_TYPES.push( 'insertCompositionText' );
-		}
+		const typingInputTypes = env.isAndroid ? TYPING_INPUT_TYPES_ANDROID : TYPING_INPUT_TYPES;
 
 		const viewDocument = view.document;
 
@@ -58,17 +71,22 @@ export default class InsertTextObserver extends Observer {
 				return;
 			}
 
-			const { data: text, targetRanges, inputType, domEvent } = data;
+			const { data: text, targetRanges, inputType, domEvent, isComposing } = data;
 
-			if ( !TYPING_INPUT_TYPES.includes( inputType ) ) {
+			if ( !typingInputTypes.includes( inputType ) ) {
 				return;
 			}
+
+			// Mark the latest focus change as complete (we are typing in editable after the focus
+			// so the selection is in the focused element).
+			this.focusObserver.flush();
 
 			const eventInfo = new EventInfo( viewDocument, 'insertText' );
 
 			viewDocument.fire( eventInfo, new DomEventData( view, domEvent, {
 				text,
-				selection: view.createSelection( targetRanges )
+				selection: view.createSelection( targetRanges ),
+				isComposing
 			} ) );
 
 			// Stop the beforeinput event if `delete` event was stopped.
@@ -78,47 +96,42 @@ export default class InsertTextObserver extends Observer {
 			}
 		} );
 
-		// Note: The priority must be lower than the CompositionObserver handler to call it after the renderer is unblocked.
-		viewDocument.on<ViewDocumentCompositionEndEvent>( 'compositionend', ( evt, { data, domEvent } ) => {
-			// On Android composition events are immediately applied to the model.
-			// On non-Android the model is updated only on composition end.
-			// On Android we can't rely on composition start/end to update model.
-			if ( !this.isEnabled || env.isAndroid ) {
-				return;
-			}
+		// On Android composition events are immediately applied to the model.
+		// On non-Android the model is updated only on composition end.
+		// On Android we can't rely on composition start/end to update model.
+		if ( !env.isAndroid ) {
+			// Note: The priority must be lower than the CompositionObserver handler to call it after the renderer is unblocked.
+			// This is important for view to DOM position mapping.
+			// This causes the effect of first remove composed DOM and then reapply it after model modification.
+			viewDocument.on<ViewDocumentCompositionEndEvent>( 'compositionend', ( evt, { data, domEvent } ) => {
+				if ( !this.isEnabled ) {
+					return;
+				}
 
-			// In case of aborted composition.
-			if ( !data ) {
-				return;
-			}
+				// In case of aborted composition.
+				if ( !data ) {
+					return;
+				}
 
-			// @if CK_DEBUG_TYPING // if ( ( window as any ).logCKETyping ) {
-			// @if CK_DEBUG_TYPING // 	console.log( `%c[InsertTextObserver]%c Fire insertText event, text: ${ JSON.stringify( data ) }`,
-			// @if CK_DEBUG_TYPING // 		'font-weight: bold; color: green;', ''
-			// @if CK_DEBUG_TYPING // 	);
-			// @if CK_DEBUG_TYPING // }
+				// @if CK_DEBUG_TYPING // if ( ( window as any ).logCKETyping ) {
+				// @if CK_DEBUG_TYPING // 	console.log( ..._buildLogMessage( this, 'InsertTextObserver',
+				// @if CK_DEBUG_TYPING // 		`%cFire insertText event, %c${ JSON.stringify( data ) }`,
+				// @if CK_DEBUG_TYPING // 		'font-weight: bold',
+				// @if CK_DEBUG_TYPING // 		 'color: blue'
+				// @if CK_DEBUG_TYPING // 	) );
+				// @if CK_DEBUG_TYPING // }
 
-			// How do we know where to insert the composed text?
-			// The selection observer is blocked and the view is not updated with the composition changes.
-			// There were three options:
-			//   - Store the selection on `compositionstart` and use it now. This wouldn't work in RTC
-			//     where the view would change and the stored selection might get incorrect.
-			//     We'd need to fallback to the current view selection anyway.
-			//   - Use the current view selection. This is a bit weird and non-intuitive because
-			//     this isn't necessarily the selection on which the user started composing.
-			//     We cannot even know whether it's still collapsed (there might be some weird
-			//     editor feature that changed it in unpredictable ways for us). But it's by far
-			//     the simplest solution and should be stable (the selection is definitely correct)
-			//     and probably mostly predictable (features usually don't modify the selection
-			//     unless called explicitly by the user).
-			//   - Try to follow it from the `beforeinput` events. This would be really complex as each
-			//     `beforeinput` would come with just the range it's changing and we'd need to calculate that.
-			// We decided to go with the 2nd option for its simplicity and stability.
-			viewDocument.fire( 'insertText', new DomEventData( view, domEvent, {
-				text: data,
-				selection: viewDocument.selection
-			} ) );
-		}, { priority: 'lowest' } );
+				// How do we know where to insert the composed text?
+				// 1. The SelectionObserver is blocked and the view is not updated with the composition changes.
+				// 2. The last moment before it's locked is the `compositionstart` event.
+				// 3. The `SelectionObserver` is listening for `compositionstart` event and immediately converts
+				//    the selection. Handle this at the low priority so after the rendering is blocked.
+				viewDocument.fire( 'insertText', new DomEventData( view, domEvent, {
+					text: data,
+					isComposing: true
+				} ) );
+			}, { priority: 'low' } );
+		}
 	}
 
 	/**
@@ -161,10 +174,15 @@ export interface InsertTextEventData extends DomEventData {
 	 * The selection into which the text should be inserted.
 	 * If not specified, the insertion should occur at the current view selection.
 	 */
-	selection: ViewSelection | ViewDocumentSelection;
+	selection?: ViewSelection | ViewDocumentSelection;
 
 	/**
-	 * The range that view selection should be set to after insertion.
+	 * A flag indicating that event was fired during composition.
+	 *
+	 * Corresponds to the
+	 * {@link module:engine/view/document~Document#event:compositionstart},
+	 * {@link module:engine/view/document~Document#event:compositionupdate},
+	 * and {@link module:engine/view/document~Document#event:compositionend } trio.
 	 */
-	resultRange?: ViewRange;
+	isComposing?: boolean;
 }

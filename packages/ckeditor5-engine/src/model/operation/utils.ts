@@ -1,22 +1,22 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module engine/model/operation/utils
  */
 
-import Node from '../node';
-import Range from '../range';
-import Text from '../text';
-import TextProxy from '../textproxy';
+import Node from '../node.js';
+import Range from '../range.js';
+import Text from '../text.js';
+import TextProxy from '../textproxy.js';
 
-import type DocumentFragment from '../documentfragment';
-import type Element from '../element';
-import type Item from '../item';
-import type NodeList from '../nodelist';
-import type Position from '../position';
+import type DocumentFragment from '../documentfragment.js';
+import type Element from '../element.js';
+import type Item from '../item.js';
+import type NodeList from '../nodelist.js';
+import type Position from '../position.js';
 
 import { CKEditorError, isIterable } from '@ckeditor/ckeditor5-utils';
 
@@ -25,7 +25,7 @@ import { CKEditorError, isIterable } from '@ckeditor/ckeditor5-utils';
  *
  * @internal
  * @param position Position at which nodes should be inserted.
- * @param normalizedNodes Nodes to insert.
+ * @param nodes Nodes to insert.
  * @returns Range spanning over inserted elements.
  */
 export function _insert( position: Position, nodes: NodeSet ): Range {
@@ -171,8 +171,11 @@ export function _normalizeNodes( nodes: NodeSet ): Array<Node> {
 			for ( const node of nodes ) {
 				convert( node );
 			}
+		} else {
+			// Skip unrecognized type.
+			// eslint-disable-next-line @typescript-eslint/no-unused-vars
+			const unreachable: never = nodes;
 		}
-		// Skip unrecognized type.
 	}
 
 	convert( nodes );

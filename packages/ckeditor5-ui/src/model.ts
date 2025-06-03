@@ -1,6 +1,6 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
@@ -8,12 +8,12 @@
  */
 
 import { ObservableMixin } from '@ckeditor/ckeditor5-utils';
-import { extend } from 'lodash-es';
+import { extend } from 'es-toolkit/compat';
 
 /**
  * The base MVC model class.
  */
-export default class Model extends ObservableMixin() {
+export default class Model extends /* #__PURE__ */ ObservableMixin() {
 	[ x: string ]: unknown;
 
 	/**

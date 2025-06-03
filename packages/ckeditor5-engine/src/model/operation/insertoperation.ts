@@ -1,22 +1,22 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module engine/model/operation/insertoperation
  */
 
-import Operation from './operation';
-import Position from '../position';
-import NodeList from '../nodelist';
-import MoveOperation from './moveoperation';
-import { _insert, _normalizeNodes, type NodeSet } from './utils';
-import Text from '../text';
-import Element from '../element';
-import type { Selectable } from '../selection';
+import Operation from './operation.js';
+import Position from '../position.js';
+import NodeList from '../nodelist.js';
+import MoveOperation from './moveoperation.js';
+import { _insert, _normalizeNodes, type NodeSet } from './utils.js';
+import Text from '../text.js';
+import Element from '../element.js';
+import type { Selectable } from '../selection.js';
 
-import type Document from '../document';
+import type Document from '../document.js';
 
 import { CKEditorError } from '@ckeditor/ckeditor5-utils';
 

@@ -1,18 +1,18 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module style/ui/stylepanelview
  */
 
-import { FocusCycler, View, ViewCollection } from 'ckeditor5/src/ui';
-import { FocusTracker, KeystrokeHandler, type Locale } from 'ckeditor5/src/utils';
+import { FocusCycler, View, ViewCollection } from 'ckeditor5/src/ui.js';
+import { FocusTracker, KeystrokeHandler, type Locale } from 'ckeditor5/src/utils.js';
 
-import StyleGroupView from './stylegroupview';
-import type StyleGridView from './stylegridview';
-import type { NormalizedStyleDefinitions } from '../styleutils';
+import StyleGroupView from './stylegroupview.js';
+import type StyleGridView from './stylegridview.js';
+import type { NormalizedStyleDefinitions } from '../styleutils.js';
 
 import '../../theme/stylepanel.css';
 

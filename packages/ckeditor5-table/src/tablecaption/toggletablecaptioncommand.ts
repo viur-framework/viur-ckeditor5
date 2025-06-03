@@ -1,17 +1,18 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
 * @module table/tablecaption/toggletablecaptioncommand
 */
 
-import { Command } from 'ckeditor5/src/core';
-import type { Writer } from 'ckeditor5/src/engine';
-import type TableCaptionEditing from './tablecaptionediting';
+import { Command } from 'ckeditor5/src/core.js';
+import type { Writer } from 'ckeditor5/src/engine.js';
+import type TableCaptionEditing from './tablecaptionediting.js';
 
-import { getCaptionFromTableModelElement, getSelectionAffectedTable } from './utils';
+import { getCaptionFromTableModelElement } from './utils.js';
+import { getSelectionAffectedTable } from '../utils/common.js';
 
 /**
  * The toggle table caption command.
@@ -46,7 +47,7 @@ export default class ToggleTableCaptionCommand extends Command {
 		const editor = this.editor;
 		const tableElement = getSelectionAffectedTable( editor.model.document.selection );
 
-		this.isEnabled = !!tableElement;
+		this.isEnabled = !!tableElement && editor.model.schema.checkChild( tableElement, 'caption' );
 
 		if ( !this.isEnabled ) {
 			this.value = false;

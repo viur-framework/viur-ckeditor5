@@ -1,16 +1,16 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-import Model from '../../../src/model/model';
-import Position from '../../../src/model/position';
-import Range from '../../../src/model/range';
-import Selection from '../../../src/model/selection';
-import Element from '../../../src/model/element';
-import deleteContent from '../../../src/model/utils/deletecontent';
-import { setData, getData } from '../../../src/dev-utils/model';
-import { stringify } from '../../../src/dev-utils/view';
+import Model from '../../../src/model/model.js';
+import Position from '../../../src/model/position.js';
+import Range from '../../../src/model/range.js';
+import Selection from '../../../src/model/selection.js';
+import Element from '../../../src/model/element.js';
+import deleteContent from '../../../src/model/utils/deletecontent.js';
+import { setData, getData } from '../../../src/dev-utils/model.js';
+import { stringify } from '../../../src/dev-utils/view.js';
 
 describe( 'DataController utils', () => {
 	let model, doc;
@@ -244,15 +244,29 @@ describe( 'DataController utils', () => {
 			);
 
 			test(
-				'do not remove end block if selection ends at start position of it',
+				'do not merge end block if selection ends at start position of it',
 				'<paragraph>x</paragraph><paragraph>[foo</paragraph><paragraph>]bar</paragraph><paragraph>y</paragraph>',
 				'<paragraph>x</paragraph><paragraph>[]</paragraph><paragraph>bar</paragraph><paragraph>y</paragraph>'
 			);
 
 			test(
-				'do not remove end block if selection ends at start position of it (multiple paragraphs)',
+				'do not merge end block if selection ends at start position of it (multiple paragraphs)',
 				'<paragraph>x</paragraph><paragraph>[foo</paragraph><paragraph>a</paragraph><paragraph>]bar</paragraph>',
 				'<paragraph>x</paragraph><paragraph>[]</paragraph><paragraph>bar</paragraph>'
+			);
+
+			test(
+				'merge end block if selection ends at start position of it with `doNotFixSelection` option',
+				'<paragraph>x</paragraph><paragraph>[foo</paragraph><paragraph>]bar</paragraph><paragraph>y</paragraph>',
+				'<paragraph>x</paragraph><paragraph>[]bar</paragraph><paragraph>y</paragraph>',
+				{ doNotFixSelection: true }
+			);
+
+			test(
+				'merge end block if selection ends at start position of it with `doNotFixSelection` option (multiple paragraphs)',
+				'<paragraph>x</paragraph><paragraph>[foo</paragraph><paragraph>a</paragraph><paragraph>]bar</paragraph>',
+				'<paragraph>x</paragraph><paragraph>[]bar</paragraph>',
+				{ doNotFixSelection: true }
 			);
 
 			test(

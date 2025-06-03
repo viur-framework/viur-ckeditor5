@@ -1,13 +1,16 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* globals ClassicEditor, console, window, document */
+import {
+	CS_CONFIG,
+	TOKEN_URL,
+	getViewportTopOffsetConfig
+} from '@snippets/index.js';
+import { ImageEditor } from './build-image-source.js';
 
-import { CS_CONFIG } from '@ckeditor/ckeditor5-cloud-services/tests/_utils/cloud-services-config.js';
-
-ClassicEditor
+ImageEditor
 	.create( document.querySelector( '#snippet-image-resize-buttons' ), {
 		removePlugins: [ 'LinkImage', 'AutoImage' ],
 		toolbar: {
@@ -15,14 +18,19 @@ ClassicEditor
 				'undo', 'redo',
 				'|', 'heading',
 				'|', 'bold', 'italic',
-				'|', 'link', 'uploadImage', 'insertTable', 'mediaEmbed',
+				'|', 'link', 'insertImage', 'insertTable', 'mediaEmbed',
 				'|', 'bulletedList', 'numberedList', 'outdent', 'indent'
 			]
 		},
 		ui: {
 			viewportOffset: {
-				top: window.getViewportTopOffsetConfig()
+				top: getViewportTopOffsetConfig()
 			}
+		},
+		ckbox: {
+			tokenUrl: TOKEN_URL,
+			allowExternalImagesEditing: [ /^data:/, 'origin', /ckbox/ ],
+			forceDemoLabel: true
 		},
 		image: {
 			resizeOptions: [
@@ -31,6 +39,12 @@ ClassicEditor
 					label: 'Original',
 					value: null,
 					icon: 'original'
+				},
+				{
+					name: 'resizeImage:custom',
+					label: 'Custom',
+					value: 'custom',
+					icon: 'custom'
 				},
 				{
 					name: 'resizeImage:20',
@@ -48,7 +62,10 @@ ClassicEditor
 			toolbar: [
 				'resizeImage:20',
 				'resizeImage:40',
-				'resizeImage:original'
+				'resizeImage:original',
+				'resizeImage:custom',
+				'|',
+				'ckboxImageEdit'
 			]
 		},
 		cloudServices: CS_CONFIG

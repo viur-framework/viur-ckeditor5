@@ -1,34 +1,21 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* globals console, window, document */
-
-import { Plugin } from '@ckeditor/ckeditor5-core';
-import { Font } from '@ckeditor/ckeditor5-font';
-import { Indent } from '@ckeditor/ckeditor5-indent';
-import { List } from '@ckeditor/ckeditor5-list';
-import { Alignment } from '@ckeditor/ckeditor5-alignment';
-import { Autoformat } from '@ckeditor/ckeditor5-autoformat';
-import { BlockQuote } from '@ckeditor/ckeditor5-block-quote';
-import { DropdownView, DropdownButtonView, DropdownPanelView, ToolbarView, clickOutsideHandler } from '@ckeditor/ckeditor5-ui';
-import { EasyImage } from '@ckeditor/ckeditor5-easy-image';
-import { Essentials } from '@ckeditor/ckeditor5-essentials';
-import { Heading } from '@ckeditor/ckeditor5-heading';
-import { HorizontalLine } from '@ckeditor/ckeditor5-horizontal-line';
-import { Image, ImageCaption, ImageStyle, ImageToolbar, ImageUpload, ImageResize } from '@ckeditor/ckeditor5-image';
-import { Link } from '@ckeditor/ckeditor5-link';
-import { MediaEmbed } from '@ckeditor/ckeditor5-media-embed';
-import { Paragraph } from '@ckeditor/ckeditor5-paragraph';
-import { RemoveFormat } from '@ckeditor/ckeditor5-remove-format';
-import { Bold, Italic, Strikethrough, Superscript, Subscript, Underline } from '@ckeditor/ckeditor5-basic-styles';
-import { Table, TableToolbar } from '@ckeditor/ckeditor5-table';
-import { CS_CONFIG } from '@ckeditor/ckeditor5-cloud-services/tests/_utils/cloud-services-config';
-
-import fontColorIcon from '@ckeditor/ckeditor5-font/theme/icons/font-color.svg';
-
-import DecoupledEditor from '../build-decoupled-document';
+import {
+	Plugin, IconFontColor, Font, Indent, List, Alignment, Autoformat, BlockQuote, DropdownView,
+	ToolbarView, createDropdown, EasyImage, Essentials, Heading, HorizontalLine, Image,
+	ImageInsert, ImageCaption, ImageStyle, ImageToolbar, ImageUpload, ImageResize, Link,
+	MediaEmbed, Paragraph, RemoveFormat, Bold, Italic, Strikethrough, Superscript, Subscript,
+	Underline, Table, TableToolbar
+} from 'ckeditor5';
+import {
+	CS_CONFIG,
+	DecoupledEditor,
+	attachTourBalloon,
+	findToolbarItem
+} from '@snippets/index.js';
 
 class FormattingOptions extends Plugin {
 	/**
@@ -46,9 +33,7 @@ class FormattingOptions extends Plugin {
 
 		editor.ui.componentFactory.add( 'formattingOptions', locale => {
 			const t = locale.t;
-			const buttonView = new DropdownButtonView( locale );
-			const panelView = new DropdownPanelView( locale );
-			const dropdownView = new DropdownView( locale, buttonView, panelView );
+			const dropdownView = createDropdown( locale );
 			const toolbarView = this.toolbarView = dropdownView.toolbarView = new ToolbarView( locale );
 
 			// Accessibility: Give the toolbar a human-readable ARIA label.
@@ -88,28 +73,17 @@ class FormattingOptions extends Plugin {
 			// * the dropdown or it contents,
 			// * any editing root,
 			// * any floating UI in the "body" collection
-			// It should close, for instance, when another (main) toolbar button was pressed, though.
-			dropdownView.on( 'render', () => {
-				clickOutsideHandler( {
-					emitter: dropdownView,
-					activator: () => dropdownView.isOpen,
-					callback: () => { dropdownView.isOpen = false; },
-					contextElements: [
-						dropdownView.element,
-						...[ ...editor.ui.getEditableElementsNames() ].map( name => editor.ui.getEditableElement( name ) ),
-						document.querySelector( '.ck-body-wrapper' )
-					]
-				} );
-			} );
+			const focusableElements = [
+				...[ ...editor.ui.getEditableElementsNames() ].map( name => editor.ui.getEditableElement( name ) ),
+				document.querySelector( '.ck-body-wrapper' )
+			];
 
-			// The main button of the dropdown should be bound to the state of the dropdown.
-			buttonView.bind( 'isOn' ).to( dropdownView, 'isOpen' );
-			buttonView.bind( 'isEnabled' ).to( dropdownView );
+			focusableElements.forEach( el => dropdownView.focusTracker.add( el ) );
 
 			// Using the font color icon to visually represent the formatting.
-			buttonView.set( {
+			dropdownView.buttonView.set( {
 				tooltip: t( 'Formatting options' ),
-				icon: fontColorIcon
+				icon: IconFontColor
 			} );
 
 			dropdownView.panelView.children.add( toolbarView );
@@ -137,6 +111,7 @@ DecoupledEditor
 			Heading,
 			HorizontalLine,
 			Image,
+			ImageInsert,
 			ImageCaption,
 			ImageResize,
 			ImageStyle,
@@ -166,7 +141,7 @@ DecoupledEditor
 			'|',
 			'link',
 			'blockQuote',
-			'uploadImage',
+			'insertImage',
 			'insertTable',
 			'mediaEmbed',
 			'horizontalLine',
@@ -214,15 +189,14 @@ DecoupledEditor
 				'mergeTableCells'
 			]
 		},
-
 		cloudServices: CS_CONFIG
 	} )
 	.then( editor => {
 		window.editor = editor;
 
-		const toolbarContainer = document.querySelector( '#editor-toolbar-container' );
-
-		toolbarContainer.appendChild( editor.ui.view.toolbar.element );
+		document
+			.querySelector( '#editor-toolbar-container' )
+			?.appendChild( editor.ui.view.toolbar.element );
 
 		overrideDropdownPositionsToNorth( editor, editor.ui.view.toolbar );
 		overrideDropdownPositionsToNorth( editor, editor.plugins.get( 'FormattingOptions' ).toolbarView );
@@ -230,9 +204,11 @@ DecoupledEditor
 		overrideTooltipPositions( editor.ui.view.toolbar );
 		overrideTooltipPositions( editor.plugins.get( 'FormattingOptions' ).toolbarView );
 
-		window.attachTourBalloon( {
-			target: window.findToolbarItem( editor.ui.view.toolbar,
-				item => item.label && item.label === 'Formatting options' ),
+		attachTourBalloon( {
+			target: findToolbarItem(
+				editor.ui.view.toolbar,
+				item => item.label && item.label === 'Formatting options'
+			),
 			text: 'Click to open formatting options.',
 			editor,
 			tippyOptions: {

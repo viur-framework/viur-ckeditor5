@@ -1,18 +1,15 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module list/list/listui
  */
 
-import { createUIComponent } from './utils';
-
-import numberedListIcon from '../../theme/icons/numberedlist.svg';
-import bulletedListIcon from '../../theme/icons/bulletedlist.svg';
-
-import { Plugin } from 'ckeditor5/src/core';
+import { createUIComponents } from './utils.js';
+import { Plugin } from 'ckeditor5/src/core.js';
+import { IconBulletedList, IconNumberedList } from 'ckeditor5/src/icons.js';
 
 /**
  * The list UI feature. It introduces the `'numberedList'` and `'bulletedList'` buttons that
@@ -22,8 +19,15 @@ export default class ListUI extends Plugin {
 	/**
 	 * @inheritDoc
 	 */
-	public static get pluginName(): 'ListUI' {
-		return 'ListUI';
+	public static get pluginName() {
+		return 'ListUI' as const;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public static override get isOfficialPlugin(): true {
+		return true;
 	}
 
 	/**
@@ -32,8 +36,14 @@ export default class ListUI extends Plugin {
 	public init(): void {
 		const t = this.editor.t;
 
-		// Create two buttons and link them with numberedList and bulletedList commands.
-		createUIComponent( this.editor, 'numberedList', t( 'Numbered List' ), numberedListIcon );
-		createUIComponent( this.editor, 'bulletedList', t( 'Bulleted List' ), bulletedListIcon );
+		// Create button numberedList.
+		if ( !this.editor.ui.componentFactory.has( 'numberedList' ) ) {
+			createUIComponents( this.editor, 'numberedList', t( 'Numbered List' ), IconNumberedList );
+		}
+
+		// Create button bulletedList.
+		if ( !this.editor.ui.componentFactory.has( 'bulletedList' ) ) {
+			createUIComponents( this.editor, 'bulletedList', t( 'Bulleted List' ), IconBulletedList );
+		}
 	}
 }

@@ -1,14 +1,12 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* global Event, console */
-
-import ViewCollection from '../../src/viewcollection';
-import DropdownPanelView from '../../src/dropdown/dropdownpanelview';
-import View from '../../src/view';
-import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils';
+import ViewCollection from '../../src/viewcollection.js';
+import DropdownPanelView from '../../src/dropdown/dropdownpanelview.js';
+import View from '../../src/view.js';
+import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils.js';
 import { LabeledFieldView, createLabeledInputText } from '@ckeditor/ckeditor5-ui';
 
 describe( 'DropdownPanelView', () => {
@@ -38,6 +36,7 @@ describe( 'DropdownPanelView', () => {
 			expect( view.element.classList.contains( 'ck' ) ).to.be.true;
 			expect( view.element.classList.contains( 'ck-reset' ) ).to.be.true;
 			expect( view.element.classList.contains( 'ck-dropdown__panel' ) ).to.be.true;
+			expect( view.element.getAttribute( 'tabindex' ) ).to.equal( '-1' );
 		} );
 
 		describe( 'template bindings', () => {

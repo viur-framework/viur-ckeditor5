@@ -1,6 +1,6 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
@@ -15,7 +15,7 @@ import {
 	type ObservableSetEvent
 } from '@ckeditor/ckeditor5-utils';
 
-import type Editor from './editor/editor';
+import type Editor from './editor/editor.js';
 
 /**
  * Base class for the CKEditor commands.
@@ -30,7 +30,7 @@ import type Editor from './editor/editor';
  * By default, commands are disabled when the editor is in the {@link module:core/editor/editor~Editor#isReadOnly read-only} mode
  * but commands with the {@link module:core/command~Command#affectsData `affectsData`} flag set to `false` will not be disabled.
  */
-export default class Command extends ObservableMixin() {
+export default class Command extends /* #__PURE__ */ ObservableMixin() {
 	/**
 	 * The editor on which this command will be used.
 	 */
@@ -121,9 +121,15 @@ export default class Command extends ObservableMixin() {
 				return;
 			}
 
+			const selection = editor.model.document.selection;
+			const selectionInGraveyard = selection.getFirstPosition()!.root.rootName == '$graveyard';
+			const canEditAtSelection = !selectionInGraveyard && editor.model.canEditAt( selection );
+
+			// Disable if editor is read only, or when selection is in a place which cannot be edited.
+			//
 			// Checking `editor.isReadOnly` is needed for all commands that have `_isEnabledBasedOnSelection == false`.
 			// E.g. undo does not base on selection, but affects data and should be disabled when the editor is in read-only mode.
-			if ( editor.isReadOnly || this._isEnabledBasedOnSelection && !editor.model.canEditAt( editor.model.document.selection ) ) {
+			if ( editor.isReadOnly || this._isEnabledBasedOnSelection && !canEditAtSelection ) {
 				evt.return = false;
 				evt.stop();
 			}
@@ -247,7 +253,7 @@ export default class Command extends ObservableMixin() {
 	 *
 	 * @fires execute
 	 */
-	public execute( ...args: Array<unknown> ): unknown { return undefined; }
+	public execute( ...args: Array<unknown> ): unknown { return undefined; } // eslint-disable-line @typescript-eslint/no-unused-vars
 
 	/**
 	 * Destroys the command.

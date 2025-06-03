@@ -1,9 +1,14 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* globals console, window, document, ClassicEditor, CS_CONFIG */
+import {
+	CS_CONFIG,
+	TOKEN_URL,
+	ClassicEditor,
+	getViewportTopOffsetConfig
+} from '@snippets/index.js';
 
 ClassicEditor
 	.create( document.querySelector( '#snippet-link-decorators' ), {
@@ -12,14 +17,25 @@ ClassicEditor
 			items: [
 				'undo', 'redo', '|', 'heading',
 				'|', 'bold', 'italic',
-				'|', 'link', 'uploadImage', 'insertTable', 'mediaEmbed',
+				'|', 'link', 'insertImage', 'insertTable', 'mediaEmbed',
 				'|', 'bulletedList', 'numberedList', 'outdent', 'indent'
+			]
+		},
+		image: {
+			toolbar: [
+				'imageStyle:inline', 'imageStyle:block', 'imageStyle:wrapText', '|',
+				'toggleImageCaption', 'imageTextAlternative', 'ckboxImageEdit'
 			]
 		},
 		ui: {
 			viewportOffset: {
-				top: window.getViewportTopOffsetConfig()
+				top: getViewportTopOffsetConfig()
 			}
+		},
+		ckbox: {
+			tokenUrl: TOKEN_URL,
+			allowExternalImagesEditing: [ /^data:/, 'origin', /ckbox/ ],
+			forceDemoLabel: true
 		},
 		link: {
 			addTargetToExternalLinks: true,

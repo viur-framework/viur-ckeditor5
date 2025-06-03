@@ -1,24 +1,25 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-import ClassicEditor from '@ckeditor/ckeditor5-editor-classic/src/classiceditor';
-import ArticlePluginSet from '@ckeditor/ckeditor5-core/tests/_utils/articlepluginset';
-import DomEventData from '@ckeditor/ckeditor5-engine/src/view/observer/domeventdata';
-import EventInfo from '@ckeditor/ckeditor5-utils/src/eventinfo';
-import global from '@ckeditor/ckeditor5-utils/src/dom/global';
-import BubblingEventInfo from '@ckeditor/ckeditor5-engine/src/view/observer/bubblingeventinfo';
+import ClassicEditor from '@ckeditor/ckeditor5-editor-classic/src/classiceditor.js';
+import ArticlePluginSet from '@ckeditor/ckeditor5-core/tests/_utils/articlepluginset.js';
+import DomEventData from '@ckeditor/ckeditor5-engine/src/view/observer/domeventdata.js';
+import EventInfo from '@ckeditor/ckeditor5-utils/src/eventinfo.js';
+import global from '@ckeditor/ckeditor5-utils/src/dom/global.js';
+import BubblingEventInfo from '@ckeditor/ckeditor5-engine/src/view/observer/bubblingeventinfo.js';
 
-import Widget from '../../src/widget';
-import WidgetTypeAround from '../../src/widgettypearound/widgettypearound';
-import { TYPE_AROUND_SELECTION_ATTRIBUTE } from '../../src/widgettypearound/utils';
-import { toWidget } from '../../src/utils';
+import Widget from '../../src/widget.js';
+import WidgetTypeAround from '../../src/widgettypearound/widgettypearound.js';
+import { TYPE_AROUND_SELECTION_ATTRIBUTE } from '../../src/widgettypearound/utils.js';
+import { toWidget } from '../../src/utils.js';
 
-import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils';
-import { setData as setModelData, getData as getModelData } from '@ckeditor/ckeditor5-engine/src/dev-utils/model';
-import { getCode } from '@ckeditor/ckeditor5-utils/src/keyboard';
-import env from '@ckeditor/ckeditor5-utils/src/env';
+import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils.js';
+import { setData as setModelData, getData as getModelData } from '@ckeditor/ckeditor5-engine/src/dev-utils/model.js';
+import { getCode } from '@ckeditor/ckeditor5-utils/src/keyboard.js';
+import env from '@ckeditor/ckeditor5-utils/src/env.js';
+import { insertAt } from '@ckeditor/ckeditor5-utils';
 
 describe( 'WidgetTypeAround', () => {
 	let element, plugin, editor, editingView, viewDocument, modelRoot, viewRoot, model, modelSelection;
@@ -45,6 +46,14 @@ describe( 'WidgetTypeAround', () => {
 
 		it( 'should have a name', () => {
 			expect( WidgetTypeAround.pluginName ).to.equal( 'WidgetTypeAround' );
+		} );
+
+		it( 'should have `isOfficialPlugin` static flag set to `true`', () => {
+			expect( WidgetTypeAround.isOfficialPlugin ).to.be.true;
+		} );
+
+		it( 'should have `isPremiumPlugin` static flag set to `false`', () => {
+			expect( WidgetTypeAround.isPremiumPlugin ).to.be.false;
 		} );
 
 		describe( '#isEnabled support', () => {
@@ -465,7 +474,8 @@ describe( 'WidgetTypeAround', () => {
 				fireInsertTextEvent( 'a' );
 
 				expect( modelSelection.getAttribute( TYPE_AROUND_SELECTION_ATTRIBUTE ) ).to.be.undefined;
-				expect( getModelData( model ) ).to.equal( '<paragraph>fooa[]</paragraph><blockWidget></blockWidget>' );
+				// As the browser is modifying DOM while typing, the change is not applied here since those are mocked events.
+				expect( getModelData( model ) ).to.equal( '<paragraph>foo[]</paragraph><blockWidget></blockWidget>' );
 
 				const viewWidget = viewRoot.getChild( 1 );
 
@@ -1053,7 +1063,7 @@ describe( 'WidgetTypeAround', () => {
 					expect( modelSelection.getAttribute( TYPE_AROUND_SELECTION_ATTRIBUTE ) ).to.be.undefined;
 				} );
 
-				it( 'should split ancestors to find a place that allows a widget', () => {
+				it( 'should split ancestors to find a place that allows a widget (no content after widget)', () => {
 					model.schema.register( 'allowP', {
 						inheritAllFrom: '$block'
 					} );
@@ -1083,7 +1093,41 @@ describe( 'WidgetTypeAround', () => {
 						'<allowP>' +
 							'<disallowP><blockWidget></blockWidget></disallowP>' +
 							'<paragraph>[]</paragraph>' +
-							'<disallowP></disallowP>' +
+						'</allowP>'
+					);
+				} );
+
+				it( 'should split ancestors to find a place that allows a widget (with content after widget)', () => {
+					model.schema.register( 'allowP', {
+						inheritAllFrom: '$block'
+					} );
+					model.schema.register( 'disallowP', {
+						inheritAllFrom: '$block',
+						allowIn: [ 'allowP' ]
+					} );
+					model.schema.extend( 'blockWidget', {
+						allowIn: [ 'allowP', 'disallowP' ]
+					} );
+					model.schema.extend( 'paragraph', {
+						allowIn: [ 'allowP' ]
+					} );
+
+					editor.conversion.for( 'downcast' ).elementToElement( { model: 'allowP', view: 'allowP' } );
+					editor.conversion.for( 'downcast' ).elementToElement( { model: 'disallowP', view: 'disallowP' } );
+
+					setModelData( model,
+						'<allowP>' +
+							'<disallowP>[<blockWidget></blockWidget>]<blockWidget></blockWidget></disallowP>' +
+						'</allowP>'
+					);
+
+					fireEnter();
+
+					expect( getModelData( model ) ).to.equal(
+						'<allowP>' +
+							'<disallowP><blockWidget></blockWidget></disallowP>' +
+							'<paragraph>[]</paragraph>' +
+							'<disallowP><blockWidget></blockWidget></disallowP>' +
 						'</allowP>'
 					);
 				} );
@@ -1124,7 +1168,7 @@ describe( 'WidgetTypeAround', () => {
 				} );
 			} );
 
-			describe( 'on keydown of a "typing" character when the "fake caret" is activated ', () => {
+			describe( 'on keydown of a "typing" character when the "fake caret" is activated', () => {
 				it( 'should insert a character inside a new paragraph before a widget if the caret was "before" it', () => {
 					setModelData( editor.model, '[<blockWidget></blockWidget>]' );
 
@@ -1133,6 +1177,7 @@ describe( 'WidgetTypeAround', () => {
 
 					fireKeyboardEvent( 'a' );
 					fireInsertTextEvent( 'a' );
+					modifyDom( 'a', viewDocument.selection.getFirstRange() );
 
 					expect( getModelData( model ) ).to.equal( '<paragraph>a[]</paragraph><blockWidget></blockWidget>' );
 					expect( modelSelection.getAttribute( TYPE_AROUND_SELECTION_ATTRIBUTE ) ).to.be.undefined;
@@ -1146,6 +1191,7 @@ describe( 'WidgetTypeAround', () => {
 
 					fireKeyboardEvent( 'a' );
 					fireInsertTextEvent( 'a' );
+					modifyDom( 'a', viewDocument.selection.getFirstRange() );
 
 					expect( getModelData( model ) ).to.equal( '<blockWidget></blockWidget><paragraph>a[]</paragraph>' );
 					expect( modelSelection.getAttribute( TYPE_AROUND_SELECTION_ATTRIBUTE ) ).to.be.undefined;
@@ -1171,6 +1217,7 @@ describe( 'WidgetTypeAround', () => {
 					fireKeyboardEvent( 'arrowleft' );
 					fireKeyboardEvent( 'a' );
 					fireInsertTextEvent( 'a' );
+					modifyDom( 'a', viewDocument.selection.getFirstRange() );
 
 					expect( getModelData( model ) ).to.equal( '<paragraph>a[]</paragraph><blockWidget></blockWidget>' );
 
@@ -1708,13 +1755,40 @@ describe( 'WidgetTypeAround', () => {
 		}
 
 		function fireInsertTextEvent( text ) {
+			const preventDefaultSpy = sinon.spy();
+
 			viewDocument.fire( 'insertText', {
 				text,
 				selection: editingView.createSelection(
 					editor.editing.mapper.toViewRange( editor.model.document.selection.getFirstRange() )
 				),
-				preventDefault: sinon.spy()
+				preventDefault: preventDefaultSpy,
+				domEvent: {
+					get defaultPrevented() {
+						return preventDefaultSpy.called;
+					}
+				}
 			} );
+		}
+
+		function modifyDom( data, range ) {
+			const domRange = editingView.domConverter.viewRangeToDom( range );
+
+			if ( !domRange.collapsed ) {
+				domRange.deleteContents();
+			}
+
+			if ( domRange.startContainer.nodeType === 3 ) {
+				domRange.startContainer.insertData( domRange.startOffset, data );
+			} else {
+				insertAt( domRange.startContainer, domRange.startOffset, domRange.startContainer.ownerDocument.createTextNode( data ) );
+			}
+
+			window.getSelection().setBaseAndExtent(
+				domRange.startContainer, domRange.startOffset + data.length,
+				domRange.startContainer, domRange.startOffset + data.length
+			);
+			window.document.dispatchEvent( new window.Event( 'selectionchange' ) );
 		}
 
 		function fireKeyboardEvent( key, modifiers ) {

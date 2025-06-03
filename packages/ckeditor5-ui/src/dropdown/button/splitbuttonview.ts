@@ -1,25 +1,24 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module ui/dropdown/button/splitbuttonview
  */
 
-import View from '../../view';
-import ButtonView from '../../button/buttonview';
-import type ViewCollection from '../../viewcollection';
-import type Button from '../../button/button';
-import type DropdownButton from './dropdownbutton';
-
+import { IconDropdownArrow } from '@ckeditor/ckeditor5-icons';
 import {
 	KeystrokeHandler,
 	FocusTracker,
 	type Locale
 } from '@ckeditor/ckeditor5-utils';
-
-import dropdownArrowIcon from '../../../theme/icons/dropdown-arrow.svg';
+import View from '../../view.js';
+import ButtonView from '../../button/buttonview.js';
+import type ViewCollection from '../../viewcollection.js';
+import type Button from '../../button/button.js';
+import type DropdownButton from './dropdownbutton.js';
+import type { FocusableView } from '../../focuscycler.js';
 
 import '../../../theme/components/dropdown/splitbutton.css';
 
@@ -170,7 +169,7 @@ export default class SplitButtonView extends View<HTMLDivElement> implements Dro
 	/**
 	 * @inheritDoc
 	 */
-	constructor( locale?: Locale ) {
+	constructor( locale?: Locale, actionButton?: ButtonView & FocusableView ) {
 		super( locale );
 
 		const bind = this.bindTemplate;
@@ -193,7 +192,7 @@ export default class SplitButtonView extends View<HTMLDivElement> implements Dro
 		this.set( 'withText', false );
 
 		this.children = this.createCollection();
-		this.actionView = this._createActionView();
+		this.actionView = this._createActionView( actionButton );
 		this.arrowView = this._createArrowView();
 		this.keystrokes = new KeystrokeHandler();
 		this.focusTracker = new FocusTracker();
@@ -269,22 +268,24 @@ export default class SplitButtonView extends View<HTMLDivElement> implements Dro
 	 * Creates a {@link module:ui/button/buttonview~ButtonView} instance as {@link #actionView} and binds it with main split button
 	 * attributes.
 	 */
-	private _createActionView() {
-		const actionView = new ButtonView();
+	private _createActionView( actionButton?: ButtonView & FocusableView ) {
+		const actionView = actionButton || new ButtonView();
 
-		actionView.bind(
-			'icon',
-			'isEnabled',
-			'isOn',
-			'isToggleable',
-			'keystroke',
-			'label',
-			'tabindex',
-			'tooltip',
-			'tooltipPosition',
-			'type',
-			'withText'
-		).to( this );
+		if ( !actionButton ) {
+			actionView.bind(
+				'icon',
+				'isEnabled',
+				'isOn',
+				'isToggleable',
+				'keystroke',
+				'label',
+				'tabindex',
+				'tooltip',
+				'tooltipPosition',
+				'type',
+				'withText'
+			).to( this );
+		}
 
 		actionView.extendTemplate( {
 			attributes: {
@@ -305,7 +306,7 @@ export default class SplitButtonView extends View<HTMLDivElement> implements Dro
 		const arrowView = new ButtonView();
 		const bind = arrowView.bindTemplate;
 
-		arrowView.icon = dropdownArrowIcon;
+		arrowView.icon = IconDropdownArrow;
 
 		arrowView.extendTemplate( {
 			attributes: {

@@ -1,30 +1,39 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module table/tableproperties/tablepropertiesediting
  */
 
-import { Plugin } from 'ckeditor5/src/core';
-import { addBackgroundRules, addBorderRules, type ViewElement, type Conversion, type Schema } from 'ckeditor5/src/engine';
+import { Plugin } from 'ckeditor5/src/core.js';
+import {
+	addBackgroundRules,
+	addBorderRules,
+	type ViewElement,
+	type Conversion,
+	type Schema,
+	type UpcastConversionApi,
+	type UpcastConversionData
+} from 'ckeditor5/src/engine.js';
 
-import TableEditing from '../tableediting';
+import TableEditing from '../tableediting.js';
 import {
 	downcastAttributeToStyle,
 	downcastTableAttribute,
+	getDefaultValueAdjusted,
 	upcastBorderStyles,
 	upcastStyleToAttribute
-} from '../converters/tableproperties';
-import TableBackgroundColorCommand from './commands/tablebackgroundcolorcommand';
-import TableBorderColorCommand from './commands/tablebordercolorcommand';
-import TableBorderStyleCommand from './commands/tableborderstylecommand';
-import TableBorderWidthCommand from './commands/tableborderwidthcommand';
-import TableWidthCommand from './commands/tablewidthcommand';
-import TableHeightCommand from './commands/tableheightcommand';
-import TableAlignmentCommand from './commands/tablealignmentcommand';
-import { getNormalizedDefaultProperties } from '../utils/table-properties';
+} from '../converters/tableproperties.js';
+import TableBackgroundColorCommand from './commands/tablebackgroundcolorcommand.js';
+import TableBorderColorCommand from './commands/tablebordercolorcommand.js';
+import TableBorderStyleCommand from './commands/tableborderstylecommand.js';
+import TableBorderWidthCommand from './commands/tableborderwidthcommand.js';
+import TableWidthCommand from './commands/tablewidthcommand.js';
+import TableHeightCommand from './commands/tableheightcommand.js';
+import TableAlignmentCommand from './commands/tablealignmentcommand.js';
+import { getNormalizedDefaultTableProperties } from '../utils/table-properties.js';
 
 const ALIGN_VALUES_REG_EXP = /^(left|center|right)$/;
 const FLOAT_VALUES_REG_EXP = /^(left|none|right)$/;
@@ -50,8 +59,15 @@ export default class TablePropertiesEditing extends Plugin {
 	/**
 	 * @inheritDoc
 	 */
-	public static get pluginName(): 'TablePropertiesEditing' {
-		return 'TablePropertiesEditing';
+	public static get pluginName() {
+		return 'TablePropertiesEditing' as const;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public static override get isOfficialPlugin(): true {
+		return true;
 	}
 
 	/**
@@ -71,9 +87,12 @@ export default class TablePropertiesEditing extends Plugin {
 
 		editor.config.define( 'table.tableProperties.defaultProperties', {} );
 
-		const defaultTableProperties = getNormalizedDefaultProperties( editor.config.get( 'table.tableProperties.defaultProperties' )!, {
-			includeAlignmentProperty: true
-		} );
+		const defaultTableProperties = getNormalizedDefaultTableProperties(
+			editor.config.get( 'table.tableProperties.defaultProperties' )!,
+			{
+				includeAlignmentProperty: true
+			}
+		);
 
 		editor.data.addStyleProcessorRules( addBorderRules );
 		enableBorderProperties( schema, conversion, {
@@ -92,6 +111,8 @@ export default class TablePropertiesEditing extends Plugin {
 		enableTableToFigureProperty( schema, conversion, {
 			modelAttribute: 'tableWidth',
 			styleName: 'width',
+			attributeName: 'width',
+			attributeType: 'length',
 			defaultValue: defaultTableProperties.width
 		} );
 		editor.commands.add( 'tableWidth', new TableWidthCommand( editor, defaultTableProperties.width ) );
@@ -99,6 +120,8 @@ export default class TablePropertiesEditing extends Plugin {
 		enableTableToFigureProperty( schema, conversion, {
 			modelAttribute: 'tableHeight',
 			styleName: 'height',
+			attributeName: 'height',
+			attributeType: 'length',
 			defaultValue: defaultTableProperties.height
 		} );
 		editor.commands.add( 'tableHeight', new TableHeightCommand( editor, defaultTableProperties.height ) );
@@ -107,6 +130,8 @@ export default class TablePropertiesEditing extends Plugin {
 		enableProperty( schema, conversion, {
 			modelAttribute: 'tableBackgroundColor',
 			styleName: 'background-color',
+			attributeName: 'bgcolor',
+			attributeType: 'color',
 			defaultValue: defaultTableProperties.backgroundColor
 		} );
 		editor.commands.add(
@@ -156,15 +181,37 @@ function enableAlignmentProperty( schema: Schema, conversion: Conversion, defaul
 		.attributeToAttribute( {
 			model: {
 				name: 'table',
-				key: 'tableAlignment'
+				key: 'tableAlignment',
+				values: [ 'left', 'center', 'right' ]
 			},
-			view: alignment => ( {
-				key: 'style',
-				value: {
-					// Model: `alignment:center` => CSS: `float:none`.
-					float: alignment === 'center' ? 'none' : alignment
+			view: {
+				left: {
+					key: 'style',
+					value: {
+						float: 'left'
+					}
+				},
+				right: {
+					key: 'style',
+					value: {
+						float: 'right'
+					}
+				},
+				center: ( alignment, conversionApi, data ) => {
+					const value: Record<string, string> = data.item.getAttribute( 'tableType' ) !== 'layout' ? {
+						// Model: `alignment:center` => CSS: `float:none`.
+						float: 'none'
+					} : {
+						'margin-left': 'auto',
+						'margin-right': 'auto'
+					};
+
+					return {
+						key: 'style',
+						value
+					};
 				}
-			} ),
+			},
 			converterPriority: 'high'
 		} );
 
@@ -179,7 +226,13 @@ function enableAlignmentProperty( schema: Schema, conversion: Conversion, defaul
 			},
 			model: {
 				key: 'tableAlignment',
-				value: ( viewElement: ViewElement ) => {
+				value: ( viewElement: ViewElement, conversionApi: UpcastConversionApi, data: UpcastConversionData<ViewElement> ) => {
+					// Ignore other figure elements.
+					if ( viewElement.name == 'figure' && !viewElement.hasClass( 'table' ) ) {
+						return;
+					}
+
+					const localDefaultValue = getDefaultValueAdjusted( defaultValue, '', data );
 					let align = viewElement.getStyle( 'float' );
 
 					// CSS: `float:none` => Model: `alignment:center`.
@@ -187,24 +240,64 @@ function enableAlignmentProperty( schema: Schema, conversion: Conversion, defaul
 						align = 'center';
 					}
 
-					return align === defaultValue ? null : align;
+					if ( align !== localDefaultValue ) {
+						return align;
+					}
+
+					// Consume the style even if not applied to the element so it won't be processed by other converters.
+					conversionApi.consumable.consume( viewElement, { styles: 'float' } );
+				}
+			}
+		} )
+		// Support for the `margin-left:auto; margin-right:auto;` CSS definition for the table alignment.
+		.attributeToAttribute( {
+			view: {
+				name: /^(table|figure)$/,
+				styles: {
+					'margin-left': 'auto',
+					'margin-right': 'auto'
+				}
+			},
+			model: {
+				key: 'tableAlignment',
+				value: ( viewElement: ViewElement, conversionApi: UpcastConversionApi, data: UpcastConversionData<ViewElement> ) => {
+					// Ignore other figure elements.
+					if ( viewElement.name == 'figure' && !viewElement.hasClass( 'table' ) ) {
+						return;
+					}
+
+					const localDefaultValue = getDefaultValueAdjusted( defaultValue, '', data );
+					const align = 'center';
+
+					if ( align !== localDefaultValue ) {
+						return align;
+					}
+
+					// Consume the styles even if not applied to the element so it won't be processed by other converters.
+					conversionApi.consumable.consume( viewElement, { styles: [ 'margin-left', 'margin-right' ] } );
 				}
 			}
 		} )
 		// Support for the `align` attribute as the backward compatibility while pasting from other sources.
 		.attributeToAttribute( {
 			view: {
+				name: 'table',
 				attributes: {
 					align: ALIGN_VALUES_REG_EXP
 				}
 			},
 			model: {
-				name: 'table',
 				key: 'tableAlignment',
-				value: ( viewElement: ViewElement ) => {
+				value: ( viewElement: ViewElement, conversionApi: UpcastConversionApi, data: UpcastConversionData<ViewElement> ) => {
+					const localDefaultValue = getDefaultValueAdjusted( defaultValue, '', data );
 					const align = viewElement.getAttribute( 'align' );
 
-					return align === defaultValue ? null : align;
+					if ( align !== localDefaultValue ) {
+						return align;
+					}
+
+					// Consume the attribute even if not applied to the element so it won't be processed by other converters.
+					conversionApi.consumable.consume( viewElement, { attributes: 'align' } );
 				}
 			}
 		} );
@@ -221,6 +314,8 @@ function enableProperty(
 	options: {
 		modelAttribute: string;
 		styleName: string;
+		attributeName?: string;
+		attributeType?: 'length' | 'color';
 		defaultValue: string;
 	}
 ) {
@@ -242,6 +337,8 @@ function enableTableToFigureProperty(
 	options: {
 		modelAttribute: string;
 		styleName: string;
+		attributeName?: string;
+		attributeType?: 'length' | 'color';
 		defaultValue: string;
 	}
 ) {
@@ -251,11 +348,6 @@ function enableTableToFigureProperty(
 		allowAttributes: [ modelAttribute ]
 	} );
 
-	upcastStyleToAttribute( conversion, {
-		viewElement: /^(table|figure)$/,
-		shouldUpcast: ( element: ViewElement ) => !( element.name == 'table' && element.parent!.name == 'figure' ),
-		...options
-	} );
-
+	upcastStyleToAttribute( conversion, { viewElement: /^(table|figure)$/, ...options } );
 	downcastAttributeToStyle( conversion, { modelElement: 'table', ...options } );
 }

@@ -1,17 +1,20 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* global window */
+import ModelTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/modeltesteditor.js';
+import ViewDocument from '@ckeditor/ckeditor5-engine/src/view/document.js';
+import ViewDowncastWriter from '@ckeditor/ckeditor5-engine/src/view/downcastwriter.js';
+import AttributeElement from '@ckeditor/ckeditor5-engine/src/view/attributeelement.js';
+import ContainerElement from '@ckeditor/ckeditor5-engine/src/view/containerelement.js';
+import Text from '@ckeditor/ckeditor5-engine/src/view/text.js';
+import Schema from '@ckeditor/ckeditor5-engine/src/model/schema.js';
+import ModelElement from '@ckeditor/ckeditor5-engine/src/model/element.js';
+import Paragraph from '@ckeditor/ckeditor5-paragraph/src/paragraph.js';
+import BoldEditing from '@ckeditor/ckeditor5-basic-styles/src/bold/boldediting.js';
+import { setData as setModelData } from '@ckeditor/ckeditor5-engine/src/dev-utils/model.js';
 
-import ViewDocument from '@ckeditor/ckeditor5-engine/src/view/document';
-import ViewDowncastWriter from '@ckeditor/ckeditor5-engine/src/view/downcastwriter';
-import AttributeElement from '@ckeditor/ckeditor5-engine/src/view/attributeelement';
-import ContainerElement from '@ckeditor/ckeditor5-engine/src/view/containerelement';
-import Text from '@ckeditor/ckeditor5-engine/src/view/text';
-import Schema from '@ckeditor/ckeditor5-engine/src/model/schema';
-import ModelElement from '@ckeditor/ckeditor5-engine/src/model/element';
 import {
 	createLinkElement,
 	isLinkElement,
@@ -20,8 +23,9 @@ import {
 	isLinkableElement,
 	isEmail,
 	addLinkProtocolIfApplicable,
-	openLink
-} from '../src/utils';
+	openLink,
+	extractTextFromLinkRange
+} from '../src/utils.js';
 
 describe( 'utils', () => {
 	describe( 'isLinkElement()', () => {
@@ -88,6 +92,27 @@ describe( 'utils', () => {
 			expect( ensureSafeUrl( url ) ).to.equal( url );
 		} );
 
+		it( 'returns the same absolute tel URL (if allowed in config)', () => {
+			const url = 'tel:+48123456789';
+			const allowedCustomProtocols = [ 'tel' ];
+
+			expect( ensureSafeUrl( url, allowedCustomProtocols ) ).to.equal( url );
+		} );
+
+		it( 'returns the same absolute sms URL (if allowed in config)', () => {
+			const url = 'sms:+48987654321';
+			const allowedCustomProtocols = [ 'sms' ];
+
+			expect( ensureSafeUrl( url, allowedCustomProtocols ) ).to.equal( url );
+		} );
+
+		it( 'returns the same absolute sftp URL (if allowed in config)', () => {
+			const url = 'sftp://xx.yy/zz';
+			const allowedCustomProtocols = [ 'sftp' ];
+
+			expect( ensureSafeUrl( url, allowedCustomProtocols ) ).to.equal( url );
+		} );
+
 		it( 'returns the same relative URL (starting with a dot)', () => {
 			const url = './xx/yyy';
 
@@ -118,6 +143,12 @@ describe( 'utils', () => {
 			expect( ensureSafeUrl( url ) ).to.equal( url );
 		} );
 
+		it( 'returns the same relative URL (starting with hash)', () => {
+			const url = '#thatsection1';
+
+			expect( ensureSafeUrl( url ) ).to.equal( url );
+		} );
+
 		it( 'returns the same URL even if it contains whitespaces', () => {
 			const url = '  ./xx/ yyy\t';
 
@@ -126,6 +157,12 @@ describe( 'utils', () => {
 
 		it( 'returns the same URL even if it contains non ASCII characters', () => {
 			const url = 'https://kłącze.yy/źdźbło';
+
+			expect( ensureSafeUrl( url ) ).to.equal( url );
+		} );
+
+		it( 'returns the same URL even if it starts with an IP address', () => {
+			const url = '192.178.10.123/subpath';
 
 			expect( ensureSafeUrl( url ) ).to.equal( url );
 		} );
@@ -145,6 +182,13 @@ describe( 'utils', () => {
 			const url = 'foo:alert(1)';
 
 			expect( ensureSafeUrl( url ) ).to.equal( '#' );
+		} );
+
+		it( 'returns the same URL when the URL contains a custom protocol defined in the allowedProtocols parameter', () => {
+			const url = 'foo:customurl.resource';
+			const allowedCustomProtocols = [ 'https', 'http', 'foo' ];
+
+			expect( ensureSafeUrl( url, allowedCustomProtocols ) ).to.equal( url );
 		} );
 
 		it( 'returns safe URL when a malicious URL contains spaces', () => {
@@ -328,6 +372,76 @@ describe( 'utils', () => {
 			expect( stub.calledOnce ).to.be.true;
 			expect( stub.calledOn( window ) ).to.be.true;
 			expect( stub.calledWith( url, '_blank', 'noopener' ) ).to.be.true;
+		} );
+	} );
+
+	describe( 'extractTextFromLinkRange()', () => {
+		let editor;
+
+		beforeEach( async () => {
+			function InlineWidget( editor ) {
+				editor.model.schema.register( 'inlineWidget', { inheritAllFrom: '$inlineObject' } );
+				editor.conversion.elementToElement( {
+					view: { name: 'span', class: 'foo' },
+					model: 'inlineWidget'
+				} );
+			}
+
+			editor = await ModelTestEditor.create( {
+				plugins: [ Paragraph, InlineWidget, BoldEditing ]
+			} );
+		} );
+
+		afterEach( async () => {
+			await editor.destroy();
+		} );
+
+		it( 'should extract text from range', () => {
+			setModelData( editor.model, '<paragraph>foo[bar]baz</paragraph>' );
+
+			const text = extractTextFromLinkRange( editor.model.document.selection.getFirstRange() );
+
+			expect( text ).to.equal( 'bar' );
+		} );
+
+		it( 'should extract text from range even when split into multiple text nodes with different style', () => {
+			setModelData( editor.model,
+				'<paragraph>' +
+					'abc[fo' +
+					'<$text bold="true">ob</$text>' +
+					'ar]def' +
+				'</paragraph>'
+			);
+
+			expect( editor.model.document.getRoot().getChild( 0 ).childCount ).to.equal( 3 );
+
+			const text = extractTextFromLinkRange( editor.model.document.selection.getFirstRange() );
+
+			expect( text ).to.equal( 'foobar' );
+		} );
+
+		it( 'should return undefined if range includes an inline object', () => {
+			setModelData( editor.model, '<paragraph>foo[ba<inlineWidget></inlineWidget>r]baz</paragraph>' );
+
+			const text = extractTextFromLinkRange( editor.model.document.selection.getFirstRange() );
+
+			expect( text ).to.be.undefined;
+		} );
+
+		it( 'should return undefined if range is on an inline object', () => {
+			setModelData( editor.model, '<paragraph>fooba[<inlineWidget></inlineWidget>]rbaz</paragraph>' );
+
+			const text = extractTextFromLinkRange( editor.model.document.selection.getFirstRange() );
+
+			expect( text ).to.be.undefined;
+		} );
+
+		it( 'should return undefined if range is spanning multiple blocks', () => {
+			setModelData( editor.model, '<paragraph>f[oo</paragraph><paragraph>ba]z</paragraph>' );
+
+			const text = extractTextFromLinkRange( editor.model.document.selection.getFirstRange() );
+
+			expect( text ).to.be.undefined;
 		} );
 	} );
 } );

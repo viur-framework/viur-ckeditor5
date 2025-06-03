@@ -1,14 +1,14 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
 * @module easy-image/cloudservicesuploadadapter
 */
 
-import { Plugin } from 'ckeditor5/src/core';
-import { FileRepository, type FileLoader, type UploadAdapter } from 'ckeditor5/src/upload';
+import { Plugin } from 'ckeditor5/src/core.js';
+import { FileRepository, type FileLoader, type UploadAdapter } from 'ckeditor5/src/upload.js';
 import type { CloudServicesCore, CloudServices, UploadGateway, FileUploader } from '@ckeditor/ckeditor5-cloud-services';
 
 /**
@@ -25,8 +25,15 @@ export default class CloudServicesUploadAdapter extends Plugin {
 	/**
 	 * @inheritDoc
 	 */
-	public static get pluginName(): 'CloudServicesUploadAdapter' {
-		return 'CloudServicesUploadAdapter';
+	public static get pluginName() {
+		return 'CloudServicesUploadAdapter' as const;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public static override get isOfficialPlugin(): true {
+		return true;
 	}
 
 	/**

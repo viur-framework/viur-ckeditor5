@@ -1,19 +1,17 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* globals console, window, document, CKEditorInspector */
+import BalloonEditor from '@ckeditor/ckeditor5-editor-balloon/src/ballooneditor.js';
+import ClassicEditor from '@ckeditor/ckeditor5-editor-classic/src/classiceditor.js';
+import DecoupledEditor from '@ckeditor/ckeditor5-editor-decoupled/src/decouplededitor.js';
+import InlineEditor from '@ckeditor/ckeditor5-editor-inline/src/inlineeditor.js';
 
-import BalloonEditor from '@ckeditor/ckeditor5-editor-balloon/src/ballooneditor';
-import ClassicEditor from '@ckeditor/ckeditor5-editor-classic/src/classiceditor';
-import DecoupledEditor from '@ckeditor/ckeditor5-editor-decoupled/src/decouplededitor';
-import InlineEditor from '@ckeditor/ckeditor5-editor-inline/src/inlineeditor';
+import BlockToolbar from '@ckeditor/ckeditor5-ui/src/toolbar/block/blocktoolbar.js';
+import SourceEditing from '@ckeditor/ckeditor5-source-editing/src/sourceediting.js';
 
-import BlockToolbar from '@ckeditor/ckeditor5-ui/src/toolbar/block/blocktoolbar';
-import SourceEditing from '@ckeditor/ckeditor5-source-editing/src/sourceediting';
-
-import ArticlePluginSet from '@ckeditor/ckeditor5-core/tests/_utils/articlepluginset';
+import ArticlePluginSet from '@ckeditor/ckeditor5-core/tests/_utils/articlepluginset.js';
 
 window.editors = {};
 

@@ -1,16 +1,16 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module easy-image/easyimage
  */
 
-import { Plugin } from 'ckeditor5/src/core';
-import { logWarning } from 'ckeditor5/src/utils';
+import { Plugin } from 'ckeditor5/src/core.js';
+import { logWarning } from 'ckeditor5/src/utils.js';
 
-import CloudServicesUploadAdapter from './cloudservicesuploadadapter';
+import CloudServicesUploadAdapter from './cloudservicesuploadadapter.js';
 
 /**
  * The Easy Image feature, which makes the image upload in CKEditor 5 possible with virtually zero
@@ -26,7 +26,7 @@ import CloudServicesUploadAdapter from './cloudservicesuploadadapter';
  * * {@link module:image/image~Image},
  * * {@link module:image/imageupload~ImageUpload},
  *
- * See the {@glink features/images/image-upload/easy-image "Easy Image integration" guide} to learn how to configure
+ * See the [Easy Image Quick Start guide](https://ckeditor.com/docs/cs/latest/guides/easy-image/quick-start.html) to learn how to configure
  * and use this feature.
  *
  * Check out the {@glink features/images/image-upload/image-upload comprehensive "Image upload" guide} to learn about
@@ -40,8 +40,15 @@ export default class EasyImage extends Plugin {
 	/**
 	 * @inheritDoc
 	 */
-	public static get pluginName(): 'EasyImage' {
-		return 'EasyImage';
+	public static get pluginName() {
+		return 'EasyImage' as const;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public static override get isOfficialPlugin(): true {
+		return true;
 	}
 
 	/**
@@ -68,7 +75,7 @@ export default class EasyImage extends Plugin {
 			 * Please make sure your editor configuration is correct.
 			 *
 			 * @error easy-image-image-feature-missing
-			 * @param {module:core/editor/editor~Editor} editor
+			 * @param {module:core/editor/editor~Editor} editor The editor instance.
 			 */
 			logWarning( 'easy-image-image-feature-missing', editor );
 		}

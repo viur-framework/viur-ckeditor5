@@ -1,21 +1,21 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-import EmitterMixin from '@ckeditor/ckeditor5-utils/src/emittermixin';
-import Model from '../../src/model/model';
-import ModelText from '../../src/model/text';
-import ModelElement from '../../src/model/element';
-import ModelRange from '../../src/model/range';
-import ModelPosition from '../../src/model/position';
-import ModelSelection from '../../src/model/selection';
-import ModelDocumentFragment from '../../src/model/documentfragment';
-import Batch from '../../src/model/batch';
-import NoOperation from '../../src/model/operation/nooperation';
-import { getData, setData, stringify } from '../../src/dev-utils/model';
-import { expectToThrowCKEditorError } from '@ckeditor/ckeditor5-utils/tests/_utils/utils';
-import CKEditorError from '@ckeditor/ckeditor5-utils/src/ckeditorerror';
+import EmitterMixin from '@ckeditor/ckeditor5-utils/src/emittermixin.js';
+import Model from '../../src/model/model.js';
+import ModelText from '../../src/model/text.js';
+import ModelElement from '../../src/model/element.js';
+import ModelRange from '../../src/model/range.js';
+import ModelPosition from '../../src/model/position.js';
+import ModelSelection from '../../src/model/selection.js';
+import ModelDocumentFragment from '../../src/model/documentfragment.js';
+import Batch from '../../src/model/batch.js';
+import NoOperation from '../../src/model/operation/nooperation.js';
+import { getData, setData, stringify } from '../../src/dev-utils/model.js';
+import { expectToThrowCKEditorError } from '@ckeditor/ckeditor5-utils/tests/_utils/utils.js';
+import CKEditorError from '@ckeditor/ckeditor5-utils/src/ckeditorerror.js';
 
 describe( 'Model', () => {
 	let model, schema, changes;
@@ -96,15 +96,14 @@ describe( 'Model', () => {
 			expect( schema.checkChild( [ '$documentFragment' ], '$block' ) ).to.be.true;
 		} );
 
-		it( 'registers $marker to the schema', () => {
-			model.document.createRoot( '$anywhere', 'anywhere' );
-			schema.register( 'anything' );
+		it( 'registers $marker to the schema and allows it in all registered elements', () => {
+			schema.register( '$otherRoot' );
 
 			expect( schema.isRegistered( '$marker' ) ).to.be.true;
 			expect( schema.checkChild( [ '$root' ], '$marker' ) ).to.be.true;
 			expect( schema.checkChild( [ '$block' ], '$marker' ) ).to.be.true;
-			expect( schema.checkChild( [ '$anywhere' ], '$marker' ) ).to.be.true;
-			expect( schema.checkChild( [ 'anything' ], '$marker' ) ).to.be.true;
+			expect( schema.checkChild( [ '$otherRoot' ], '$marker' ) ).to.be.true;
+			expect( schema.checkChild( [ 'foo' ], '$marker' ) ).to.be.false;
 		} );
 	} );
 
@@ -418,7 +417,6 @@ describe( 'Model', () => {
 		it( 'should throw the original CKEditorError error if it was thrown inside the `change()` block', () => {
 			expectToThrowCKEditorError( () => {
 				model.change( () => {
-					// eslint-disable-next-line ckeditor5-rules/ckeditor-error-message
 					throw new CKEditorError( 'foo', null, { foo: 1 } );
 				} );
 			}, /foo/, null, { foo: 1 } );
@@ -435,7 +433,6 @@ describe( 'Model', () => {
 		} );
 
 		it( 'should throw the original CKEditorError error if it was thrown inside the `enqueueChange()` block', () => {
-			// eslint-disable-next-line ckeditor5-rules/ckeditor-error-message
 			const err = new CKEditorError( 'foo', null, { foo: 1 } );
 
 			expectToThrowCKEditorError( () => {
@@ -1092,10 +1089,10 @@ describe( 'Model', () => {
 
 			setData( model, '<paragraph>fo[ob]ar</paragraph>' );
 
-			model.change( writer => {
-				model.getSelectedContent( model.document.selection );
-				expect( writer.batch.operations ).to.length( 1 );
-			} );
+			const version = model.document.version;
+			model.getSelectedContent( model.document.selection );
+
+			expect( model.document.version ).to.equal( version );
 		} );
 	} );
 
@@ -1471,7 +1468,7 @@ describe( 'Model', () => {
 		} );
 
 		it( 'should stop listening', () => {
-			const emitter = Object.create( EmitterMixin );
+			const emitter = new ( EmitterMixin() )();
 			const spy = sinon.spy();
 
 			model.listenTo( emitter, 'event', spy );

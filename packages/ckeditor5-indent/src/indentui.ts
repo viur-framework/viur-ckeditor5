@@ -1,17 +1,15 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module indent/indentui
  */
 
-import { ButtonView } from 'ckeditor5/src/ui';
-import { Plugin } from 'ckeditor5/src/core';
-
-import indentIcon from '../theme/icons/indent.svg';
-import outdentIcon from '../theme/icons/outdent.svg';
+import { ButtonView, MenuBarMenuListItemButtonView } from 'ckeditor5/src/ui.js';
+import { Plugin } from 'ckeditor5/src/core.js';
+import { IconIndent, IconOutdent } from 'ckeditor5/src/icons.js';
 
 /**
  * The indent UI feature.
@@ -25,8 +23,15 @@ export default class IndentUI extends Plugin {
 	/**
 	 * @inheritDoc
 	 */
-	public static get pluginName(): 'IndentUI' {
-		return 'IndentUI';
+	public static get pluginName() {
+		return 'IndentUI' as const;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public static override get isOfficialPlugin(): true {
+		return true;
 	}
 
 	/**
@@ -37,37 +42,60 @@ export default class IndentUI extends Plugin {
 		const locale = editor.locale;
 		const t = editor.t;
 
-		const localizedIndentIcon = locale.uiLanguageDirection == 'ltr' ? indentIcon : outdentIcon;
-		const localizedOutdentIcon = locale.uiLanguageDirection == 'ltr' ? outdentIcon : indentIcon;
+		const localizedIndentIcon = locale.uiLanguageDirection == 'ltr' ? IconIndent : IconOutdent;
+		const localizedOutdentIcon = locale.uiLanguageDirection == 'ltr' ? IconOutdent : IconIndent;
 
 		this._defineButton( 'indent', t( 'Increase indent' ), localizedIndentIcon );
 		this._defineButton( 'outdent', t( 'Decrease indent' ), localizedOutdentIcon );
 	}
 
 	/**
-	 * Defines a UI button.
+	 * Defines UI buttons for both toolbar and menu bar.
 	 */
 	private _defineButton( commandName: 'indent' | 'outdent', label: string, icon: string ): void {
 		const editor = this.editor;
 
-		editor.ui.componentFactory.add( commandName, locale => {
-			const command = editor.commands.get( commandName )!;
-			const view = new ButtonView( locale );
+		editor.ui.componentFactory.add( commandName, () => {
+			const buttonView = this._createButton( ButtonView, commandName, label, icon );
 
-			view.set( {
-				label,
-				icon,
+			buttonView.set( {
 				tooltip: true
 			} );
 
-			view.bind( 'isEnabled' ).to( command, 'isEnabled' );
-
-			this.listenTo( view, 'execute', () => {
-				editor.execute( commandName );
-				editor.editing.view.focus();
-			} );
-
-			return view;
+			return buttonView;
 		} );
+
+		editor.ui.componentFactory.add( 'menuBar:' + commandName, () => {
+			return this._createButton( MenuBarMenuListItemButtonView, commandName, label, icon );
+		} );
+	}
+
+	/**
+	 * Creates a button to use either in toolbar or in menu bar.
+	 */
+	private _createButton<T extends typeof ButtonView | typeof MenuBarMenuListItemButtonView>(
+		ButtonClass: T,
+		commandName: string,
+		label: string,
+		icon: string
+	): InstanceType<T> {
+		const editor = this.editor;
+		const command = editor.commands.get( commandName )!;
+		const view = new ButtonClass( editor.locale ) as InstanceType<T>;
+
+		view.set( {
+			label,
+			icon
+		} );
+
+		view.bind( 'isEnabled' ).to( command, 'isEnabled' );
+
+		// Execute the command.
+		this.listenTo( view, 'execute', () => {
+			editor.execute( commandName );
+			editor.editing.view.focus();
+		} );
+
+		return view;
 	}
 }

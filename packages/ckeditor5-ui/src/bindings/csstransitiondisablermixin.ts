@@ -1,6 +1,6 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
@@ -9,7 +9,7 @@
 
 import type { Constructor, Mixed } from '@ckeditor/ckeditor5-utils';
 
-import type View from '../view';
+import type View from '../view.js';
 
 /**
  * A mixin that brings the possibility to temporarily disable CSS transitions using
@@ -71,7 +71,9 @@ export default function CssTransitionDisablerMixin<Base extends Constructor<View
 	return Mixin as any;
 }
 
-export type ViewWithCssTransitionDisabler = View & {
-	disableCssTransitions(): void;
-	enableCssTransitions(): void;
+export declare class ViewWithCssTransitionDisabler extends View {
+	public disableCssTransitions(): void;
+	public enableCssTransitions(): void;
+
+	protected initializeCssTransitionDisablerMixin(): void;
 };

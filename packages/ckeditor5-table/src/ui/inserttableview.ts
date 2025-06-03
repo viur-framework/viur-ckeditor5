@@ -1,15 +1,15 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module table/ui/inserttableview
  */
 
-import { View, ButtonView, addKeyboardHandlingForGrid, type ViewCollection } from 'ckeditor5/src/ui';
+import { View, ButtonView, addKeyboardHandlingForGrid, type ViewCollection } from 'ckeditor5/src/ui.js';
 
-import { KeystrokeHandler, FocusTracker, type Locale } from 'ckeditor5/src/utils';
+import { KeystrokeHandler, FocusTracker, type Locale } from 'ckeditor5/src/utils.js';
 
 import './../../theme/inserttable.css';
 
@@ -157,6 +157,16 @@ export default class InsertTableView extends View {
 		}
 
 		this.keystrokes.listenTo( this.element! );
+	}
+
+	/**
+	 * Resets the rows and columns selection.
+	 */
+	public reset(): void {
+		this.set( {
+			rows: 1,
+			columns: 1
+		} );
 	}
 
 	/**

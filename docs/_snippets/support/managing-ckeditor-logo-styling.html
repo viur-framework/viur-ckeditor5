@@ -1,5 +1,5 @@
 <div class="custom-theme-editor-wrapper">
-	<div id="snippet-managing-ckeditor-logo-styling">
+	<div class="ck ck-content" id="snippet-managing-ckeditor-logo-styling">
 		<h2>Taj Mahal: A breathtaking ode to love</h2>
 
 		<figure class="image image-style-side" height="400">
@@ -70,6 +70,11 @@
 		--ck-color-dropdown-panel-background: var(--ck-custom-background);
 		--ck-color-dropdown-panel-border: var(--ck-custom-foreground);
 
+		/* -- Overrides the default .ck-dialog class colors. ----------------------------------- */
+
+		--ck-color-dialog-background: var(--ck-custom-background);
+		--ck-color-dialog-form-header-border: var(--ck-custom-border);
+
 		/* -- Overrides the default .ck-splitbutton class colors. ----------------------------------- */
 
 		--ck-color-split-button-hover-background: var(--ck-color-button-default-hover-background);
@@ -126,7 +131,7 @@
 		--ck-color-link-default: hsl(190, 100%, 75%);
 	}
 
-	/* PoweredBy logo customization. */
+	/* "Powered by CKEditor" logo customization. */
 	.custom-theme-editor-wrapper .ck.ck-balloon-panel.ck-powered-by-balloon {
 		--ck-powered-by-background: var(--ck-custom-background);
 		--ck-powered-by-border-color: var(--ck-custom-background);

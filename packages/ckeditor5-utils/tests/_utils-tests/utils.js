@@ -1,12 +1,12 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils';
-import ObservableMixin from '../../src/observablemixin';
-import EmitterMixin from '../../src/emittermixin';
-import { createObserver } from '../_utils/utils';
+import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils.js';
+import ObservableMixin from '../../src/observablemixin.js';
+import EmitterMixin from '../../src/emittermixin.js';
+import { createObserver } from '../_utils/utils.js';
 
 describe( 'utils - testUtils', () => {
 	const Observable = ObservableMixin();
@@ -38,8 +38,6 @@ describe( 'utils - testUtils', () => {
 		} );
 
 		describe( 'Observer', () => {
-			/* global console:false  */
-
 			it( 'logs changes in the observable', () => {
 				const spy = sinon.stub( console, 'log' );
 

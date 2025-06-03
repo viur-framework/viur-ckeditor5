@@ -1,15 +1,13 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* globals document, window, console */
+import ClassicEditor from '@ckeditor/ckeditor5-editor-classic/src/classiceditor.js';
 
-import ClassicEditor from '@ckeditor/ckeditor5-editor-classic/src/classiceditor';
-
-import SourceEditing from '@ckeditor/ckeditor5-source-editing/src/sourceediting';
-import ArticlePluginSet from '@ckeditor/ckeditor5-core/tests/_utils/articlepluginset';
-import Autosave from '../../src/autosave';
+import SourceEditing from '@ckeditor/ckeditor5-source-editing/src/sourceediting.js';
+import ArticlePluginSet from '@ckeditor/ckeditor5-core/tests/_utils/articlepluginset.js';
+import Autosave from '../../src/autosave.js';
 
 ClassicEditor
 	.create( document.querySelector( '#editor' ), {
@@ -18,7 +16,7 @@ ClassicEditor
 			'heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote', 'undo', 'redo', '|', 'sourceEditing'
 		],
 		image: {
-			toolbar: [ 'imageStyle:block', 'imageStyle:side', '|', 'imageTextAlternative' ]
+			toolbar: [ 'imageStyle:block', 'imageStyle:wrapText', '|', 'imageTextAlternative' ]
 		},
 		autosave: {
 			save( editor ) {

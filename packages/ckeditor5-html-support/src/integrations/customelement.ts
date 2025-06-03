@@ -1,20 +1,18 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module html-support/integrations/customelement
  */
 
-/* globals document */
+import { Plugin } from 'ckeditor5/src/core.js';
+import { UpcastWriter, type ViewDocumentFragment, type ViewNode } from 'ckeditor5/src/engine.js';
 
-import { Plugin } from 'ckeditor5/src/core';
-import { UpcastWriter, type ViewDocumentFragment, type ViewNode } from 'ckeditor5/src/engine';
-
-import DataSchema from '../dataschema';
-import DataFilter, { type DataFilterRegisterEvent } from '../datafilter';
-import { type GHSViewAttributes, setViewAttributes } from '../utils';
+import DataSchema from '../dataschema.js';
+import DataFilter, { type DataFilterRegisterEvent } from '../datafilter.js';
+import { type GHSViewAttributes, setViewAttributes } from '../utils.js';
 
 /**
  * Provides the General HTML Support for custom elements (not registered in the {@link module:html-support/dataschema~DataSchema}).
@@ -30,8 +28,15 @@ export default class CustomElementSupport extends Plugin {
 	/**
 	 * @inheritDoc
 	 */
-	public static get pluginName(): 'CustomElementSupport' {
-		return 'CustomElementSupport';
+	public static get pluginName() {
+		return 'CustomElementSupport' as const;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public static override get isOfficialPlugin(): true {
+		return true;
 	}
 
 	/**
@@ -52,9 +57,13 @@ export default class CustomElementSupport extends Plugin {
 
 			schema.register( definition.model, definition.modelSchema );
 			schema.extend( definition.model, {
-				allowAttributes: [ 'htmlElementName', 'htmlAttributes', 'htmlContent' ],
+				allowAttributes: [ 'htmlElementName', 'htmlCustomElementAttributes', 'htmlContent' ],
 				isContent: true
 			} );
+
+			// For the `<template>` element we use only raw-content because DOM API exposes its content
+			// only as a document fragment in the `content` property (or innerHTML).
+			editor.data.htmlProcessor.domConverter.registerRawContentMatcher( { name: 'template' } );
 
 			// Being executed on the low priority, it will catch all elements that were not caught by other converters.
 			conversion.for( 'upcast' ).elementToElement( {
@@ -92,13 +101,30 @@ export default class CustomElementSupport extends Plugin {
 					const htmlAttributes = dataFilter.processViewAttributes( viewElement, conversionApi );
 
 					if ( htmlAttributes ) {
-						conversionApi.writer.setAttribute( 'htmlAttributes', htmlAttributes, modelElement );
+						conversionApi.writer.setAttribute( 'htmlCustomElementAttributes', htmlAttributes, modelElement );
 					}
 
-					// Store the whole element in the attribute so that DomConverter will be able to use the pre like element context.
-					const viewWriter = new UpcastWriter( viewElement.document );
-					const documentFragment = viewWriter.createDocumentFragment( viewElement );
-					const htmlContent = editor.data.processor.toData( documentFragment );
+					let htmlContent;
+
+					// For the `<template>` element we use only raw-content because DOM API exposes its content
+					// only as a document fragment in the `content` property.
+					if ( viewElement.is( 'element', 'template' ) && viewElement.getCustomProperty( '$rawContent' ) ) {
+						htmlContent = viewElement.getCustomProperty( '$rawContent' );
+					} else {
+						// Store the whole element in the attribute so that DomConverter will be able to use the pre like element context.
+						const viewWriter = new UpcastWriter( viewElement.document );
+						const documentFragment = viewWriter.createDocumentFragment( viewElement );
+						const domFragment = editor.data.htmlProcessor.domConverter.viewToDom( documentFragment );
+						const domElement = domFragment.firstChild!;
+
+						while ( domElement.firstChild ) {
+							domFragment.appendChild( domElement.firstChild );
+						}
+
+						domElement.remove();
+
+						htmlContent = editor.data.htmlProcessor.htmlWriter.getHtml( domFragment );
+					}
 
 					conversionApi.writer.setAttribute( 'htmlContent', htmlContent, modelElement );
 
@@ -117,14 +143,18 @@ export default class CustomElementSupport extends Plugin {
 			conversion.for( 'editingDowncast' ).elementToElement( {
 				model: {
 					name: definition.model,
-					attributes: [ 'htmlElementName', 'htmlAttributes', 'htmlContent' ]
+					attributes: [ 'htmlElementName', 'htmlCustomElementAttributes', 'htmlContent' ]
 				},
 				view: ( modelElement, { writer } ) => {
 					const viewName = modelElement.getAttribute( 'htmlElementName' ) as string;
 					const viewElement = writer.createRawElement( viewName );
 
-					if ( modelElement.hasAttribute( 'htmlAttributes' ) ) {
-						setViewAttributes( writer, modelElement.getAttribute( 'htmlAttributes' ) as GHSViewAttributes, viewElement );
+					if ( modelElement.hasAttribute( 'htmlCustomElementAttributes' ) ) {
+						setViewAttributes(
+							writer,
+							modelElement.getAttribute( 'htmlCustomElementAttributes' ) as GHSViewAttributes,
+							viewElement
+						);
 					}
 
 					return viewElement;
@@ -134,7 +164,7 @@ export default class CustomElementSupport extends Plugin {
 			conversion.for( 'dataDowncast' ).elementToElement( {
 				model: {
 					name: definition.model,
-					attributes: [ 'htmlElementName', 'htmlAttributes', 'htmlContent' ]
+					attributes: [ 'htmlElementName', 'htmlCustomElementAttributes', 'htmlContent' ]
 				},
 				view: ( modelElement, { writer } ) => {
 					const viewName = modelElement.getAttribute( 'htmlElementName' ) as string;
@@ -142,20 +172,14 @@ export default class CustomElementSupport extends Plugin {
 
 					const viewElement = writer.createRawElement( viewName, null, ( domElement, domConverter ) => {
 						domConverter.setContentOf( domElement, htmlContent );
-
-						// Unwrap the custom element content (it was stored in the attribute as the whole custom element).
-						// See the upcast conversion for the "htmlContent" attribute to learn more.
-						const customElement = domElement.firstChild!;
-
-						customElement.remove();
-
-						while ( customElement.firstChild ) {
-							domElement.appendChild( customElement.firstChild );
-						}
 					} );
 
-					if ( modelElement.hasAttribute( 'htmlAttributes' ) ) {
-						setViewAttributes( writer, modelElement.getAttribute( 'htmlAttributes' ) as GHSViewAttributes, viewElement );
+					if ( modelElement.hasAttribute( 'htmlCustomElementAttributes' ) ) {
+						setViewAttributes(
+							writer,
+							modelElement.getAttribute( 'htmlCustomElementAttributes' ) as GHSViewAttributes,
+							viewElement
+						);
 					}
 
 					return viewElement;
@@ -171,7 +195,7 @@ export default class CustomElementSupport extends Plugin {
 function isValidElementName( name: string ): boolean {
 	try {
 		document.createElement( name );
-	} catch ( error ) {
+	} catch {
 		return false;
 	}
 

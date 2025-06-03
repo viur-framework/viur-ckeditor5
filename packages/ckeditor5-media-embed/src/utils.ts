@@ -1,6 +1,6 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
@@ -17,9 +17,9 @@ import type {
 	ViewDocumentSelection,
 	ViewElement,
 	DocumentSelection
-} from 'ckeditor5/src/engine';
-import { isWidget, toWidget } from 'ckeditor5/src/widget';
-import type MediaRegistry from './mediaregistry';
+} from 'ckeditor5/src/engine.js';
+import { isWidget, toWidget } from 'ckeditor5/src/widget.js';
+import type MediaRegistry from './mediaregistry.js';
 
 /**
  * Converts a given {@link module:engine/view/element~Element} to a media embed widget:

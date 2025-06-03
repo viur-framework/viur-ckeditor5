@@ -1,11 +1,15 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* globals window, document, console, ClassicEditor, SpecialCharactersEssentials */
-
-import { CS_CONFIG } from '@ckeditor/ckeditor5-cloud-services/tests/_utils/cloud-services-config';
+import { SpecialCharactersEssentials } from 'ckeditor5';
+import {
+	CS_CONFIG,
+	TOKEN_URL,
+	getViewportTopOffsetConfig
+} from '@snippets/index.js';
+import { SpecialCharactersEditor } from './special-characters-source.js';
 
 function SpecialCharactersExtended( editor ) {
 	editor.plugins.get( 'SpecialCharacters' ).addItems( 'Mathematical', [
@@ -15,21 +19,26 @@ function SpecialCharactersExtended( editor ) {
 	] );
 }
 
-ClassicEditor
+SpecialCharactersEditor
 	.create( document.querySelector( '#snippet-special-characters-extended-category' ), {
 		extraPlugins: [ SpecialCharactersEssentials, SpecialCharactersExtended ],
 		toolbar: {
 			items: [
 				'undo', 'redo', '|', 'heading',
 				'|', 'bold', 'italic',
-				'|', 'link', 'uploadImage', 'insertTable', 'mediaEmbed', 'specialCharacters',
+				'|', 'link', 'insertImage', 'insertTable', 'mediaEmbed', 'specialCharacters',
 				'|', 'bulletedList', 'numberedList', 'outdent', 'indent'
 			]
 		},
 		ui: {
 			viewportOffset: {
-				top: window.getViewportTopOffsetConfig()
+				top: getViewportTopOffsetConfig()
 			}
+		},
+		ckbox: {
+			tokenUrl: TOKEN_URL,
+			allowExternalImagesEditing: [ /^data:/, 'origin', /ckbox/ ],
+			forceDemoLabel: true
 		},
 		image: {
 			toolbar: [
@@ -38,7 +47,9 @@ ClassicEditor
 				'imageStyle:breakText',
 				'|',
 				'toggleImageCaption',
-				'imageTextAlternative'
+				'imageTextAlternative',
+				'|',
+				'ckboxImageEdit'
 			]
 		},
 		table: {

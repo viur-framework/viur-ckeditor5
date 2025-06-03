@@ -1,17 +1,20 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module engine/view/observer/inputobserver
  */
 
-import DomEventObserver from './domeventobserver';
-import type DomEventData from './domeventdata';
-import type ViewRange from '../range';
-import DataTransfer from '../datatransfer';
-import { env } from '@ckeditor/ckeditor5-utils';
+import DomEventObserver from './domeventobserver.js';
+import type DomEventData from './domeventdata.js';
+import type ViewRange from '../range.js';
+import DataTransfer from '../datatransfer.js';
+import { env, isText, indexOf } from '@ckeditor/ckeditor5-utils';
+import { INLINE_FILLER_LENGTH, startsWithFiller } from '../filler.js';
+
+// @if CK_DEBUG_TYPING // const { _debouncedLine, _buildLogMessage } = require( '../../dev-utils/utils.js' );
 
 /**
  * Observer for events connected with data input.
@@ -30,9 +33,10 @@ export default class InputObserver extends DomEventObserver<'beforeinput'> {
 	 */
 	public onDomEvent( domEvent: InputEvent ): void {
 		// @if CK_DEBUG_TYPING // if ( ( window as any ).logCKETyping ) {
-		// @if CK_DEBUG_TYPING // 	console.group( `%c[InputObserver]%c ${ domEvent.type }: ${ domEvent.inputType }`,
-		// @if CK_DEBUG_TYPING // 		'color: green', 'color: default'
-		// @if CK_DEBUG_TYPING // 	);
+		// @if CK_DEBUG_TYPING // 	_debouncedLine();
+		// @if CK_DEBUG_TYPING // 	console.group( ..._buildLogMessage( this, 'InputObserver',
+		// @if CK_DEBUG_TYPING // 		`${ domEvent.type }: ${ domEvent.inputType } - ${ domEvent.isComposing ? 'is' : 'not' } composing`,
+		// @if CK_DEBUG_TYPING // 	) );
 		// @if CK_DEBUG_TYPING // }
 
 		const domTargetRanges = domEvent.getTargetRanges();
@@ -51,17 +55,21 @@ export default class InputObserver extends DomEventObserver<'beforeinput'> {
 			data = domEvent.data;
 
 			// @if CK_DEBUG_TYPING // if ( ( window as any ).logCKETyping ) {
-			// @if CK_DEBUG_TYPING // 	console.info( `%c[InputObserver]%c event data: %c${ JSON.stringify( data ) }`,
-			// @if CK_DEBUG_TYPING // 		'color: green;font-weight: bold', 'font-weight:bold', 'color: blue;'
-			// @if CK_DEBUG_TYPING // 	);
+			// @if CK_DEBUG_TYPING // 	console.info( ..._buildLogMessage( this, 'InputObserver',
+			// @if CK_DEBUG_TYPING // 		`%cevent data: %c${ JSON.stringify( data ) }`,
+			// @if CK_DEBUG_TYPING // 		'font-weight: bold',
+			// @if CK_DEBUG_TYPING // 		'color: blue;'
+			// @if CK_DEBUG_TYPING // 	) );
 			// @if CK_DEBUG_TYPING // }
 		} else if ( dataTransfer ) {
 			data = dataTransfer.getData( 'text/plain' );
 
 			// @if CK_DEBUG_TYPING // if ( ( window as any ).logCKETyping ) {
-			// @if CK_DEBUG_TYPING // 	console.info( `%c[InputObserver]%c event data transfer: %c${ JSON.stringify( data ) }`,
-			// @if CK_DEBUG_TYPING // 		'color: green;font-weight: bold', 'font-weight:bold', 'color: blue;'
-			// @if CK_DEBUG_TYPING // 	);
+			// @if CK_DEBUG_TYPING // 	console.info( ..._buildLogMessage( this, 'InputObserver',
+			// @if CK_DEBUG_TYPING // 		`%cevent data transfer: %c${ JSON.stringify( data ) }`,
+			// @if CK_DEBUG_TYPING // 		'font-weight: bold',
+			// @if CK_DEBUG_TYPING // 		'color: blue;'
+			// @if CK_DEBUG_TYPING // 	) );
 			// @if CK_DEBUG_TYPING // }
 		}
 
@@ -71,21 +79,80 @@ export default class InputObserver extends DomEventObserver<'beforeinput'> {
 			// Future-proof: in case of multi-range fake selections being possible.
 			targetRanges = Array.from( viewDocument.selection.getRanges() );
 
+			// Do not allow typing inside a fake selection container, we will handle it manually.
+			domEvent.preventDefault();
+
 			// @if CK_DEBUG_TYPING // if ( ( window as any ).logCKETyping ) {
-			// @if CK_DEBUG_TYPING // 	console.info( '%c[InputObserver]%c using fake selection:',
-			// @if CK_DEBUG_TYPING // 		'color: green;font-weight: bold', 'font-weight:bold', targetRanges,
+			// @if CK_DEBUG_TYPING // 	console.info( ..._buildLogMessage( this, 'InputObserver',
+			// @if CK_DEBUG_TYPING // 		'%cusing fake selection:',
+			// @if CK_DEBUG_TYPING // 		'font-weight: bold',
+			// @if CK_DEBUG_TYPING // 		targetRanges,
 			// @if CK_DEBUG_TYPING // 		viewDocument.selection.isFake ? 'fake view selection' : 'fake DOM parent'
-			// @if CK_DEBUG_TYPING // 	);
+			// @if CK_DEBUG_TYPING // 	) );
 			// @if CK_DEBUG_TYPING // }
 		} else if ( domTargetRanges.length ) {
 			targetRanges = domTargetRanges.map( domRange => {
-				return view.domConverter.domRangeToView( domRange )!;
-			} );
+				// Sometimes browser provides range that starts before editable node.
+				// We try to fall back to collapsed range at the valid end position.
+				// See https://github.com/ckeditor/ckeditor5/issues/14411.
+				// See https://github.com/ckeditor/ckeditor5/issues/14050.
+				let viewStart = view.domConverter.domPositionToView( domRange.startContainer, domRange.startOffset );
+				const viewEnd = view.domConverter.domPositionToView( domRange.endContainer, domRange.endOffset );
+
+				// When text replacement is enabled and browser tries to replace double space with dot, and space,
+				// but the first space is no longer where browser put it (it was moved to an attribute element),
+				// then we must extend the target range so it does not include a part of an inline filler.
+				if ( viewStart && startsWithFiller( domRange.startContainer ) && domRange.startOffset < INLINE_FILLER_LENGTH ) {
+					// @if CK_DEBUG_TYPING // if ( ( window as any ).logCKETyping ) {
+					// @if CK_DEBUG_TYPING // 	console.info( ..._buildLogMessage( this, 'InputObserver',
+					// @if CK_DEBUG_TYPING // 		'%cTarget range starts in an inline filler - adjusting it',
+					// @if CK_DEBUG_TYPING // 		'font-style: italic'
+					// @if CK_DEBUG_TYPING // 	) );
+					// @if CK_DEBUG_TYPING // }
+
+					domEvent.preventDefault();
+
+					let count = INLINE_FILLER_LENGTH - domRange.startOffset;
+
+					viewStart = viewStart.getLastMatchingPosition( value => {
+						// Ignore attribute and UI elements but stop on container elements.
+						if ( value.item.is( 'attributeElement' ) || value.item.is( 'uiElement' ) ) {
+							return true;
+						}
+
+						// Skip as many characters as inline filler was overlapped.
+						if ( value.item.is( '$textProxy' ) && count-- ) {
+							return true;
+						}
+
+						return false;
+					}, { direction: 'backward', singleCharacters: true } );
+				}
+
+				// Check if there is no an inline filler just after the target range.
+				if ( isFollowedByInlineFiller( domRange.endContainer, domRange.endOffset ) ) {
+					// @if CK_DEBUG_TYPING // if ( ( window as any ).logCKETyping ) {
+					// @if CK_DEBUG_TYPING // 	console.info( ..._buildLogMessage( this, 'InputObserver',
+					// @if CK_DEBUG_TYPING // 		'%cTarget range ends just before an inline filler - prevent default behavior',
+					// @if CK_DEBUG_TYPING // 		'font-style: italic'
+					// @if CK_DEBUG_TYPING // 	) );
+					// @if CK_DEBUG_TYPING // }
+					domEvent.preventDefault();
+				}
+
+				if ( viewStart ) {
+					return view.createRange( viewStart, viewEnd );
+				} else if ( viewEnd ) {
+					return view.createRange( viewEnd );
+				}
+			} ).filter( ( range ): range is ViewRange => !!range );
 
 			// @if CK_DEBUG_TYPING // if ( ( window as any ).logCKETyping ) {
-			// @if CK_DEBUG_TYPING // 	console.info( '%c[InputObserver]%c using target ranges:',
-			// @if CK_DEBUG_TYPING // 		'color: green;font-weight: bold', 'font-weight:bold', targetRanges
-			// @if CK_DEBUG_TYPING // 	);
+			// @if CK_DEBUG_TYPING // 	console.info( ..._buildLogMessage( this, 'InputObserver',
+			// @if CK_DEBUG_TYPING // 		'%cusing target ranges:',
+			// @if CK_DEBUG_TYPING // 		'font-weight: bold',
+			// @if CK_DEBUG_TYPING // 		targetRanges
+			// @if CK_DEBUG_TYPING // 	) );
 			// @if CK_DEBUG_TYPING // }
 		}
 		// For Android devices we use a fallback to the current DOM selection, Android modifies it according
@@ -96,9 +163,11 @@ export default class InputObserver extends DomEventObserver<'beforeinput'> {
 			targetRanges = Array.from( view.domConverter.domSelectionToView( domSelection ).getRanges() );
 
 			// @if CK_DEBUG_TYPING // if ( ( window as any ).logCKETyping ) {
-			// @if CK_DEBUG_TYPING // 	console.info( '%c[InputObserver]%c using selection ranges:',
-			// @if CK_DEBUG_TYPING // 		'color: green;font-weight: bold', 'font-weight:bold', targetRanges
-			// @if CK_DEBUG_TYPING // 	);
+			// @if CK_DEBUG_TYPING // 	console.info( ..._buildLogMessage( this, 'InputObserver',
+			// @if CK_DEBUG_TYPING // 		'%cusing selection ranges:',
+			// @if CK_DEBUG_TYPING // 		'font-weight: bold',
+			// @if CK_DEBUG_TYPING // 		targetRanges
+			// @if CK_DEBUG_TYPING // 	) );
 			// @if CK_DEBUG_TYPING // }
 		}
 
@@ -122,12 +191,15 @@ export default class InputObserver extends DomEventObserver<'beforeinput'> {
 
 		// Normalize the insertText data that includes new-line characters.
 		// https://github.com/ckeditor/ckeditor5/issues/2045.
-		if ( domEvent.inputType == 'insertText' && data && data.includes( '\n' ) ) {
+		if ( [ 'insertText', 'insertReplacementText' ].includes( domEvent.inputType ) && data && data.includes( '\n' ) ) {
 			// There might be a single new-line or double for new paragraph, but we translate
 			// it to paragraphs as it is our default action for enter handling.
 			const parts = data.split( /\n{1,2}/g );
 
 			let partTargetRanges = targetRanges;
+
+			// Handle all parts on our side as we rely on paragraph inserting and synchronously updated view selection.
+			domEvent.preventDefault();
 
 			for ( let i = 0; i < parts.length; i++ ) {
 				const dataPart = parts[ i ];
@@ -176,6 +248,33 @@ export default class InputObserver extends DomEventObserver<'beforeinput'> {
 		// @if CK_DEBUG_TYPING // 	console.groupEnd();
 		// @if CK_DEBUG_TYPING // }
 	}
+}
+
+/**
+ * Returns `true` if there is an inline filler just after the position in DOM.
+ * It walks up the DOM tree if the offset is at the end of the node.
+ */
+function isFollowedByInlineFiller( node: Node, offset: number ): boolean {
+	while ( node.parentNode ) {
+		if ( isText( node ) ) {
+			if ( offset != node.data.length ) {
+				return false;
+			}
+		} else {
+			if ( offset != node.childNodes.length ) {
+				return false;
+			}
+		}
+
+		offset = indexOf( node ) + 1;
+		node = node.parentNode;
+
+		if ( offset < node.childNodes.length && startsWithFiller( node.childNodes[ offset ] ) ) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 /**

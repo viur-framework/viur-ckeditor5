@@ -1,14 +1,22 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* globals
-	ClassicEditor, Plugin, ButtonView, Command, toWidget, toWidgetEditable, createElement, findOptimalInsertionRange,
-	console, window, prompt, document
-*/
-
-import { CS_CONFIG } from '@ckeditor/ckeditor5-cloud-services/tests/_utils/cloud-services-config';
+import {
+	Plugin,
+	Command,
+	ButtonView,
+	toWidget,
+	toWidgetEditable,
+	findOptimalInsertionRange,
+	createElement
+} from 'ckeditor5';
+import {
+	CS_CONFIG,
+	ClassicEditor,
+	getViewportTopOffsetConfig
+} from '@snippets/index.js';
 
 /**
  * Helper for extracting the side card type from a view element based on its CSS class.
@@ -167,7 +175,7 @@ const downcastSideCard = ( editor, { asWidget } ) => {
 		if ( asWidget ) {
 			const actionsView = writer.createRawElement( 'div', {
 				class: 'side-card-actions',
-				contenteditable: 'false', 			// Prevents editing of the element.
+				contenteditable: 'false', // Prevents editing of the element.
 				'data-cke-ignore-events': 'true'	// Allows using custom UI elements inside the editing view.
 			}, createActionsView( editor, modelElement ) ); // See the full code for details.
 
@@ -333,7 +341,7 @@ ClassicEditor
 		cloudServices: CS_CONFIG,
 		extraPlugins: [ ComplexBox ],
 		image: {
-			toolbar: [ 'imageStyle:inline', 'imageStyle:block', 'imageStyle:side', '|', 'toggleImageCaption', 'imageTextAlternative' ]
+			toolbar: [ 'imageStyle:inline', 'imageStyle:block', 'imageStyle:wrapText', '|', 'toggleImageCaption', 'imageTextAlternative' ]
 		},
 		table: {
 			contentToolbar: [
@@ -347,7 +355,7 @@ ClassicEditor
 		},
 		ui: {
 			viewportOffset: {
-				top: window.getViewportTopOffsetConfig()
+				top: getViewportTopOffsetConfig()
 			}
 		}
 	} )

@@ -1,17 +1,17 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module find-and-replace/findandreplaceutils
  */
 
-import type { Element, Item, Marker, Model, Range } from 'ckeditor5/src/engine';
-import { Plugin } from 'ckeditor5/src/core';
-import { Collection, uid } from 'ckeditor5/src/utils';
-import { escapeRegExp } from 'lodash-es';
-import type { ResultType } from './findandreplace';
+import type { Element, Item, Marker, Model, Range } from 'ckeditor5/src/engine.js';
+import { Plugin } from 'ckeditor5/src/core.js';
+import { Collection, uid } from 'ckeditor5/src/utils.js';
+import { escapeRegExp } from 'es-toolkit/compat';
+import type { ResultType } from './findandreplace.js';
 
 /**
  * A set of helpers related to find and replace.
@@ -20,8 +20,15 @@ export default class FindAndReplaceUtils extends Plugin {
 	/**
 	 * @inheritDoc
 	 */
-	public static get pluginName(): 'FindAndReplaceUtils' {
-		return 'FindAndReplaceUtils';
+	public static get pluginName() {
+		return 'FindAndReplaceUtils' as const;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public static override get isOfficialPlugin(): true {
+		return true;
 	}
 
 	/**
@@ -47,22 +54,37 @@ export default class FindAndReplaceUtils extends Plugin {
 	public updateFindResultFromRange(
 		range: Range,
 		model: Model,
-		findCallback: ( { item, text }: { item: Item; text: string } ) => Array<ResultType>,
+		findCallback: ( { item, text }: { item: Item; text: string } ) => Array<ResultType> | { results: Array<ResultType> },
 		startResults: Collection<ResultType> | null
 	): Collection<ResultType> {
 		const results = startResults || new Collection();
+
+		const checkIfResultAlreadyOnList = ( marker: Marker ) => results.find(
+			markerItem => {
+				const { marker: resultsMarker } = markerItem;
+
+				const resultRange = resultsMarker!.getRange();
+				const markerRange = marker.getRange();
+
+				return resultRange.isEqual( markerRange );
+			}
+		);
 
 		model.change( writer => {
 			[ ...range ].forEach( ( { type, item } ) => {
 				if ( type === 'elementStart' ) {
 					if ( model.schema.checkChild( item, '$text' ) ) {
-						const foundItems = findCallback( {
+						let foundItems = findCallback( {
 							item,
 							text: this.rangeToText( model.createRangeIn( item as Element ) )
 						} );
 
 						if ( !foundItems ) {
 							return;
+						}
+
+						if ( 'results' in foundItems ) {
+							foundItems = foundItems.results;
 						}
 
 						foundItems.forEach( foundItem => {
@@ -78,14 +100,16 @@ export default class FindAndReplaceUtils extends Plugin {
 
 							const index = findInsertIndex( results, marker );
 
-							results.add(
-								{
-									id: resultId,
-									label: foundItem.label,
-									marker
-								},
-								index
-							);
+							if ( !checkIfResultAlreadyOnList( marker ) ) {
+								results.add(
+									{
+										id: resultId,
+										label: foundItem.label,
+										marker
+									},
+									index
+								);
+							}
 						} );
 					}
 				}
@@ -103,7 +127,7 @@ export default class FindAndReplaceUtils extends Plugin {
 	 * @returns The text content of the provided range.
 	 */
 	public rangeToText( range: Range ): string {
-		return Array.from( range.getItems() ).reduce( ( rangeText, node ) => {
+		return Array.from( range.getItems( { shallow: true } ) ).reduce( ( rangeText, node ) => {
 			// Trim text to a last occurrence of an inline element and update range start.
 			if ( !( node.is( '$text' ) || node.is( '$textProxy' ) ) ) {
 				// Editor has only one inline element defined in schema: `<softBreak>` which is treated as new line character in blocks.

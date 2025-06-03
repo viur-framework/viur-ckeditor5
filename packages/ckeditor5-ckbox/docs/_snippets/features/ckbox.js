@@ -1,20 +1,24 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* globals ClassicEditor, console, window, document */
+import {
+	TOKEN_URL,
+	getViewportTopOffsetConfig,
+	attachTourBalloon,
+	findToolbarItem
+} from '@snippets/index.js';
+import { CkBoxEditor } from './build-ckbox-source.js';
 
-import { TOKEN_URL } from '@ckeditor/ckeditor5-ckbox/tests/_utils/ckbox-config';
-
-ClassicEditor
+CkBoxEditor
 	.create( document.querySelector( '#snippet-ckbox' ), {
 		toolbar: {
 			items: [
 				'undo', 'redo',
 				'|', 'heading',
 				'|', 'bold', 'italic',
-				'|', 'link', 'uploadImage', 'ckbox', 'insertTable', 'mediaEmbed',
+				'|', 'link', 'uploadImage', 'ckbox', 'ckboxImageEdit', 'insertTable', 'mediaEmbed',
 				'|', 'bulletedList', 'numberedList', 'outdent', 'indent'
 			]
 		},
@@ -25,11 +29,13 @@ ClassicEditor
 				'|',
 				'imageStyle:inline',
 				'imageStyle:block',
-				'imageStyle:side',
+				'imageStyle:wrapText',
 				'|',
 				'resizeImage:25',
 				'resizeImage:50',
-				'resizeImage:original'
+				'resizeImage:original',
+				'|',
+				'ckboxImageEdit'
 			],
 			resizeOptions: [
 				{
@@ -52,19 +58,20 @@ ClassicEditor
 		},
 		ui: {
 			viewportOffset: {
-				top: window.getViewportTopOffsetConfig()
+				top: getViewportTopOffsetConfig()
 			}
 		},
 		ckbox: {
-			tokenUrl: TOKEN_URL
+			tokenUrl: TOKEN_URL,
+			forceDemoLabel: true,
+			allowExternalImagesEditing: [ /^data:/, 'origin', /ckbox/ ]
 		}
 	} )
 	.then( editor => {
 		window.editor = editor;
 
-		window.attachTourBalloon( {
-			target: window.findToolbarItem( editor.ui.view.toolbar,
-				item => item.label && item.label === 'Open file manager' ),
+		attachTourBalloon( {
+			target: findToolbarItem( editor.ui.view.toolbar, item => item.label && item.label === 'Open file manager' ),
 			text: 'Click to open the file manager.',
 			editor
 		} );

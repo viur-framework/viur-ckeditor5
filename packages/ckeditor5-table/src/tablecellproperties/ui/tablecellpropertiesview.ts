@@ -1,6 +1,6 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
@@ -13,6 +13,7 @@ import {
 	createLabeledDropdown,
 	createLabeledInputText,
 	FocusCycler,
+	FormRowView,
 	FormHeaderView,
 	LabeledFieldView,
 	LabelView,
@@ -21,44 +22,47 @@ import {
 	View,
 	ViewCollection,
 	type FocusableView,
-	type NormalizedColorOption
-} from 'ckeditor5/src/ui';
+	type NormalizedColorOption,
+	type ColorPickerConfig
+} from 'ckeditor5/src/ui.js';
 import {
 	KeystrokeHandler,
 	FocusTracker,
 	type Locale,
 	type ObservableChangeEvent
-} from 'ckeditor5/src/utils';
-import { icons } from 'ckeditor5/src/core';
+} from 'ckeditor5/src/utils.js';
+import {
+	IconAlignBottom,
+	IconAlignCenter,
+	IconAlignJustify,
+	IconAlignLeft,
+	IconAlignMiddle,
+	IconAlignRight,
+	IconAlignTop,
+	IconCancel,
+	IconCheck
+} from 'ckeditor5/src/icons.js';
 
 import {
 	fillToolbar,
 	getBorderStyleDefinitions,
 	getBorderStyleLabels,
 	getLabeledColorInputCreator
-} from '../../utils/ui/table-properties';
-import FormRowView from '../../ui/formrowview';
-import type ColorInputView from '../../ui/colorinputview';
-import type { TableCellPropertiesOptions } from '../../tableconfig';
+} from '../../utils/ui/table-properties.js';
+import type ColorInputView from '../../ui/colorinputview.js';
+import type { TableCellPropertiesOptions } from '../../tableconfig.js';
 
-import '../../../theme/form.css';
+// eslint-disable-next-line ckeditor5-rules/ckeditor-imports
+import '@ckeditor/ckeditor5-ui/theme/components/form/form.css';
+import '../../../theme/formrow.css';
 import '../../../theme/tableform.css';
 import '../../../theme/tablecellproperties.css';
-
-const ALIGNMENT_ICONS = {
-	left: icons.alignLeft,
-	center: icons.alignCenter,
-	right: icons.alignRight,
-	justify: icons.alignJustify,
-	top: icons.alignTop,
-	middle: icons.alignMiddle,
-	bottom: icons.alignBottom
-};
 
 export interface TableCellPropertiesViewOptions {
 	borderColors: Array<NormalizedColorOption>;
 	backgroundColors: Array<NormalizedColorOption>;
 	defaultTableCellProperties: TableCellPropertiesOptions;
+	colorPickerConfig: false | ColorPickerConfig;
 }
 
 /**
@@ -196,12 +200,12 @@ export default class TableCellPropertiesView extends View {
 	/**
 	 * A toolbar with buttons that allow changing the horizontal text alignment in a table cell.
 	 */
-	public readonly horizontalAlignmentToolbar: View<HTMLElement>;
+	public readonly horizontalAlignmentToolbar: ToolbarView;
 
 	/**
 	 * A toolbar with buttons that allow changing the vertical text alignment in a table cell.
 	 */
-	public readonly verticalAlignmentToolbar: View<HTMLElement>;
+	public readonly verticalAlignmentToolbar: ToolbarView;
 
 	/**
 	 * The "Save" button view.
@@ -216,7 +220,7 @@ export default class TableCellPropertiesView extends View {
 	/**
 	 * A collection of views that can be focused in the form.
 	 */
-	protected readonly _focusables: ViewCollection;
+	protected readonly _focusables: ViewCollection<FocusableView>;
 
 	/**
 	 * Helps cycling over {@link #_focusables} in the form.
@@ -388,13 +392,16 @@ export default class TableCellPropertiesView extends View {
 			view: this
 		} );
 
+		// Maintain continuous focus cycling over views that have focusable children and focus cyclers themselves.
+		[ this.borderColorInput, this.backgroundInput ].forEach( view => {
+			this._focusCycler.chain( view.fieldView.focusCycler );
+		} );
+
 		[
 			this.borderStyleDropdown,
 			this.borderColorInput,
-			this.borderColorInput.fieldView.dropdownView.buttonView,
 			this.borderWidthInput,
 			this.backgroundInput,
-			this.backgroundInput.fieldView.dropdownView.buttonView,
 			this.widthInput,
 			this.heightInput,
 			this.paddingInput,
@@ -443,7 +450,7 @@ export default class TableCellPropertiesView extends View {
 		borderStyleDropdown: LabeledFieldView;
 		borderColorInput: LabeledFieldView<ColorInputView>;
 		borderWidthInput: LabeledFieldView;
-		} {
+	} {
 		const defaultTableCellProperties = this.options.defaultTableCellProperties;
 		const defaultBorder = {
 			style: defaultTableCellProperties.borderStyle,
@@ -454,7 +461,8 @@ export default class TableCellPropertiesView extends View {
 		const colorInputCreator = getLabeledColorInputCreator( {
 			colorConfig: this.options.borderColors,
 			columns: 5,
-			defaultColorValue: defaultBorder.color
+			defaultColorValue: defaultBorder.color,
+			colorPickerConfig: this.options.colorPickerConfig
 		} );
 		const locale = this.locale;
 		const t = this.t!;
@@ -571,7 +579,8 @@ export default class TableCellPropertiesView extends View {
 		const colorInputCreator = getLabeledColorInputCreator( {
 			colorConfig: this.options.backgroundColors,
 			columns: 5,
-			defaultColorValue: this.options.defaultTableCellProperties.backgroundColor
+			defaultColorValue: this.options.defaultTableCellProperties.backgroundColor,
+			colorPickerConfig: this.options.colorPickerConfig
 		} );
 
 		const backgroundInput = new LabeledFieldView( locale, colorInputCreator );
@@ -603,7 +612,7 @@ export default class TableCellPropertiesView extends View {
 		widthInput: LabeledFieldView;
 		operatorLabel: View;
 		heightInput: LabeledFieldView;
-		} {
+	} {
 		const locale = this.locale;
 		const t = this.t!;
 
@@ -699,6 +708,16 @@ export default class TableCellPropertiesView extends View {
 
 		const alignmentLabel = new LabelView( locale );
 
+		const ALIGNMENT_ICONS = {
+			left: IconAlignLeft,
+			center: IconAlignCenter,
+			right: IconAlignRight,
+			justify: IconAlignJustify,
+			top: IconAlignTop,
+			middle: IconAlignMiddle,
+			bottom: IconAlignBottom
+		};
+
 		alignmentLabel.text = t( 'Table cell text alignment' );
 
 		// -- Horizontal ---------------------------------------------------
@@ -708,6 +727,7 @@ export default class TableCellPropertiesView extends View {
 
 		horizontalAlignmentToolbar.set( {
 			isCompact: true,
+			role: 'radiogroup',
 			ariaLabel: t( 'Horizontal text alignment toolbar' )
 		} );
 
@@ -738,6 +758,7 @@ export default class TableCellPropertiesView extends View {
 
 		verticalAlignmentToolbar.set( {
 			isCompact: true,
+			role: 'radiogroup',
 			ariaLabel: t( 'Vertical text alignment toolbar' )
 		} );
 
@@ -777,7 +798,7 @@ export default class TableCellPropertiesView extends View {
 
 		saveButtonView.set( {
 			label: t( 'Save' ),
-			icon: icons.check,
+			icon: IconCheck,
 			class: 'ck-button-save',
 			type: 'submit',
 			withText: true
@@ -789,7 +810,7 @@ export default class TableCellPropertiesView extends View {
 
 		cancelButtonView.set( {
 			label: t( 'Cancel' ),
-			icon: icons.cancel,
+			icon: IconCancel,
 			class: 'ck-button-cancel',
 			withText: true
 		} );

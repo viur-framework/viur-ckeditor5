@@ -1,6 +1,6 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
@@ -10,7 +10,7 @@
 import {
 	Plugin,
 	type Editor
-} from 'ckeditor5/src/core';
+} from 'ckeditor5/src/core.js';
 import {
 	Matcher,
 	type UpcastElementEvent,
@@ -20,12 +20,12 @@ import {
 	type ViewElement,
 	type DowncastDispatcher,
 	type UpcastDispatcher
-} from 'ckeditor5/src/engine';
-import { toMap } from 'ckeditor5/src/utils';
+} from 'ckeditor5/src/engine.js';
+import { toMap } from 'ckeditor5/src/utils.js';
 
-import LinkEditing from './linkediting';
-import type ManualDecorator from './utils/manualdecorator';
-import type LinkCommand from './linkcommand';
+import LinkEditing from './linkediting.js';
+import type ManualDecorator from './utils/manualdecorator.js';
+import type LinkCommand from './linkcommand.js';
 
 import type { ImageUtils } from '@ckeditor/ckeditor5-image';
 
@@ -46,14 +46,21 @@ export default class LinkImageEditing extends Plugin {
 	/**
 	 * @inheritDoc
 	 */
-	public static get pluginName(): 'LinkImageEditing' {
-		return 'LinkImageEditing';
+	public static get pluginName() {
+		return 'LinkImageEditing' as const;
 	}
 
 	/**
 	 * @inheritDoc
 	 */
-	public init(): void {
+	public static override get isOfficialPlugin(): true {
+		return true;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public afterInit(): void {
 		const editor = this.editor;
 		const schema = editor.model.schema;
 
@@ -246,6 +253,24 @@ function downcastImageLinkManualDecorator( decorator: ManualDecorator ): ( dispa
 				return;
 			}
 
+			// Handle deactivated manual decorator.
+			if ( decorator.value === undefined ) {
+				for ( const key in decorator.attributes ) {
+					conversionApi.writer.removeAttribute( key, linkInImage );
+				}
+
+				if ( decorator.classes ) {
+					conversionApi.writer.removeClass( decorator.classes, linkInImage );
+				}
+
+				for ( const key in decorator.styles ) {
+					conversionApi.writer.removeStyle( key, linkInImage );
+				}
+
+				return;
+			}
+
+			// Handle activated manual decorator.
 			for ( const [ key, val ] of toMap( decorator.attributes ) ) {
 				conversionApi.writer.setAttribute( key, val, linkInImage );
 			}

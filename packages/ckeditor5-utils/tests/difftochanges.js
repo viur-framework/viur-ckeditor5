@@ -1,12 +1,14 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-import diff from '../src/diff';
-import diffToChanges from '../src/difftochanges';
+import diff from '../src/diff.js';
+import diffToChanges from '../src/difftochanges.js';
 
 describe( 'diffToChanges', () => {
+	/* eslint-disable @stylistic/no-multi-spaces */
+
 	describe( 'equal patterns', () => {
 		testDiff( 0,		'',				'' );
 		testDiff( 0,		'abc',			'abc' );
@@ -44,6 +46,8 @@ describe( 'diffToChanges', () => {
 		testDiff( 4,		'abcdef',		'xybzc' );
 		testDiff( 5,		'abcdef',		'bdxfy' );
 	} );
+
+	/* eslint-enable @stylistic/no-multi-spaces */
 
 	it( 'works with arrays', () => {
 		const input = Array.from( 'abc' );

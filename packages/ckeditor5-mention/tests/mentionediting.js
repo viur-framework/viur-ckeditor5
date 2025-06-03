@@ -1,17 +1,17 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-import VirtualTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/virtualtesteditor';
-import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils';
-import { getData as getModelData } from '@ckeditor/ckeditor5-engine/src/dev-utils/model';
-import { stringify as stringifyView, getData as getViewData } from '@ckeditor/ckeditor5-engine/src/dev-utils/view';
-import ClipboardPipeline from '@ckeditor/ckeditor5-clipboard/src/clipboardpipeline';
-import Paragraph from '@ckeditor/ckeditor5-paragraph/src/paragraph';
+import VirtualTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/virtualtesteditor.js';
+import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils.js';
+import { getData as getModelData } from '@ckeditor/ckeditor5-engine/src/dev-utils/model.js';
+import { stringify as stringifyView, getData as getViewData } from '@ckeditor/ckeditor5-engine/src/dev-utils/view.js';
+import ClipboardPipeline from '@ckeditor/ckeditor5-clipboard/src/clipboardpipeline.js';
+import Paragraph from '@ckeditor/ckeditor5-paragraph/src/paragraph.js';
 
-import MentionEditing, { _toMentionAttribute } from '../src/mentionediting';
-import MentionCommand from '../src/mentioncommand';
+import MentionEditing, { _toMentionAttribute } from '../src/mentionediting.js';
+import MentionCommand from '../src/mentioncommand.js';
 
 describe( 'MentionEditing', () => {
 	let editor, model, doc;
@@ -26,6 +26,14 @@ describe( 'MentionEditing', () => {
 
 	it( 'should be named', () => {
 		expect( MentionEditing.pluginName ).to.equal( 'MentionEditing' );
+	} );
+
+	it( 'should have `isOfficialPlugin` static flag set to `true`', () => {
+		expect( MentionEditing.isOfficialPlugin ).to.be.true;
+	} );
+
+	it( 'should have `isPremiumPlugin` static flag set to `false`', () => {
+		expect( MentionEditing.isPremiumPlugin ).to.be.false;
 	} );
 
 	it( 'should be loaded', () => {
@@ -69,6 +77,14 @@ describe( 'MentionEditing', () => {
 		} );
 
 		it( 'should convert <span class="mention" data-mention="@John"> to mention attribute', () => {
+			editor.conversion.for( 'upcast' ).add( dispatcher => {
+				dispatcher.on( 'element:span', ( evt, data, { consumable } ) => {
+					expect( consumable.test( data.viewItem, { name: true } ) ).to.be.false;
+					expect( consumable.test( data.viewItem, { classes: 'mention' } ) ).to.be.false;
+					expect( consumable.test( data.viewItem, { attributes: 'data-mention' } ) ).to.be.false;
+				}, { priority: 'lowest' } );
+			} );
+
 			editor.setData( '<p>foo <span class="mention" data-mention="@John">@John</span> bar</p>' );
 
 			const textNode = doc.getRoot().getChild( 0 ).getChild( 1 );
@@ -672,7 +688,7 @@ function addCustomMentionConverters( editor ) {
 	editor.conversion.for( 'upcast' ).elementToAttribute( {
 		view: {
 			name: 'b',
-			key: 'data-mention',
+			attributes: 'data-mention',
 			classes: 'mention'
 		},
 		model: {

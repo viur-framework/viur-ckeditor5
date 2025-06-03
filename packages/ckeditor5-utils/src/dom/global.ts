@@ -1,9 +1,7 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
-
-/* globals window, document */
 
 /**
  * @module utils/dom/global
@@ -39,7 +37,7 @@ let globalVar: GlobalType; // named globalVar instead of global: https://github.
 // In some environments window and document API might not be available.
 try {
 	globalVar = { window, document };
-} catch ( e ) {
+} catch {
 	// It's not possible to mock a window object to simulate lack of a window object without writing extremely convoluted code.
 	/* istanbul ignore next -- @preserve */
 

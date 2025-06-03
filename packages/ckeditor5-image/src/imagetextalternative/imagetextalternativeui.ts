@@ -1,26 +1,29 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module image/imagetextalternative/imagetextalternativeui
  */
 
-import { Plugin, icons } from 'ckeditor5/src/core';
+import { Plugin } from 'ckeditor5/src/core.js';
 import {
 	ButtonView,
 	ContextualBalloon,
 	clickOutsideHandler,
 	CssTransitionDisablerMixin,
 	type ViewWithCssTransitionDisabler
-} from 'ckeditor5/src/ui';
+} from 'ckeditor5/src/ui.js';
+import { IconTextAlternative } from 'ckeditor5/src/icons.js';
 
-import TextAlternativeFormView from './ui/textalternativeformview';
-import { repositionContextualBalloon, getBalloonPositionData } from '../image/ui/utils';
-import type { CancelEvent, SubmitEvent } from '../imageinsert/ui/imageinsertpanelview';
-import type ImageTextAlternativeCommand from './imagetextalternativecommand';
-import type ImageUtils from '../imageutils';
+import TextAlternativeFormView, {
+	type TextAlternativeFormViewCancelEvent,
+	type TextAlternativeFormViewSubmitEvent
+} from './ui/textalternativeformview.js';
+import { repositionContextualBalloon, getBalloonPositionData } from '../image/ui/utils.js';
+import type ImageTextAlternativeCommand from './imagetextalternativecommand.js';
+import type ImageUtils from '../imageutils.js';
 
 /**
  * The image text alternative UI plugin.
@@ -48,8 +51,15 @@ export default class ImageTextAlternativeUI extends Plugin {
 	/**
 	 * @inheritDoc
 	 */
-	public static get pluginName(): 'ImageTextAlternativeUI' {
-		return 'ImageTextAlternativeUI';
+	public static get pluginName() {
+		return 'ImageTextAlternativeUI' as const;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public static override get isOfficialPlugin(): true {
+		return true;
 	}
 
 	/**
@@ -85,7 +95,7 @@ export default class ImageTextAlternativeUI extends Plugin {
 
 			view.set( {
 				label: t( 'Change image text alternative' ),
-				icon: icons.lowVision,
+				icon: IconTextAlternative,
 				tooltip: true
 			} );
 
@@ -117,7 +127,7 @@ export default class ImageTextAlternativeUI extends Plugin {
 		// Render the form so its #element is available for clickOutsideHandler.
 		this._form.render();
 
-		this.listenTo<SubmitEvent>( this._form, 'submit', () => {
+		this.listenTo<TextAlternativeFormViewSubmitEvent>( this._form, 'submit', () => {
 			editor.execute( 'imageTextAlternative', {
 				newValue: this._form!.labeledInput.fieldView.element!.value
 			} );
@@ -125,14 +135,8 @@ export default class ImageTextAlternativeUI extends Plugin {
 			this._hideForm( true );
 		} );
 
-		this.listenTo<CancelEvent>( this._form, 'cancel', () => {
+		this.listenTo<TextAlternativeFormViewCancelEvent>( this._form, 'cancel', () => {
 			this._hideForm( true );
-		} );
-
-		// Close the form on Esc key press.
-		this._form.keystrokes.set( 'Esc', ( data, cancel ) => {
-			this._hideForm( true );
-			cancel();
 		} );
 
 		// Reposition the balloon or hide the form if an image widget is no longer selected.

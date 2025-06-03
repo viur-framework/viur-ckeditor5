@@ -1,17 +1,15 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module upload/adapters/simpleuploadadapter
  */
 
-/* globals XMLHttpRequest, FormData */
-
 import { Plugin } from '@ckeditor/ckeditor5-core';
-import FileRepository, { type UploadResponse, type FileLoader, type UploadAdapter } from '../filerepository';
-import type { SimpleUploadConfig } from '../uploadconfig';
+import FileRepository, { type UploadResponse, type FileLoader, type UploadAdapter } from '../filerepository.js';
+import type { SimpleUploadConfig } from '../uploadconfig.js';
 import { logWarning } from '@ckeditor/ckeditor5-utils';
 
 /**
@@ -50,8 +48,15 @@ export default class SimpleUploadAdapter extends Plugin {
 	/**
 	 * @inheritDoc
 	 */
-	public static get pluginName(): 'SimpleUploadAdapter' {
-		return 'SimpleUploadAdapter';
+	public static get pluginName() {
+		return 'SimpleUploadAdapter' as const;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public static override get isOfficialPlugin(): true {
+		return true;
 	}
 
 	/**
@@ -198,7 +203,11 @@ class Adapter implements UploadAdapter {
 	 */
 	private _sendRequest( file: File ): void {
 		// Set headers if specified.
-		const headers = this.options.headers || {};
+		let headers = this.options.headers || {};
+
+		if ( typeof headers === 'function' ) {
+			headers = headers( file );
+		}
 
 		// Use the withCredentials flag if specified.
 		const withCredentials = this.options.withCredentials || false;

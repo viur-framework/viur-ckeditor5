@@ -1,23 +1,22 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* globals setTimeout, document, console, Event */
+import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils.js';
 
-import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils';
-
-import ViewRange from '../../../src/view/range';
-import DocumentSelection from '../../../src/view/documentselection';
-import ViewSelection from '../../../src/view/selection';
-import View from '../../../src/view/view';
-import SelectionObserver from '../../../src/view/observer/selectionobserver';
-import FocusObserver from '../../../src/view/observer/focusobserver';
-import MutationObserver from '../../../src/view/observer/mutationobserver';
-import createViewRoot from '../_utils/createroot';
-import { parse } from '../../../src/dev-utils/view';
-import { StylesProcessor } from '../../../src/view/stylesmap';
-import env from '@ckeditor/ckeditor5-utils/src/env';
+import ViewRange from '../../../src/view/range.js';
+import DocumentSelection from '../../../src/view/documentselection.js';
+import ViewSelection from '../../../src/view/selection.js';
+import View from '../../../src/view/view.js';
+import SelectionObserver from '../../../src/view/observer/selectionobserver.js';
+import FocusObserver from '../../../src/view/observer/focusobserver.js';
+import MutationObserver from '../../../src/view/observer/mutationobserver.js';
+import createViewRoot from '../_utils/createroot.js';
+import { parse } from '../../../src/dev-utils/view.js';
+import { StylesProcessor } from '../../../src/view/stylesmap.js';
+import env from '@ckeditor/ckeditor5-utils/src/env.js';
+import { priorities } from '@ckeditor/ckeditor5-utils';
 
 describe( 'SelectionObserver', () => {
 	let view, viewDocument, viewRoot, selectionObserver, domRoot, domMain, domDocument;
@@ -30,7 +29,6 @@ describe( 'SelectionObserver', () => {
 		domRoot.innerHTML = '<div contenteditable="true"></div><div contenteditable="true" id="additional"></div>';
 		domMain = domRoot.childNodes[ 0 ];
 		domDocument.body.appendChild( domRoot );
-
 		view = new View( new StylesProcessor() );
 		viewDocument = view.document;
 		createViewRoot( viewDocument );
@@ -104,9 +102,66 @@ describe( 'SelectionObserver', () => {
 		changeDomSelection();
 	} );
 
+	// See https://github.com/ckeditor/ckeditor5/issues/14569.
+	it( 'should call focusObserver#flush when selection is in the editable but not changed', () => {
+		// Set DOM selection.
+		changeDomSelection();
+
+		// Update view selection to match DOM selection.
+		const domSelection = domDocument.getSelection();
+		const viewPosition = view.domConverter.domPositionToView( domSelection.focusNode, domSelection.focusOffset );
+
+		view.change( writer => writer.setSelection( viewPosition ) );
+
+		const flushSpy = testUtils.sinon.spy( selectionObserver.focusObserver, 'flush' );
+
+		// Fire selection change without actually moving selection.
+		domDocument.dispatchEvent( new Event( 'selectionchange' ) );
+
+		sinon.assert.calledOnce( flushSpy );
+	} );
+
+	it( 'should not fire selectionChange while editable is not focused', done => {
+		viewDocument.on( 'selectionChange', () => {
+			throw new Error( 'selectionChange fired while editable is not focused' );
+		} );
+
+		viewDocument.isFocused = false;
+		changeDomSelection();
+
+		setTimeout( done, 100 );
+	} );
+
+	it( 'should fire selectionChange after editor is focused and there were pending selection changes', done => {
+		viewDocument.on( 'selectionChange', () => done() );
+
+		viewDocument.isFocused = false;
+		changeDomSelection();
+
+		setTimeout( () => {
+			viewDocument.isFocused = true;
+		}, 100 );
+	} );
+
+	// See https://github.com/ckeditor/ckeditor5/issues/18514.
+	it( 'should fire selectionChange while editable is not focused but the editor is in read-only mode', done => {
+		const spy = sinon.spy();
+
+		viewDocument.on( 'selectionChange', spy );
+
+		viewDocument.isReadOnly = true;
+		viewDocument.isFocused = false;
+		changeDomSelection();
+
+		setTimeout( () => {
+			expect( spy.calledOnce ).to.be.true;
+			done();
+		}, 100 );
+	} );
+
 	it( 'should not fire selectionChange while user is composing', done => {
 		viewDocument.on( 'selectionChange', () => {
-			throw 'selectionChange fired while composing';
+			throw new Error( 'selectionChange fired while composing' );
 		} );
 
 		viewDocument.isComposing = true;
@@ -143,6 +198,25 @@ describe( 'SelectionObserver', () => {
 		changeDomSelection();
 	} );
 
+	it( 'should detect "restricted objects" in Firefox DOM ranges and prevent an error being thrown', () => {
+		testUtils.sinon.stub( env, 'isGecko' ).value( true );
+
+		changeDomSelection();
+		domDocument.dispatchEvent( new Event( 'selectionchange' ) );
+
+		expect( view.hasDomSelection ).to.be.true;
+
+		const domFoo = domDocument.getSelection().anchorNode;
+
+		sinon.stub( domFoo, Symbol.toStringTag ).get( () => {
+			throw new Error( 'Permission denied to access property Symbol.toStringTag' );
+		} );
+
+		domDocument.dispatchEvent( new Event( 'selectionchange' ) );
+
+		expect( view.hasDomSelection ).to.be.false;
+	} );
+
 	it( 'should add only one #selectionChange listener to one document', done => {
 		// Add second roots to ensure that listener is added once.
 		createViewRoot( viewDocument, 'div', 'additional' );
@@ -155,9 +229,51 @@ describe( 'SelectionObserver', () => {
 		changeDomSelection();
 	} );
 
+	it( 'should fire selectionChange synchronously on composition start event (at lowest priority)', () => {
+		let eventCount = 0;
+		let priorityCheck = 0;
+
+		viewDocument.on( 'selectionChange', ( evt, data ) => {
+			expect( data ).to.have.property( 'domSelection' ).that.equals( domDocument.getSelection() );
+
+			expect( data ).to.have.property( 'oldSelection' ).that.is.instanceof( DocumentSelection );
+			expect( data.oldSelection.rangeCount ).to.equal( 0 );
+
+			expect( data ).to.have.property( 'newSelection' ).that.is.instanceof( ViewSelection );
+			expect( data.newSelection.rangeCount ).to.equal( 1 );
+
+			const newViewRange = data.newSelection.getFirstRange();
+			const viewFoo = viewDocument.getRoot().getChild( 1 ).getChild( 0 );
+
+			expect( newViewRange.start.parent ).to.equal( viewFoo );
+			expect( newViewRange.start.offset ).to.equal( 2 );
+			expect( newViewRange.end.parent ).to.equal( viewFoo );
+			expect( newViewRange.end.offset ).to.equal( 2 );
+
+			expect( priorityCheck ).to.equal( 1 );
+
+			eventCount++;
+		} );
+
+		viewDocument.on( 'compositionstart', () => {
+			priorityCheck++;
+		}, { priority: priorities.lowest + 1 } );
+
+		viewDocument.on( 'compositionstart', () => {
+			priorityCheck++;
+		}, { priority: priorities.lowest - 1 } );
+
+		changeDomSelection();
+
+		viewDocument.fire( 'compositionstart' );
+
+		expect( eventCount ).to.equal( 1 );
+		expect( priorityCheck ).to.equal( 2 );
+	} );
+
 	it( 'should not fire selectionChange for ignored target', done => {
 		viewDocument.on( 'selectionChange', () => {
-			throw 'selectionChange fired in ignored elements';
+			throw new Error( 'selectionChange fired in ignored elements' );
 		} );
 
 		view.getObserver( MutationObserver ).disable();
@@ -170,7 +286,7 @@ describe( 'SelectionObserver', () => {
 
 	it( 'should not fire selectionChange on render', done => {
 		viewDocument.on( 'selectionChange', () => {
-			throw 'selectionChange on render';
+			throw new Error( 'selectionChange on render' );
 		} );
 
 		setTimeout( done, 70 );
@@ -186,7 +302,7 @@ describe( 'SelectionObserver', () => {
 		view.getObserver( SelectionObserver ).disable();
 
 		viewDocument.on( 'selectionChange', () => {
-			throw 'selectionChange on render';
+			throw new Error( 'selectionChange on render' );
 		} );
 
 		setTimeout( done, 70 );
@@ -219,8 +335,6 @@ describe( 'SelectionObserver', () => {
 	} );
 
 	it( 'should not enter infinite loop', () => {
-		let counter = 70;
-
 		const viewFoo = viewDocument.getRoot().getChild( 0 ).getChild( 0 );
 		view.change( writer => {
 			writer.setSelection( viewFoo, 0 );
@@ -235,18 +349,29 @@ describe( 'SelectionObserver', () => {
 		selectionObserver._clearInfiniteLoop();
 		viewDocument.on( 'selectionChange', selectionChangeSpy );
 
+		let counter = 70;
+
+		const simulateSelectionChanges = () => {
+			if ( !counter ) {
+				return;
+			}
+
+			changeDomSelection();
+			counter--;
+
+			setTimeout( simulateSelectionChanges, 10 );
+		};
+
 		return new Promise( resolve => {
 			viewDocument.on( 'selectionChangeDone', () => {
 				expect( wasInfiniteLoopDetected ).to.be.true;
 				expect( selectionChangeSpy.callCount ).to.equal( 60 );
 
+				counter = 0;
 				resolve();
 			} );
 
-			while ( counter > 0 ) {
-				changeDomSelection();
-				counter--;
-			}
+			simulateSelectionChanges();
 		} );
 	} );
 
@@ -531,7 +656,7 @@ describe( 'SelectionObserver', () => {
 			}, { priority: 'highest' } );
 
 			viewDocument.on( 'selectionChange', () => {
-				throw 'selectionChange fired';
+				throw new Error( 'selectionChange fired' );
 			} );
 
 			viewDocument.isSelecting = false;

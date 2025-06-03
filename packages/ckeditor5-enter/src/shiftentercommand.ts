@@ -1,6 +1,6 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
@@ -8,7 +8,7 @@
  */
 
 import { Command } from '@ckeditor/ckeditor5-core';
-import { getCopyOnEnterAttributes } from './utils';
+import { getCopyOnEnterAttributes } from './utils.js';
 
 import type {
 	DocumentSelection,

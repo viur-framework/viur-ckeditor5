@@ -1,10 +1,11 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-import IconView from '../../src/icon/iconview';
-import normalizeHtml from '@ckeditor/ckeditor5-utils/tests/_utils/normalizehtml';
+import IconView from '../../src/icon/iconview.js';
+import normalizeHtml from '@ckeditor/ckeditor5-utils/tests/_utils/normalizehtml.js';
+import CKEditorError from '@ckeditor/ckeditor5-utils/src/ckeditorerror.js';
 
 describe( 'IconView', () => {
 	let view;
@@ -31,11 +32,16 @@ describe( 'IconView', () => {
 			expect( view.isColorInherited ).to.be.true;
 		} );
 
+		it( 'sets #isVisible', () => {
+			expect( view.isVisible ).to.be.true;
+		} );
+
 		it( 'creates element from template', () => {
 			expect( view.element.tagName ).to.equal( 'svg' );
 			expect( view.element.classList.contains( 'ck' ) ).to.be.true;
 			expect( view.element.classList.contains( 'ck-icon' ) ).to.be.true;
 			expect( view.element.getAttribute( 'viewBox' ) ).to.equal( '0 0 20 20' );
+			expect( view.element.getAttribute( 'aria-hidden' ) ).to.equal( 'true' );
 		} );
 	} );
 
@@ -59,6 +65,18 @@ describe( 'IconView', () => {
 
 				view.isColorInherited = true;
 				expect( view.element.classList.contains( 'ck-icon_inherit-color' ) ).to.be.true;
+			} );
+		} );
+
+		describe( '#isVisible', () => {
+			it( 'should react to changes in view#isVisible', () => {
+				view.isVisible = true;
+
+				expect( view.element.classList.contains( 'ck-hidden' ) ).to.be.false;
+
+				view.isVisible = false;
+
+				expect( view.element.classList.contains( 'ck-hidden' ) ).to.be.true;
 			} );
 		} );
 
@@ -100,6 +118,12 @@ describe( 'IconView', () => {
 
 				sinon.assert.notCalled( innerHTMLSpy.set );
 				sinon.assert.calledTwice( removeChildSpy );
+			} );
+
+			it( 'should throw an error on invalid SVG', () => {
+				expect( () => {
+					view.content = 'foo';
+				} ).to.throw( CKEditorError, 'ui-iconview-invalid-svg' );
 			} );
 
 			describe( 'preservation of presentational attributes on the <svg> element', () => {

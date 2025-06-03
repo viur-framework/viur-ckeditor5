@@ -1,26 +1,38 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* globals window, document */
-
-import { Alignment } from '@ckeditor/ckeditor5-alignment';
-import { Subscript, Superscript } from '@ckeditor/ckeditor5-basic-styles';
-import { CloudServices } from '@ckeditor/ckeditor5-cloud-services';
-import { CodeBlock } from '@ckeditor/ckeditor5-code-block';
-import ArticlePluginSet from '@ckeditor/ckeditor5-core/tests/_utils/articlepluginset';
-import { EasyImage } from '@ckeditor/ckeditor5-easy-image';
-import { DecoupledEditor } from '@ckeditor/ckeditor5-editor-decoupled';
-import { FontBackgroundColor, FontColor, FontFamily, FontSize } from '@ckeditor/ckeditor5-font';
-import { ImageResize, ImageUpload } from '@ckeditor/ckeditor5-image';
-import { IndentBlock } from '@ckeditor/ckeditor5-indent';
-import { PageBreak } from '@ckeditor/ckeditor5-page-break';
-import { TableCellProperties, TableProperties } from '@ckeditor/ckeditor5-table';
-
-import { Minimap } from '@ckeditor/ckeditor5-minimap';
-
-import { CS_CONFIG } from '@ckeditor/ckeditor5-cloud-services/tests/_utils/cloud-services-config.js';
+import {
+	Alignment,
+	Subscript,
+	Superscript,
+	CloudServices,
+	CodeBlock,
+	CKBox,
+	CKBoxImageEdit,
+	DecoupledEditor,
+	FontBackgroundColor,
+	FontColor,
+	FontFamily,
+	FontSize,
+	PictureEditing,
+	ImageInsert,
+	ImageResize,
+	ImageUpload,
+	IndentBlock,
+	PageBreak,
+	TableCellProperties,
+	TableProperties,
+	Minimap
+} from 'ckeditor5';
+import {
+	CS_CONFIG,
+	TOKEN_URL,
+	ArticlePluginSet,
+	attachTourBalloon,
+	getViewportTopOffsetConfig
+} from '@snippets/index.js';
 
 const config = {
 	plugins: [
@@ -32,6 +44,7 @@ const config = {
 		FontColor,
 		FontBackgroundColor,
 		IndentBlock,
+		ImageInsert,
 		ImageUpload,
 		ImageResize,
 		TableProperties,
@@ -41,22 +54,25 @@ const config = {
 		PageBreak,
 		CodeBlock,
 		Minimap,
-		EasyImage
+		PictureEditing,
+		CKBox,
+		CKBoxImageEdit
 	],
 	toolbar: [
 		'undo', 'redo', '|', 'heading',
 		'|', 'bold', 'italic',
-		'|', 'link', 'uploadImage', 'insertTable', 'mediaEmbed',
+		'|', 'link', 'insertImage', 'insertTable', 'mediaEmbed',
 		'|', 'bulletedList', 'numberedList', 'outdent', 'indent'
 	],
 	image: {
 		toolbar: [
 			'imageStyle:inline',
 			'imageStyle:block',
-			'imageStyle:side',
+			'imageStyle:wrapText',
 			'|',
 			'imageTextAlternative',
-			'toggleImageCaption'
+			'toggleImageCaption',
+			'ckboxImageEdit'
 		],
 		styles: [
 			'inline',
@@ -88,8 +104,13 @@ const config = {
 	cloudServices: CS_CONFIG,
 	ui: {
 		viewportOffset: {
-			top: window.getViewportTopOffsetConfig()
+			top: getViewportTopOffsetConfig()
 		}
+	},
+	ckbox: {
+		tokeUrl: TOKEN_URL,
+		allowExternalImagesEditing: [ /^data:/, 'origin', /ckbox/ ],
+		forceDemoLabel: true
 	}
 };
 
@@ -102,7 +123,7 @@ DecoupledEditor
 
 		toolbarContainer.appendChild( editor.ui.view.toolbar.element );
 
-		window.attachTourBalloon( {
+		attachTourBalloon( {
 			target: editor.plugins.get( 'Minimap' )._minimapView.element,
 			text: 'Use the minimap for quick navigation',
 			editor,

@@ -1,16 +1,16 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module restricted-editing/standardeditingmode
  */
 
-import { Plugin } from 'ckeditor5/src/core';
+import { Plugin } from 'ckeditor5/src/core.js';
 
-import StandardEditingModeEditing from './standardeditingmodeediting';
-import StandardEditingModeUI from './standardeditingmodeui';
+import StandardEditingModeEditing from './standardeditingmodeediting.js';
+import StandardEditingModeUI from './standardeditingmodeui.js';
 
 import '../theme/restrictedediting.css';
 
@@ -26,8 +26,15 @@ export default class StandardEditingMode extends Plugin {
 	/**
 	 * @inheritDoc
 	 */
-	public static get pluginName(): 'StandardEditingMode' {
-		return 'StandardEditingMode';
+	public static get pluginName() {
+		return 'StandardEditingMode' as const;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public static override get isOfficialPlugin(): true {
+		return true;
 	}
 
 	public static get requires() {

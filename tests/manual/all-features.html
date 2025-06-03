@@ -1,10 +1,7 @@
 <head>
 	<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://ckeditor.com 'unsafe-inline' 'unsafe-eval'">
-	<!-- For a totally unknown reason, Travis and Vimeo do not like each other and the test fail on CI. -->
 	<meta name="x-cke-crawler-ignore-patterns" content='{
-		"request-failure": "vimeo.com",
-		"response-failure": "vimeo.com",
-		"console-error": [ "<svg> attribute preserveAspectRatio", "vimeo.com" ]
+		"console-error": [ "<svg> attribute preserveAspectRatio", "transparent NaN" ]
 	}'>
 </head>
 
@@ -60,10 +57,10 @@
 		</table>
 	</figure>
 
-	<h2>Basic features overview</h2>
+	<h2><a id="basic-features-overview"></a>Basic features overview</h2>
 	<p>Lorem <b>ipsum dolor sit </b>amet, consectetur <i>adipisicing elit</i>.<sub>1</sub></p>
 	<h3>Basic styles</h3>
-	<p>Ad alias, <s>architecto</s> culpa <b><i>cumque</i></b> dignissimos <code>dolor eos incidunt ipsa itaque</code> <u>laboriosam</u> magnam molestias nihil <i><u>numquam</u></i> odit quam, suscipit <i><s>veritatis</s></i> voluptate voluptatum.<sup>2</sup></p>
+	<p><a id="in-text-bookmark"></a>Ad alias, <s>architecto</s> culpa <b><i>cumque</i></b> dignissimos <code>dolor eos incidunt ipsa itaque</code> <u>laboriosam</u> magnam molestias nihil <i><u>numquam</u></i> odit quam, suscipit <i><s>veritatis</s></i> voluptate voluptatum.<sup>2</sup></p>
 	<h3>Image</h3>
 	<figure class="image">
 		<img alt="bar" src="sample.jpg">
@@ -280,10 +277,10 @@ function bar() {
 
 	/* Styles necessary for the Styles dropdown: */
 
-	@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=PT+Serif:ital,wght@0,400;0,700;1,400&display=swap');
+	@import url('https://fonts.googleapis.com/css2?family=~&family=PT+Serif:ital,wght@0,400;0,700;1,400&display=swap');
 
 	.ck.ck-content h3.category {
-		font-family: 'Bebas Neue';
+		font-family: 'Oswald';
 		font-size: 20px;
 		font-weight: bold;
 		color: #d1d1d1;
@@ -293,7 +290,7 @@ function bar() {
 	}
 
 	.ck.ck-content h2.document-title {
-		font-family: 'Bebas Neue';
+		font-family: 'Oswald';
 		font-size: 50px;
 		font-weight: bold;
 		margin: 0;
@@ -321,7 +318,7 @@ function bar() {
 	}
 
 	.ck.ck-content blockquote.side-quote {
-		font-family: 'Bebas Neue';
+		font-family: 'Oswald';
 		font-style: normal;
 		float: right;
 		width: 35%;

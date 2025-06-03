@@ -1,18 +1,18 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module table/commands/setheaderrowcommand
  */
 
-import { Command } from 'ckeditor5/src/core';
-import type { Element } from 'ckeditor5/src/engine';
-import type TableUtils from '../tableutils';
+import { Command } from 'ckeditor5/src/core.js';
+import type { Element } from 'ckeditor5/src/engine.js';
+import type TableUtils from '../tableutils.js';
 
-import { updateNumericAttribute } from '../utils/common';
-import { getVerticallyOverlappingCells, splitHorizontally } from '../utils/structure';
+import { updateNumericAttribute } from '../utils/common.js';
+import { getVerticallyOverlappingCells, splitHorizontally } from '../utils/structure.js';
 
 /**
  * The header row command.
@@ -43,11 +43,20 @@ export default class SetHeaderRowCommand extends Command {
 	public override refresh(): void {
 		const tableUtils: TableUtils = this.editor.plugins.get( 'TableUtils' );
 		const model = this.editor.model;
-		const selectedCells = tableUtils.getSelectionAffectedTableCells( model.document.selection );
-		const isInTable = selectedCells.length > 0;
 
-		this.isEnabled = isInTable;
-		this.value = isInTable && selectedCells.every( cell => this._isInHeading( cell, cell.parent!.parent as Element ) );
+		const selectedCells = tableUtils.getSelectionAffectedTableCells( model.document.selection );
+
+		if ( selectedCells.length === 0 ) {
+			this.isEnabled = false;
+			this.value = false;
+
+			return;
+		}
+
+		const table = selectedCells[ 0 ].findAncestor( 'table' )!;
+
+		this.isEnabled = model.schema.checkAttribute( table, 'headingRows' );
+		this.value = selectedCells.every( cell => this._isInHeading( cell, cell.parent!.parent as Element ) );
 	}
 
 	/**

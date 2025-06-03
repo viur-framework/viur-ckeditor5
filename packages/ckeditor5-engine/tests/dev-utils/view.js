@@ -1,27 +1,25 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* globals document */
-
-import { parse, stringify, getData, setData } from '../../src/dev-utils/view';
-import ViewDocument from '../../src/view/document';
-import DocumentFragment from '../../src/view/documentfragment';
-import Position from '../../src/view/position';
-import Element from '../../src/view/element';
-import AttributeElement from '../../src/view/attributeelement';
-import ContainerElement from '../../src/view/containerelement';
-import EmptyElement from '../../src/view/emptyelement';
-import UIElement from '../../src/view/uielement';
-import RawElement from '../../src/view/rawelement';
-import Text from '../../src/view/text';
-import DocumentSelection from '../../src/view/documentselection';
-import Range from '../../src/view/range';
-import View from '../../src/view/view';
-import XmlDataProcessor from '../../src/dataprocessor/xmldataprocessor';
-import createViewRoot from '../view/_utils/createroot';
-import { StylesProcessor } from '../../src/view/stylesmap';
+import { parse, stringify, getData, setData } from '../../src/dev-utils/view.js';
+import ViewDocument from '../../src/view/document.js';
+import DocumentFragment from '../../src/view/documentfragment.js';
+import Position from '../../src/view/position.js';
+import Element from '../../src/view/element.js';
+import AttributeElement from '../../src/view/attributeelement.js';
+import ContainerElement from '../../src/view/containerelement.js';
+import EmptyElement from '../../src/view/emptyelement.js';
+import UIElement from '../../src/view/uielement.js';
+import RawElement from '../../src/view/rawelement.js';
+import Text from '../../src/view/text.js';
+import DocumentSelection from '../../src/view/documentselection.js';
+import Range from '../../src/view/range.js';
+import View from '../../src/view/view.js';
+import XmlDataProcessor from '../../src/dataprocessor/xmldataprocessor.js';
+import createViewRoot from '../view/_utils/createroot.js';
+import { StylesProcessor } from '../../src/view/stylesmap.js';
 
 describe( 'view test utils', () => {
 	describe( 'getData, setData', () => {
@@ -167,6 +165,15 @@ describe( 'view test utils', () => {
 			}, b );
 
 			expect( stringify( p ) ).to.equal( '<p bar="taz" baz="qux" class="short wide"><b foo="bar">foobar</b></p>' );
+		} );
+
+		it( 'should write elements with attributes which values include double quotes', () => {
+			const text = new Text( viewDocument, 'foobar' );
+			const p = new Element( viewDocument, 'p', {
+				style: 'font-family: Calibri, "Times New Roman", sans-serif'
+			}, text );
+
+			expect( stringify( p ) ).to.equal( '<p style="font-family:Calibri, &quot;Times New Roman&quot;, sans-serif">foobar</p>' );
 		} );
 
 		it( 'should write selection ranges inside elements', () => {
@@ -437,6 +444,30 @@ describe( 'view test utils', () => {
 				.to.equal( '<container:p><raw:span><b>foo</b></raw:span></container:p>' );
 		} );
 
+		it( 'should not return `data-list-item-id` on <li> element by default (skipListItemIds=true)', () => {
+			const li = new ContainerElement( viewDocument, 'li', { 'data-list-item-id': 'foo' } );
+			const ol = new ContainerElement( viewDocument, 'ol', null, li );
+
+			expect( stringify( ol, null, { showType: true, skipListItemIds: true } ) )
+				.to.equal( '<container:ol><container:li></container:li></container:ol>' );
+		} );
+
+		it( 'should not return `data-list-item-id` on <li> element when set (skipListItemIds=true)', () => {
+			const li = new ContainerElement( viewDocument, 'li', { 'data-list-item-id': 'foo' } );
+			const ol = new ContainerElement( viewDocument, 'ol', null, li );
+
+			expect( stringify( ol, null, { showType: true, skipListItemIds: true } ) )
+				.to.equal( '<container:ol><container:li></container:li></container:ol>' );
+		} );
+
+		it( 'should return `data-list-item-id` on <li> element (skipListItemIds=true)', () => {
+			const li = new ContainerElement( viewDocument, 'li', { 'data-list-item-id': 'foo' } );
+			const ol = new ContainerElement( viewDocument, 'ol', null, li );
+
+			expect( stringify( ol, null, { showType: true, skipListItemIds: false } ) )
+				.to.equal( '<container:ol><container:li data-list-item-id="foo"></container:li></container:ol>' );
+		} );
+
 		it( 'should sort classes in specified element', () => {
 			const text = new Text( viewDocument, 'foobar' );
 			const b = new Element( viewDocument, 'b', {
@@ -560,6 +591,13 @@ describe( 'view test utils', () => {
 
 			const parsed2 = parse( '<container:div view-id="bar"></container:div>' );
 			expect( parsed2.id ).to.be.undefined;
+		} );
+
+		it( 'should correctly parse whitespaces around custom inline object elements', () => {
+			const parsed = parse( '<p>Foo <inlineObj></inlineObj> bar</p>', { inlineObjectElements: [ 'inlineObj' ] } );
+
+			expect( parsed.getChild( 0 ).data ).to.equal( 'Foo ' );
+			expect( parsed.getChild( 2 ).data ).to.equal( ' bar' );
 		} );
 
 		it( 'should paste nested elements and texts', () => {

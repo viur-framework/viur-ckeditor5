@@ -1,13 +1,13 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module html-support/htmlpagedataprocessor
  */
 
-import { HtmlDataProcessor, UpcastWriter, type ViewDocumentFragment } from 'ckeditor5/src/engine';
+import { HtmlDataProcessor, UpcastWriter, type ViewDocumentFragment } from 'ckeditor5/src/engine.js';
 
 /**
  * The full page HTML data processor class.
@@ -19,7 +19,7 @@ export default class HtmlPageDataProcessor extends HtmlDataProcessor {
 	 */
 	public override toView( data: string ): ViewDocumentFragment {
 		// Ignore content that is not a full page source.
-		if ( !data.match( /<(?:html|body|head|meta)(?:\s[^>]*)?>/i ) ) {
+		if ( !/<(?:html|body|head|meta)(?:\s[^>]*)?>/i.test( data.trim().slice( 0, 10_000 ) ) ) {
 			return super.toView( data );
 		}
 
@@ -27,14 +27,14 @@ export default class HtmlPageDataProcessor extends HtmlDataProcessor {
 		let docType = '';
 		let xmlDeclaration = '';
 
-		data = data.replace( /<!DOCTYPE[^>]*>/i, match => {
-			docType = match;
+		data = data.trim().replace( /<\?xml\s[^?]*\?>/i, match => {
+			xmlDeclaration = match;
 
 			return '';
 		} );
 
-		data = data.replace( /<\?xml\s[^?]*\?>/i, match => {
-			xmlDeclaration = match;
+		data = data.trim().replace( /^<!DOCTYPE\s[^>]*?>/i, match => {
+			docType = match;
 
 			return '';
 		} );
@@ -52,6 +52,11 @@ export default class HtmlPageDataProcessor extends HtmlDataProcessor {
 
 		// Using the DOM document with body content extracted as a skeleton of the page.
 		writer.setCustomProperty( '$fullPageDocument', domFragment.ownerDocument.documentElement.outerHTML, viewFragment );
+
+		// List of `<style>` elements extracted from document's `<head>` element.
+		const headStylesElements = Array.from( domFragment.ownerDocument.querySelectorAll( 'head style' ) );
+
+		writer.setCustomProperty( '$fullPageHeadStyles', headStylesElements, viewFragment );
 
 		if ( docType ) {
 			writer.setCustomProperty( '$fullPageDocType', docType, viewFragment );

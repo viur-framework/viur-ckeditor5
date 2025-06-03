@@ -1,21 +1,21 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module html-support/integrations/script
  */
 
-import { Plugin } from 'ckeditor5/src/core';
+import { Plugin } from 'ckeditor5/src/core.js';
 import {
 	createObjectView,
 	modelToViewBlockAttributeConverter,
 	viewToModelBlockAttributeConverter,
 	viewToModelObjectConverter
-} from '../converters';
-import DataFilter, { type DataFilterRegisterEvent } from '../datafilter';
-import type { DataSchemaBlockElementDefinition } from '../dataschema';
+} from '../converters.js';
+import DataFilter, { type DataFilterRegisterEvent } from '../datafilter.js';
+import type { DataSchemaBlockElementDefinition } from '../dataschema.js';
 
 /**
  * Provides the General HTML Support for `script` elements.
@@ -31,8 +31,15 @@ export default class ScriptElementSupport extends Plugin {
 	/**
 	 * @inheritDoc
 	 */
-	public static get pluginName(): 'ScriptElementSupport' {
-		return 'ScriptElementSupport';
+	public static get pluginName() {
+		return 'ScriptElementSupport' as const;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public static override get isOfficialPlugin(): true {
+		return true;
 	}
 
 	/**
@@ -49,7 +56,7 @@ export default class ScriptElementSupport extends Plugin {
 			schema.register( 'htmlScript', definition.modelSchema );
 
 			schema.extend( 'htmlScript', {
-				allowAttributes: [ 'htmlAttributes', 'htmlContent' ],
+				allowAttributes: [ 'htmlScriptAttributes', 'htmlContent' ],
 				isContent: true
 			} );
 

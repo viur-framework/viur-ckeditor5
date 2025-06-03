@@ -5,10 +5,10 @@ order: 25
 
 # Abbreviation plugin tutorial - part 1
 
-This guide will show you how to create a simple abbreviation plugin for CKEditor 5.
+This guide will show you how to create a simple abbreviation plugin for CKEditor&nbsp;5.
 
 <info-box>
-	Before you get to work, you should check out the {@link framework/quick-start Quick start} guide first to set up the framework and building tools. Be sure to check out the {@link framework/using-package-generatorpackage generator guide} as well.
+	Before you get to work,be sure to check out the {@link framework/using-package-generatorpackage generator guide}.
 </info-box>
 
 We’ll create a toolbar button that lets the users insert abbreviations into their document.  The abbreviations will use [the `<abbr>` <abbr title="HyperText Markup Language"> HTML </abbr> element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/abbr), with a ‘title’ attribute that will show up in a tooltip when the user hovers over the element.
@@ -107,7 +107,7 @@ Let's define the 3 components.
 
 import AbbreviationEditing from './abbreviationediting';
 import AbbreviationUI from './abbreviationui';
-import { Plugin } from '@ckeditor/ckeditor5-core';
+import { Plugin } from 'ckeditor5';
 
 export default class Abbreviation extends Plugin {
 	static get requires() {
@@ -119,7 +119,7 @@ export default class Abbreviation extends Plugin {
 ```js
 // abbreviation/abbreviationui.js
 
-import { Plugin } from '@ckeditor/ckeditor5-core';
+import { Plugin } from 'ckeditor5';
 
 export default class AbbreviationUI extends Plugin {
 	init() {
@@ -131,7 +131,7 @@ export default class AbbreviationUI extends Plugin {
 ```js
 // abbreviation/abbreviationediting.js
 
-import { Plugin } from '@ckeditor/ckeditor5-core';
+import { Plugin } from 'ckeditor5';
 
 export default class AbbreviationEditing extends Plugin {
 	init() {
@@ -174,7 +174,7 @@ Rebuild your project, refresh the browser and you should see that the `Abbreviat
 
 ## The model and the view layers
 
-CKEditor 5 implements its own custom data model, which does not map to the DOM 1:1. The model document is converted into the view, which represents the content that the user is editing - the DOM structure you see in the browser.
+CKEditor&nbsp;5 implements its own custom data model, which does not map to the DOM 1:1. The model document is converted into the view, which represents the content that the user is editing - the DOM structure you see in the browser.
 
 <info-box>
 	Before moving forward, it is important to understand the editor architecture. Read more about the {@link framework/architecture/editing-engine#model model} and the {@link framework/architecture/editing-engine#view view} to get familiar with the basic concepts.
@@ -199,7 +199,7 @@ Update the `AbbreviationEditing` plugin with this definition:
 ```js
 // abbreviation/abbreviationediting.js)
 
-import { Plugin } from '@ckeditor/ckeditor5-core';
+import { Plugin } from 'ckeditor5';
 
 export default class AbbreviationEditing extends Plugin {
 	init() {
@@ -238,7 +238,7 @@ We will need to use a callback function, in order to get the title stored as a m
 ```js
 // abbreviation/abbreviationediting.js
 
-import { Plugin } from '@ckeditor/ckeditor5-core';
+import { Plugin } from 'ckeditor5';
 
 export default class AbbreviationEditing extends Plugin {
 	init() {
@@ -281,7 +281,7 @@ We also need to grab the title value from content and use it in the model. We ca
 ```js
 // abbreviation/abbreviationediting.js
 
-import { Plugin } from '@ckeditor/ckeditor5-core';
+import { Plugin } from 'ckeditor5';
 
 export default class AbbreviationEditing extends Plugin {
 	init() {
@@ -297,7 +297,7 @@ export default class AbbreviationEditing extends Plugin {
 
 		conversion.for( 'downcast' ).attributeToElement(
 			// ...
-		 );
+		);
 
 		// Conversion from a view element to a model attribute
 		conversion.for( 'upcast' ).elementToAttribute( {
@@ -373,7 +373,7 @@ ClassicEditor
 		],
 		toolbar: [
 			'heading', 'bold', 'italic', 'numberedList', 'bulletedList', '|',
-			'abbreviation'														  // ADDED
+			'abbreviation'														 // ADDED
 		]
 	} )
 	.then( editor => {
@@ -391,7 +391,7 @@ We will use the {@link module:engine/model/model~Model#insertContent `writer.ins
 ```js
 // abbreviation/abbreviationui.js
 
-import { Plugin } from '@ckeditor/ckeditor5-core';
+import { Plugin } from 'ckeditor5';
 import { ButtonView } from '@ckeditor/ckeditor5-ui';
 
 class AbbreviationUI extends Plugin {
@@ -418,7 +418,7 @@ class AbbreviationUI extends Plugin {
 }
 ```
 
-That's it for the first part of this tutorial! Your plugin should now work (in its most basic form). Go on to {@link framework/abbreviation-plugin-tutorial/abbreviation-plugin-level-2 the second part}, where you will create a balloon with a form to get user's input, replacing our hard-coded "WYSIWYG" abbreviation.
+That's it for the first part of this tutorial! Your plugin should now work (in its most basic form). Go on to {@link tutorials/abbreviation-plugin-tutorial/abbreviation-plugin-level-2 the second part}, where you will create a balloon with a form to get user's input, replacing our hard-coded "WYSIWYG" abbreviation.
 
 ## Demo
 
@@ -437,7 +437,7 @@ import { Heading } from '@ckeditor/ckeditor5-heading';
 import { List } from '@ckeditor/ckeditor5-list';
 import { Paragraph } from '@ckeditor/ckeditor5-paragraph';
 
-import { Plugin } from '@ckeditor/ckeditor5-core';
+import { Plugin } from 'ckeditor5';
 import { ButtonView } from '@ckeditor/ckeditor5-ui';
 
 class AbbreviationUI extends Plugin {

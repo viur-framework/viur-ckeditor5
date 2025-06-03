@@ -1,19 +1,19 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module table/tablecaption/tablecaptionediting
  */
 
-import { Plugin, type Editor } from 'ckeditor5/src/core';
-import { Element, enablePlaceholder } from 'ckeditor5/src/engine';
-import { toWidgetEditable } from 'ckeditor5/src/widget';
+import { Plugin, type Editor } from 'ckeditor5/src/core.js';
+import { Element, enablePlaceholder } from 'ckeditor5/src/engine.js';
+import { toWidgetEditable } from 'ckeditor5/src/widget.js';
 
-import injectTableCaptionPostFixer from '../converters/table-caption-post-fixer';
-import ToggleTableCaptionCommand from './toggletablecaptioncommand';
-import { isTable, matchTableCaptionViewElement } from './utils';
+import injectTableCaptionPostFixer from '../converters/table-caption-post-fixer.js';
+import ToggleTableCaptionCommand from './toggletablecaptioncommand.js';
+import { isTable, matchTableCaptionViewElement } from './utils.js';
 
 /**
  * The table caption editing plugin.
@@ -30,8 +30,15 @@ export default class TableCaptionEditing extends Plugin {
 	/**
 	 * @inheritDoc
 	 */
-	public static get pluginName(): 'TableCaptionEditing' {
-		return 'TableCaptionEditing';
+	public static get pluginName() {
+		return 'TableCaptionEditing' as const;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public static override get isOfficialPlugin(): true {
+		return true;
 	}
 
 	/**
@@ -95,10 +102,11 @@ export default class TableCaptionEditing extends Plugin {
 				const figcaptionElement = writer.createEditableElement( 'figcaption' );
 				writer.setCustomProperty( 'tableCaption', true, figcaptionElement );
 
+				figcaptionElement.placeholder = t( 'Enter table caption' );
+
 				enablePlaceholder( {
 					view,
 					element: figcaptionElement,
-					text: t( 'Enter table caption' ),
 					keepOnFocus: true
 				} );
 

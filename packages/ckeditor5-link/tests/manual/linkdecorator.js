@@ -1,13 +1,11 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* globals console:false, window, document, CKEditorInspector */
-
-import ClassicEditor from '@ckeditor/ckeditor5-editor-classic/src/classiceditor';
-import ArticlePluginSet from '@ckeditor/ckeditor5-core/tests/_utils/articlepluginset';
-import LinkImage from '../../src/linkimage';
+import ClassicEditor from '@ckeditor/ckeditor5-editor-classic/src/classiceditor.js';
+import ArticlePluginSet from '@ckeditor/ckeditor5-core/tests/_utils/articlepluginset.js';
+import LinkImage from '../../src/linkimage.js';
 
 // Just to have nicely styles switchbutton;
 import '@ckeditor/ckeditor5-theme-lark/theme/ckeditor5-ui/components/list/list.css';
@@ -26,7 +24,8 @@ ClassicEditor
 					attributes: {
 						target: '_blank',
 						rel: 'noopener noreferrer'
-					}
+					},
+					defaultValue: true
 				},
 				isDownloadable: {
 					mode: 'manual',
@@ -38,18 +37,30 @@ ClassicEditor
 				isGallery: {
 					mode: 'manual',
 					label: 'Gallery link',
+					classes: 'gallery'
+				},
+				isNofollow: {
+					mode: 'manual',
+					label: 'No Follow',
 					attributes: {
-						class: 'gallery'
+						rel: 'nofollow'
+					}
+				},
+				isSponsored: {
+					mode: 'manual',
+					label: 'Sponsored',
+					attributes: {
+						rel: 'sponsored'
 					}
 				}
 			}
 		},
 		image: {
-			toolbar: [ 'imageStyle:block', 'imageStyle:side', '|', 'imageTextAlternative', '|', 'linkImage' ]
+			toolbar: [ 'imageStyle:block', 'imageStyle:wrapText', '|', 'imageTextAlternative', '|', 'linkImage' ]
 		}
 	} )
 	.then( editor => {
-		CKEditorInspector.attach( 'manual', editor );
+		CKEditorInspector.attach( { manual: editor } );
 		window.editors.manualDecorators = editor;
 	} )
 	.catch( err => {
@@ -80,11 +91,11 @@ ClassicEditor
 			addTargetToExternalLinks: true
 		},
 		image: {
-			toolbar: [ 'imageStyle:block', 'imageStyle:side', '|', 'imageTextAlternative', '|', 'linkImage' ]
+			toolbar: [ 'imageStyle:block', 'imageStyle:wrapText', '|', 'imageTextAlternative', '|', 'linkImage' ]
 		}
 	} )
 	.then( editor => {
-		CKEditorInspector.attach( 'automatic', editor );
+		CKEditorInspector.attach( { automatic: editor } );
 		window.editors.automaticDecorators = editor;
 	} )
 	.catch( err => {

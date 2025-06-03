@@ -1,6 +1,6 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
@@ -16,14 +16,23 @@ import type {
 	ViewElement,
 	ModelPostFixer,
 	Model
-} from 'ckeditor5/src/engine';
+} from 'ckeditor5/src/engine.js';
 
-import { Plugin } from 'ckeditor5/src/core';
+import { Plugin } from 'ckeditor5/src/core.js';
 import type { TableUtils } from '@ckeditor/ckeditor5-table';
 
-import { updateViewAttributes, type GHSViewAttributes } from '../utils';
-import DataFilter, { type DataFilterRegisterEvent } from '../datafilter';
-import { getDescendantElement } from './integrationutils';
+import { updateViewAttributes, type GHSViewAttributes } from '../utils.js';
+import DataFilter, { type DataFilterRegisterEvent } from '../datafilter.js';
+import { getDescendantElement } from './integrationutils.js';
+
+const STYLE_ATTRIBUTES_TO_PROPAGATE = [
+	'width',
+	'max-width',
+	'min-width',
+	'height',
+	'min-height',
+	'max-height'
+];
 
 /**
  * Provides the General HTML Support integration with {@link module:table/table~Table Table} feature.
@@ -39,8 +48,15 @@ export default class TableElementSupport extends Plugin {
 	/**
 	 * @inheritDoc
 	 */
-	public static get pluginName(): 'TableElementSupport' {
-		return 'TableElementSupport';
+	public static get pluginName() {
+		return 'TableElementSupport' as const;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public static override get isOfficialPlugin(): true {
+		return true;
 	}
 
 	/**
@@ -69,7 +85,7 @@ export default class TableElementSupport extends Plugin {
 
 			schema.extend( 'table', {
 				allowAttributes: [
-					'htmlAttributes',
+					'htmlTableAttributes',
 					// Figure, thead and tbody elements don't have model counterparts.
 					// We will be preserving attributes on table element using these attribute keys.
 					'htmlFigureAttributes', 'htmlTheadAttributes', 'htmlTbodyAttributes'
@@ -132,7 +148,7 @@ function viewToModelTableAttributeConverter( dataFilter: DataFilter ) {
 
 			const viewTableElement = data.viewItem;
 
-			preserveElementAttributes( viewTableElement, 'htmlAttributes' );
+			preserveElementAttributes( viewTableElement, 'htmlTableAttributes' );
 
 			for ( const childNode of viewTableElement.getChildren() ) {
 				if ( childNode.is( 'element', 'thead' ) ) {
@@ -187,7 +203,7 @@ function viewToModelFigureAttributeConverter( dataFilter: DataFilter ) {
  */
 function modelToViewTableAttributeConverter() {
 	return ( dispatcher: DowncastDispatcher ) => {
-		addAttributeConversionDispatcherHandler( 'table', 'htmlAttributes' );
+		addAttributeConversionDispatcherHandler( 'table', 'htmlTableAttributes' );
 		addAttributeConversionDispatcherHandler( 'figure', 'htmlFigureAttributes' );
 		addAttributeConversionDispatcherHandler( 'thead', 'htmlTheadAttributes' );
 		addAttributeConversionDispatcherHandler( 'tbody', 'htmlTbodyAttributes' );
@@ -207,13 +223,61 @@ function modelToViewTableAttributeConverter() {
 
 				conversionApi.consumable.consume( data.item, evt.name );
 
-				updateViewAttributes(
-					conversionApi.writer,
-					data.attributeOldValue as GHSViewAttributes,
-					data.attributeNewValue as GHSViewAttributes,
-					viewElement!
-				);
+				// Downcast selected styles to a figure element instead of a table element.
+				if ( attributeName === 'htmlTableAttributes' && containerElement !== viewElement ) {
+					const oldAttributes = splitAttributesForFigureAndTable( data.attributeOldValue as GHSViewAttributes );
+					const newAttributes = splitAttributesForFigureAndTable( data.attributeNewValue as GHSViewAttributes );
+
+					updateViewAttributes(
+						conversionApi.writer,
+						oldAttributes.tableAttributes,
+						newAttributes.tableAttributes,
+						viewElement!
+					);
+
+					updateViewAttributes(
+						conversionApi.writer,
+						oldAttributes.figureAttributes,
+						newAttributes.figureAttributes,
+						containerElement!
+					);
+				} else {
+					updateViewAttributes(
+						conversionApi.writer,
+						data.attributeOldValue as GHSViewAttributes,
+						data.attributeNewValue as GHSViewAttributes,
+						viewElement!
+					);
+				}
 			} );
 		}
 	};
+}
+
+/**
+ * Splits styles based on the `STYLE_ATTRIBUTES_TO_PROPAGATE` pattern that should be moved to the parent element
+ * and those that should remain on element.
+ */
+function splitAttributesForFigureAndTable( data: GHSViewAttributes ): {
+	figureAttributes: GHSViewAttributes;
+	tableAttributes: GHSViewAttributes;
+} {
+	const figureAttributes: GHSViewAttributes = {};
+	const tableAttributes: GHSViewAttributes = { ...data };
+
+	if ( !data || !( 'styles' in data ) ) {
+		return { figureAttributes, tableAttributes };
+	}
+
+	tableAttributes.styles = {};
+
+	for ( const [ key, value ] of Object.entries( data.styles! ) ) {
+		if ( STYLE_ATTRIBUTES_TO_PROPAGATE.includes( key ) ) {
+			figureAttributes.styles = { ...figureAttributes.styles, [ key ]: value };
+		} else {
+			tableAttributes.styles = { ...tableAttributes.styles, [ key ]: value };
+		}
+	}
+
+	return { figureAttributes, tableAttributes };
 }

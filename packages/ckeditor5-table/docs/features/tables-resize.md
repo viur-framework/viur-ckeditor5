@@ -1,7 +1,8 @@
 ---
 menu-title: Table column resizing
+meta-title: Table column resizing | CKEditor 5 Documentation
 category: tables
-order: 40
+order: 30
 modified_at: 2022-05-19
 ---
 # Table column resize
@@ -17,36 +18,35 @@ To resize a column, simply hover your pointer over the column edge until it gets
 {@snippet features/table-column-resize}
 
 <info-box info>
-	This demo only presents a limited set of features. Visit the {@link examples/builds/full-featured-editor full-featured editor example} to see more in action.
+	This demo presents a limited set of features. Visit the {@link examples/builds/full-featured-editor feature-rich editor example} to see more in action.
 </info-box>
 
 The column resize feature is compatible with the {@link features/export-word Export to Word} feature. The converter will respect the column width set in the editor and retain it in the created .DOCX file.
 
 ## Installation
 
-<info-box>
-	By default, the table column resize feature is not included in the {@link installation/getting-started/predefined-builds predefined builds} and must be installed separately.
+<info-box info>
+	⚠️ **New import paths**
+
+	Starting with {@link updating/update-to-42 version 42.0.0}, we changed the format of import paths. This guide uses the new, shorter format. Refer to the {@link getting-started/legacy-getting-started/legacy-imports Packages in the legacy setup} guide if you use an older version of CKEditor&nbsp;5.
 </info-box>
 
-To enable the table column resize feature in your editor, you need to have the [`@ckeditor/ckeditor5-table`](https://www.npmjs.com/package/@ckeditor/ckeditor5-table) package installed (it is already present in the predefined builds):
+After {@link getting-started/integrations-cdn/quick-start installing the editor}, add the feature to your plugin list and toolbar configuration:
 
-```
-npm install --save @ckeditor/ckeditor5-table
-```
-
-Then add the `Table` and **`TableColumnResize`** plugins to your plugin list and configure the table toolbar:
-
+<code-switcher>
 ```js
-import { Table, TableColumnResize } from '@ckeditor/ckeditor5-table';
+import { ClassicEditor, Table, TableColumnResize } from 'ckeditor5';
 
 ClassicEditor
 	.create( document.querySelector( '#editor' ), {
+		licenseKey: '<YOUR_LICENSE_KEY>', // Or 'GPL'.
 		plugins: [ Table, TableColumnResize, /* ... */ ],
 		toolbar: [ 'insertTable', /* ... */ ],
 	} )
 	.then( /* ... */ )
 	.catch( /* ... */ );
 ```
+</code-switcher>
 
 ## Common API
 
@@ -55,7 +55,7 @@ The {@link module:table/tablecolumnresize~TableColumnResize} plugin does not reg
 <!-- Only drag handle, so this needs to be checked. No commands, tho. -->
 
 <info-box>
-	We recommend using the official {@link framework/development-tools#ckeditor-5-inspector CKEditor 5 inspector} for development and debugging. It will give you tons of useful information about the state of the editor such as internal data structures, selection, commands, and many more.
+	We recommend using the official {@link framework/development-tools/inspector CKEditor&nbsp;5 inspector} for development and debugging. It will give you tons of useful information about the state of the editor such as internal data structures, selection, commands, and many more.
 </info-box>
 
 ## Contribute

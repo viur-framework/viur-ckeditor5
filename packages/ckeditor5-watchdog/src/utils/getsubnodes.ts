@@ -1,13 +1,11 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module watchdog/utils/getsubnodes
  */
-
-/* globals EventTarget, Event */
 
 export default function getSubNodes( head: unknown, excludedProperties = new Set() ): Set<unknown> {
 	const nodes = [ head ];
@@ -39,10 +37,9 @@ export default function getSubNodes( head: unknown, excludedProperties = new Set
 					// @if CK_DEBUG_WATCHDOG // 	prevNodeMap.set( n, node );
 					// @if CK_DEBUG_WATCHDOG // }
 				}
-			} catch ( err ) {
+			} catch {
 				// Do not log errors for broken structures
 				// since we are in the error handling process already.
-				// eslint-disable-line no-empty
 			}
 		} else {
 			for ( const key in node ) {

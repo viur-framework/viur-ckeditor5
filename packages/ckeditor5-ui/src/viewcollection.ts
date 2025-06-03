@@ -1,6 +1,6 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
@@ -15,7 +15,7 @@ import {
 	type EmitterMixinDelegateChain
 } from '@ckeditor/ckeditor5-utils';
 
-import type View from './view';
+import type View from './view.js';
 
 /**
  * Collects {@link module:ui/view~View} instances.
@@ -58,7 +58,7 @@ import type View from './view';
  * of a {@link module:ui/template~Template template}.
  */
 export default class ViewCollection<TView extends View = View> extends Collection<TView> {
-	public id?: string;
+	public declare id?: string;
 
 	/**
 	 * A parent element within which child views are rendered and managed in DOM.
@@ -105,7 +105,7 @@ export default class ViewCollection<TView extends View = View> extends Collectio
 	 * {@link #remove removing} views in the collection synchronizes their
 	 * {@link module:ui/view~View#element elements} in the parent element.
 	 *
-	 * @param element A new parent element.
+	 * @param elementOrDocFragment A new parent element or document fragment.
 	 */
 	public setParent( elementOrDocFragment: DocumentFragment | HTMLElement ): void {
 		this._parentElement = elementOrDocFragment;

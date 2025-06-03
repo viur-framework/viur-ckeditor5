@@ -1,29 +1,34 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* global document, Event, console */
-
-import ToolbarView from '../../src/toolbar/toolbarview';
-import ToolbarSeparatorView from '../../src/toolbar/toolbarseparatorview';
-import KeystrokeHandler from '@ckeditor/ckeditor5-utils/src/keystrokehandler';
-import ComponentFactory from '../../src/componentfactory';
-import FocusTracker from '@ckeditor/ckeditor5-utils/src/focustracker';
-import FocusCycler from '../../src/focuscycler';
-import { keyCodes } from '@ckeditor/ckeditor5-utils/src/keyboard';
-import ViewCollection from '../../src/viewcollection';
-import global from '@ckeditor/ckeditor5-utils/src/dom/global';
-import View from '../../src/view';
-import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils';
-import { add as addTranslations, _clear as clearTranslations } from '@ckeditor/ckeditor5-utils/src/translation-service';
-import Rect from '@ckeditor/ckeditor5-utils/src/dom/rect';
-import Locale from '@ckeditor/ckeditor5-utils/src/locale';
-import ResizeObserver from '@ckeditor/ckeditor5-utils/src/dom/resizeobserver';
-import ToolbarLineBreakView from '../../src/toolbar/toolbarlinebreakview';
-import DropdownView from '../../src/dropdown/dropdownview';
-
-import { icons } from '@ckeditor/ckeditor5-core';
+import ToolbarView from '../../src/toolbar/toolbarview.js';
+import ToolbarSeparatorView from '../../src/toolbar/toolbarseparatorview.js';
+import KeystrokeHandler from '@ckeditor/ckeditor5-utils/src/keystrokehandler.js';
+import ComponentFactory from '../../src/componentfactory.js';
+import FocusTracker from '@ckeditor/ckeditor5-utils/src/focustracker.js';
+import FocusCycler from '../../src/focuscycler.js';
+import { keyCodes } from '@ckeditor/ckeditor5-utils/src/keyboard.js';
+import ViewCollection from '../../src/viewcollection.js';
+import global from '@ckeditor/ckeditor5-utils/src/dom/global.js';
+import View from '../../src/view.js';
+import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils.js';
+import { add as addTranslations, _clear as clearTranslations } from '@ckeditor/ckeditor5-utils/src/translation-service.js';
+import Rect from '@ckeditor/ckeditor5-utils/src/dom/rect.js';
+import Locale from '@ckeditor/ckeditor5-utils/src/locale.js';
+import ResizeObserver from '@ckeditor/ckeditor5-utils/src/dom/resizeobserver.js';
+import ToolbarLineBreakView from '../../src/toolbar/toolbarlinebreakview.js';
+import DropdownView from '../../src/dropdown/dropdownview.js';
+import {
+	IconAlignLeft,
+	IconBold,
+	IconImportExport,
+	IconParagraph,
+	IconPlus,
+	IconText,
+	IconThreeVerticalDots
+} from '@ckeditor/ckeditor5-icons';
 
 describe( 'ToolbarView', () => {
 	let locale, view;
@@ -193,6 +198,21 @@ describe( 'ToolbarView', () => {
 
 				view.destroy();
 			} );
+
+			it( 'should have proper ARIA properties', () => {
+				expect( view.element.getAttribute( 'role' ) ).to.equal( 'toolbar' );
+			} );
+
+			it( 'should allow customizing toolbar role', () => {
+				const view = new ToolbarView( locale );
+				view.role = 'radiogroup';
+
+				view.render();
+
+				expect( view.element.getAttribute( 'role' ) ).to.equal( 'radiogroup' );
+
+				view.destroy();
+			} );
 		} );
 
 		describe( 'event listeners', () => {
@@ -256,28 +276,36 @@ describe( 'ToolbarView', () => {
 
 			view.render();
 
-			sinon.assert.calledOnce( spyAdd );
+			sinon.assert.calledOnceWithExactly( spyAdd, view.element );
 			sinon.assert.notCalled( spyRemove );
 
 			view.destroy();
 		} );
 
-		it( 'registers #items in #focusTracker', () => {
+		// https://github.com/cksource/ckeditor5-commercial/issues/6633
+		it( 'registers #items in #focusTracker as View instances (not just DOM elements) to alow for complex Views scattered across ' +
+			'multiple DOM sub-trees',
+		() => {
 			const view = new ToolbarView( locale );
 			const spyAdd = sinon.spy( view.focusTracker, 'add' );
 			const spyRemove = sinon.spy( view.focusTracker, 'remove' );
 
-			view.items.add( focusable() );
-			view.items.add( focusable() );
+			const focusableViewA = focusable();
+			const focusableViewB = focusable();
+
+			view.items.add( focusableViewA );
+			view.items.add( focusableViewB );
 			sinon.assert.notCalled( spyAdd );
 
 			view.render();
 
 			// 2 for items and 1 for toolbar itself.
 			sinon.assert.calledThrice( spyAdd );
+			sinon.assert.calledWithExactly( spyAdd.secondCall, focusableViewA );
+			sinon.assert.calledWithExactly( spyAdd.thirdCall, focusableViewB );
 
 			view.items.remove( 1 );
-			sinon.assert.calledOnce( spyRemove );
+			sinon.assert.calledOnceWithExactly( spyRemove, focusableViewB );
 
 			view.destroy();
 		} );
@@ -706,7 +734,7 @@ describe( 'ToolbarView', () => {
 
 				expect( dropdownView.buttonView.label, 'label' ).to.equal( 'Some label' );
 				expect( dropdownView.buttonView.withText, 'withText' ).to.be.false;
-				expect( dropdownView.buttonView.icon, 'icon' ).to.equal( icons.threeVerticalDots );
+				expect( dropdownView.buttonView.icon, 'icon' ).to.equal( IconThreeVerticalDots );
 				expect( dropdownView.buttonView.tooltip, 'tooltip' ).to.be.true;
 
 				const nestedToolbarItems = toolbarView.items;
@@ -794,17 +822,17 @@ describe( 'ToolbarView', () => {
 			} );
 
 			describe( 'pre-configured icons', () => {
-				const iconNames = [
-					'alignLeft',
-					'bold',
-					'importExport',
-					'paragraph',
-					'plus',
-					'text',
-					'threeVerticalDots'
-				];
+				const iconNames = {
+					alignLeft: IconAlignLeft,
+					bold: IconBold,
+					importExport: IconImportExport,
+					paragraph: IconParagraph,
+					plus: IconPlus,
+					text: IconText,
+					threeVerticalDots: IconThreeVerticalDots
+				};
 
-				for ( const name of iconNames ) {
+				for ( const [ name, icon ] of Object.entries( iconNames ) ) {
 					it( `should provide the "${ name }" icon`, () => {
 						view.fillFromConfig( [
 							{
@@ -816,7 +844,7 @@ describe( 'ToolbarView', () => {
 
 						dropdownView = view.items.get( 0 );
 
-						expect( dropdownView.buttonView.icon ).to.equal( icons[ name ] );
+						expect( dropdownView.buttonView.icon ).to.equal( icon );
 					} );
 				}
 			} );
@@ -832,7 +860,7 @@ describe( 'ToolbarView', () => {
 
 				dropdownView = view.items.get( 1 );
 
-				expect( dropdownView.buttonView.icon ).to.equal( icons.threeVerticalDots );
+				expect( dropdownView.buttonView.icon ).to.equal( IconThreeVerticalDots );
 				expect( dropdownView.buttonView.withText ).to.be.false;
 			} );
 
@@ -1063,6 +1091,41 @@ describe( 'ToolbarView', () => {
 					view.isVertical = true;
 					expect( view.element.classList.contains( 'ck-toolbar_vertical' ) ).to.be.true;
 				} );
+			} );
+		} );
+
+		describe( '#switchBehavior()', () => {
+			it( 'should do nothing if changed to `static`', () => {
+				const spy = sinon.spy( view._behavior, 'render' );
+
+				view.switchBehavior( 'static' );
+
+				expect( view.isGrouping ).to.be.false;
+				sinon.assert.notCalled( spy );
+			} );
+
+			it( 'should replace #_behavior with dynamic layout', () => {
+				const spy = sinon.spy( view._behavior, 'destroy' );
+
+				view.switchBehavior( 'dynamic' );
+
+				expect( view.isGrouping ).to.be.true;
+				sinon.assert.calledOnce( spy );
+			} );
+
+			it( 'should update the bindings in the new behavior', () => {
+				const itemA = focusable();
+				const itemB = focusable();
+				const itemC = focusable();
+
+				view.items.add( itemA );
+				view.items.add( itemB );
+				view.items.add( itemC );
+
+				view.switchBehavior( 'dynamic' );
+
+				expect( view._behavior.ungroupedItems.length === 3 );
+				expect( view.focusables.length === 3 );
 			} );
 		} );
 	} );
@@ -1660,6 +1723,26 @@ describe( 'ToolbarView', () => {
 				sinon.assert.calledOnce( groupedItemsDropdown.focus );
 
 				view.element.remove();
+			} );
+		} );
+
+		describe( '#switchBehavior()', () => {
+			it( 'should do nothing if changed to `dynamic`', () => {
+				const spy = sinon.spy( view._behavior, 'render' );
+
+				view.switchBehavior( 'dynamic' );
+
+				expect( view.isGrouping ).to.be.true;
+				sinon.assert.notCalled( spy );
+			} );
+
+			it( 'should replace #_behavior with static layout', () => {
+				const spy = sinon.spy( view._behavior, 'destroy' );
+
+				view.switchBehavior( 'static' );
+
+				expect( view.isGrouping ).to.be.false;
+				sinon.assert.calledOnce( spy );
 			} );
 		} );
 	} );

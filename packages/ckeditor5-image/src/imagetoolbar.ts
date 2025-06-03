@@ -1,19 +1,19 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module image/imagetoolbar
  */
 
-import { Plugin } from 'ckeditor5/src/core';
-import { WidgetToolbarRepository } from 'ckeditor5/src/widget';
+import { Plugin } from 'ckeditor5/src/core.js';
+import { WidgetToolbarRepository } from 'ckeditor5/src/widget.js';
 
-import ImageUtils from './imageutils';
-import type { ImageStyleDropdownDefinition } from './imageconfig';
+import ImageUtils from './imageutils.js';
+import type { ImageStyleDropdownDefinition } from './imageconfig.js';
 
-import { isObject } from 'lodash-es';
+import { isObject } from 'es-toolkit/compat';
 
 /**
  * The image toolbar plugin. It creates and manages the image toolbar (the toolbar displayed when an image is selected).
@@ -37,8 +37,15 @@ export default class ImageToolbar extends Plugin {
 	/**
 	 * @inheritDoc
 	 */
-	public static get pluginName(): 'ImageToolbar' {
-		return 'ImageToolbar';
+	public static get pluginName() {
+		return 'ImageToolbar' as const;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public static override get isOfficialPlugin(): true {
+		return true;
 	}
 
 	/**

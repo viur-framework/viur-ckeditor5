@@ -1,25 +1,25 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-import Matcher, { type ClassPatterns, type MatcherPattern, type PropertyPatterns } from '../view/matcher';
-import ConversionHelpers from './conversionhelpers';
+import Matcher, { type ClassPatterns, type MatcherPattern, type PropertyPatterns } from '../view/matcher.js';
+import ConversionHelpers from './conversionhelpers.js';
 
-import type { default as UpcastDispatcher, UpcastElementEvent, UpcastConversionApi, UpcastConversionData } from './upcastdispatcher';
-import type ModelElement from '../model/element';
-import type ModelRange from '../model/range';
-import type ModelPosition from '../model/position';
-import type { ViewDocumentFragment, ViewElement, ViewText } from '../index';
-import type Mapper from './mapper';
-import type Model from '../model/model';
-import type ViewSelection from '../view/selection';
-import type ViewDocumentSelection from '../view/documentselection';
-import { isParagraphable, wrapInParagraph } from '../model/utils/autoparagraphing';
+import type { default as UpcastDispatcher, UpcastElementEvent, UpcastConversionApi, UpcastConversionData } from './upcastdispatcher.js';
+import type ModelElement from '../model/element.js';
+import type ModelRange from '../model/range.js';
+import type ModelPosition from '../model/position.js';
+import type { ViewDocumentFragment, ViewElement, ViewText } from '../index.js';
+import type Mapper from './mapper.js';
+import type Model from '../model/model.js';
+import type ViewSelection from '../view/selection.js';
+import type ViewDocumentSelection from '../view/documentselection.js';
+import { isParagraphable, wrapInParagraph } from '../model/utils/autoparagraphing.js';
 
 import { priorities, type EventInfo, type PriorityString } from '@ckeditor/ckeditor5-utils';
 
-import { cloneDeep } from 'lodash-es';
+import { cloneDeep } from 'es-toolkit/compat';
 
 /**
  * Contains the {@link module:engine/view/view view} to {@link module:engine/model/model model} converters for
@@ -206,7 +206,7 @@ export default class UpcastHelpers extends ConversionHelpers<UpcastDispatcher> {
 	 * <div class="dark"><div>foo</div></div>    -->    <div dark="true"><div>foo</div></div>
 	 * ```
 	 *
-	 * Above, `class="dark"` attribute is added only to the `<div>` elements that has it. This is in contrary to
+	 * Above, `class="dark"` attribute is added only to the `<div>` elements that has it. This is in contrast to
 	 * {@link module:engine/conversion/upcasthelpers~UpcastHelpers#elementToAttribute} which sets attributes for
 	 * all the children in the model:
 	 *
@@ -330,8 +330,8 @@ export default class UpcastHelpers extends ConversionHelpers<UpcastDispatcher> {
 		};
 		model: string | {
 			key: string;
-			value: unknown | ( ( viewElement: ViewElement, conversionApi: UpcastConversionApi ) => unknown );
-			name?: string;
+			value: unknown |
+				( ( viewElement: ViewElement, conversionApi: UpcastConversionApi, data: UpcastConversionData<ViewElement> ) => unknown );
 		};
 		converterPriority?: PriorityString;
 	} ): this {
@@ -536,16 +536,7 @@ export function convertText() {
 				return;
 			}
 
-			// Wrap `$text` in paragraph and include any marker that is directly before `$text`. See #13053.
-			const nodeBefore = position.nodeBefore;
-
 			position = wrapInParagraph( position, writer );
-
-			if ( nodeBefore && nodeBefore.is( 'element', '$marker' ) ) {
-				// Move `$marker` to the paragraph.
-				writer.move( writer.createRangeOn( nodeBefore ), position );
-				position = writer.createPositionAfter( nodeBefore );
-			}
 		}
 
 		consumable.consume( data.viewItem );
@@ -694,7 +685,8 @@ function upcastAttributeToAttribute( config: {
 	};
 	model: string | {
 		key: string;
-		value: unknown | ( ( viewElement: ViewElement, conversionApi: UpcastConversionApi ) => unknown );
+		value: unknown |
+			( ( viewElement: ViewElement, conversionApi: UpcastConversionApi, data: UpcastConversionData<ViewElement> ) => unknown );
 	};
 	converterPriority?: PriorityString;
 } ) {
@@ -790,8 +782,8 @@ function upcastDataToMarker( config: {
 		//
 		// This hack probably would not be needed if attributes are upcasted separately.
 		//
-		const basePriority = priorities.get( 'low' );
-		const maxPriority = priorities.get( 'highest' );
+		const basePriority = priorities.low;
+		const maxPriority = priorities.highest;
 		const priorityFactor = priorities.get( config.converterPriority ) / maxPriority; // Number in range [ -1, 1 ].
 
 		dispatcher.on<UpcastElementEvent>(
@@ -977,17 +969,16 @@ function normalizeViewAttributeKeyValueConfig( config: any ) {
 	}
 
 	const key: string = config.view.key;
+	const value = typeof config.view.value == 'undefined' ? /[\s\S]*/ : config.view.value;
 	let normalized: MatcherPattern;
 
 	if ( key == 'class' || key == 'style' ) {
 		const keyName = key == 'class' ? 'classes' : 'styles';
 
 		normalized = {
-			[ keyName ]: config.view.value
+			[ keyName ]: value
 		};
 	} else {
-		const value = typeof config.view.value == 'undefined' ? /[\s\S]*/ : config.view.value;
-
 		normalized = {
 			attributes: {
 				[ key ]: value
@@ -1077,10 +1068,10 @@ function prepareToAttributeConverter(
 
 		const modelKey = config.model.key;
 		const modelValue: unknown = typeof config.model.value == 'function' ?
-			config.model.value( data.viewItem, conversionApi ) : config.model.value;
+			config.model.value( data.viewItem, conversionApi, data ) : config.model.value;
 
 		// Do not convert if attribute building function returned falsy value.
-		if ( modelValue === null ) {
+		if ( modelValue === null || modelValue === undefined ) {
 			return;
 		}
 

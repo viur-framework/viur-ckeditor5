@@ -1,17 +1,17 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module font/fontsize
  */
 
-import { Plugin } from 'ckeditor5/src/core';
-import FontSizeEditing from './fontsize/fontsizeediting';
-import FontSizeUI from './fontsize/fontsizeui';
-import { normalizeOptions } from './fontsize/utils';
-import type { FontSizeOption } from './fontconfig';
+import { Plugin } from 'ckeditor5/src/core.js';
+import FontSizeEditing from './fontsize/fontsizeediting.js';
+import FontSizeUI from './fontsize/fontsizeui.js';
+import { normalizeOptions } from './fontsize/utils.js';
+import type { FontSizeOption } from './fontconfig.js';
 
 /**
  * The font size plugin.
@@ -33,15 +33,22 @@ export default class FontSize extends Plugin {
 	/**
 	 * @inheritDoc
 	 */
-	public static get pluginName(): 'FontSize' {
-		return 'FontSize';
+	public static get pluginName() {
+		return 'FontSize' as const;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public static override get isOfficialPlugin(): true {
+		return true;
 	}
 
 	/**
 	 * Normalizes and translates the {@link module:font/fontconfig~FontSizeConfig#options configuration options}
 	 * to the {@link module:font/fontconfig~FontSizeOption} format.
 	 *
-	 * @param configuredOptions An array of options taken from the configuration.
+	 * @param options An array of options taken from the configuration.
 	 */
 	public normalizeSizeOptions( options: Array<string | number | FontSizeOption> ): Array<FontSizeOption> {
 		return normalizeOptions( options );

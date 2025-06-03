@@ -1,16 +1,16 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-import BlockQuoteEditing from '../src/blockquoteediting';
-import BlockQuoteCommand from '../src/blockquotecommand';
+import BlockQuoteEditing from '../src/blockquoteediting.js';
+import BlockQuoteCommand from '../src/blockquotecommand.js';
 
-import VirtualTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/virtualtesteditor';
-import { getData as getModelData, setData as setModelData } from '@ckeditor/ckeditor5-engine/src/dev-utils/model';
-import { getData as getViewData } from '@ckeditor/ckeditor5-engine/src/dev-utils/view';
+import VirtualTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/virtualtesteditor.js';
+import { getData as getModelData, setData as setModelData } from '@ckeditor/ckeditor5-engine/src/dev-utils/model.js';
+import { getData as getViewData } from '@ckeditor/ckeditor5-engine/src/dev-utils/view.js';
 
-import Command from '@ckeditor/ckeditor5-core/src/command';
+import Command from '@ckeditor/ckeditor5-core/src/command.js';
 
 describe( 'BlockQuoteCommand', () => {
 	let editor, model, command;
@@ -44,8 +44,8 @@ describe( 'BlockQuoteCommand', () => {
 			} );
 	} );
 
-	afterEach( () => {
-		editor.destroy();
+	afterEach( async () => {
+		await editor.destroy();
 	} );
 
 	it( 'is a command', () => {
@@ -375,8 +375,8 @@ describe( 'BlockQuoteCommand', () => {
 				);
 			} );
 
-			it( 'should not wrap a block which can not be in a quote', () => {
-				// blockQuote is allowed in root, but fooBlock can not be inside blockQuote.
+			it( 'should not wrap a block which cannot be in a quote', () => {
+				// blockQuote is allowed in root, but fooBlock cannot be inside blockQuote.
 				model.schema.register( 'fooBlock', { inheritAllFrom: '$block' } );
 				model.schema.addChildCheck( ( ctx, childDef ) => {
 					if ( ctx.endsWith( 'blockQuote' ) && childDef.name == 'fooBlock' ) {

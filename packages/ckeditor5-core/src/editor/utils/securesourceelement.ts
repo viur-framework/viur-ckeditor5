@@ -1,6 +1,6 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
@@ -9,8 +9,7 @@
 
 import { CKEditorError } from '@ckeditor/ckeditor5-utils';
 
-import type { default as Editor, EditorDestroyEvent } from '../editor';
-import type { ElementApi } from './elementapimixin';
+import type { default as Editor, EditorDestroyEvent } from '../editor.js';
 
 /**
  * Marks the source element on which the editor was initialized. This prevents other editor instances from using this element.
@@ -27,10 +26,10 @@ export default function secureSourceElement( editor: Editor, sourceElement: HTML
 		 * A DOM element used to create the editor (e.g.
 		 * {@link module:editor-inline/inlineeditor~InlineEditor.create `InlineEditor.create()`})
 		 * has already been used to create another editor instance. Make sure each editor is
-		 * created with an unique DOM element.
+		 * created with a unique DOM element.
 		 *
 		 * @error editor-source-element-already-used
-		 * @param element DOM element that caused the collision.
+		 * @param {HTMLElement} element DOM element that caused the collision.
 		 */
 		throw new CKEditorError(
 			'editor-source-element-already-used',

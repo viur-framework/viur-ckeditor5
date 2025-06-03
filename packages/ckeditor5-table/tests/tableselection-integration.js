@@ -1,27 +1,26 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* globals document */
+import ClassicTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/classictesteditor.js';
 
-import ClassicTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/classictesteditor';
+import Paragraph from '@ckeditor/ckeditor5-paragraph/src/paragraph.js';
+import Delete from '@ckeditor/ckeditor5-typing/src/delete.js';
+import Clipboard from '@ckeditor/ckeditor5-clipboard/src/clipboard.js';
+import HorizontalLine from '@ckeditor/ckeditor5-horizontal-line/src/horizontalline.js';
 
-import Paragraph from '@ckeditor/ckeditor5-paragraph/src/paragraph';
-import Delete from '@ckeditor/ckeditor5-typing/src/delete';
-import Clipboard from '@ckeditor/ckeditor5-clipboard/src/clipboard';
-import HorizontalLine from '@ckeditor/ckeditor5-horizontal-line/src/horizontalline';
+import TableEditing from '../src/tableediting.js';
+import TableSelection from '../src/tableselection.js';
+import TableClipboard from '../src/tableclipboard.js';
 
-import TableEditing from '../src/tableediting';
-import TableSelection from '../src/tableselection';
-import TableClipboard from '../src/tableclipboard';
+import { getData as getModelData, setData as setModelData } from '@ckeditor/ckeditor5-engine/src/dev-utils/model.js';
 
-import { getData as getModelData, setData as setModelData } from '@ckeditor/ckeditor5-engine/src/dev-utils/model';
-
-import { assertSelectedCells, modelTable } from './_utils/utils';
-import DomEventData from '@ckeditor/ckeditor5-engine/src/view/observer/domeventdata';
-import Input from '@ckeditor/ckeditor5-typing/src/input';
-import UndoEditing from '@ckeditor/ckeditor5-undo/src/undoediting';
+import { assertSelectedCells, modelTable } from './_utils/utils.js';
+import DomEventData from '@ckeditor/ckeditor5-engine/src/view/observer/domeventdata.js';
+import Input from '@ckeditor/ckeditor5-typing/src/input.js';
+import UndoEditing from '@ckeditor/ckeditor5-undo/src/undoediting.js';
+import ClipboardPipeline from '@ckeditor/ckeditor5-clipboard/src/clipboardpipeline.js';
 
 describe( 'TableSelection - integration', () => {
 	let editor, model, tableSelection, modelRoot, element, viewDocument;
@@ -118,11 +117,19 @@ describe( 'TableSelection - integration', () => {
 				modelRoot.getNodeByPath( [ 0, 1, 1 ] )
 			);
 
-			viewDocument.fire( 'insertText', {
+			const eventData = {
 				text: 'x',
 				selection: view.createSelection( view.createPositionAt( viewCell.getChild( 0 ), 0 ) ),
 				preventDefault: sinon.spy()
-			} );
+			};
+
+			eventData.domEvent = {
+				get defaultPrevented() {
+					return eventData.preventDefault.called;
+				}
+			};
+
+			viewDocument.fire( 'insertText', eventData );
 
 			expect( getModelData( model ) ).to.equalMarkup( modelTable( [
 				[ '', '', '13' ],
@@ -135,11 +142,22 @@ describe( 'TableSelection - integration', () => {
 			const view = editor.editing.view;
 			const viewCell = editor.editing.mapper.toViewElement( modelRoot.getNodeByPath( [ 0, 0, 0 ] ) );
 
-			viewDocument.fire( 'insertText', {
+			const eventData = {
 				text: 'x',
 				selection: view.createSelection( view.createPositionAt( viewCell.getChild( 0 ), 0 ) ),
 				preventDefault: sinon.spy()
-			} );
+			};
+
+			eventData.domEvent = {
+				get defaultPrevented() {
+					return eventData.preventDefault.called;
+				}
+			};
+
+			viewDocument.fire( 'insertText', eventData );
+
+			// Do not wait for the browser to change DOM.
+			editor.plugins.get( 'Input' )._typingQueue.flush();
 
 			expect( getModelData( model ) ).to.equalMarkup( modelTable( [
 				[ 'x[]11', '12', '13' ],
@@ -283,7 +301,7 @@ describe( 'TableSelection - integration', () => {
 		document.body.appendChild( element );
 
 		editor = await ClassicTestEditor.create( element, {
-			plugins: [ TableEditing, TableSelection, TableClipboard, Paragraph, ...plugins ]
+			plugins: [ TableEditing, TableSelection, TableClipboard, Paragraph, ClipboardPipeline, ...plugins ]
 		} );
 
 		model = editor.model;

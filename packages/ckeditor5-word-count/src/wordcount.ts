@@ -1,21 +1,21 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module word-count/wordcount
  */
 
-import { type DocumentChangeEvent } from 'ckeditor5/src/engine';
-import { Plugin, type Editor } from 'ckeditor5/src/core';
-import { Template, View } from 'ckeditor5/src/ui';
-import { env } from 'ckeditor5/src/utils';
+import { type DocumentChangeEvent } from 'ckeditor5/src/engine.js';
+import { Plugin, type Editor } from 'ckeditor5/src/core.js';
+import { Template, View } from 'ckeditor5/src/ui.js';
+import { env } from 'ckeditor5/src/utils.js';
 
-import { modelElementToPlainText } from './utils';
-import type { WordCountConfig } from './wordcountconfig';
+import { modelElementToPlainText } from './utils.js';
+import type { WordCountConfig } from './wordcountconfig.js';
 
-import { throttle, isElement } from 'lodash-es';
+import { throttle, isElement } from 'es-toolkit/compat';
 
 /**
  * The word count plugin.
@@ -112,12 +112,12 @@ export default class WordCount extends Plugin {
 		Object.defineProperties( this, {
 			characters: {
 				get() {
-					return ( this.characters = this._getCharacters() );
+					return ( this.characters = this._getCharacters( this._getText() ) );
 				}
 			},
 			words: {
 				get() {
-					return ( this.words = this._getWords() );
+					return ( this.words = this._getWords( this._getText() ) );
 				}
 			}
 		} );
@@ -141,8 +141,15 @@ export default class WordCount extends Plugin {
 	/**
 	 * @inheritDoc
 	 */
-	public static get pluginName(): 'WordCount' {
-		return 'WordCount';
+	public static get pluginName() {
+		return 'WordCount' as const;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public static override get isOfficialPlugin(): true {
+		return true;
 	}
 
 	/**
@@ -251,20 +258,32 @@ export default class WordCount extends Plugin {
 		return this._outputView.element!;
 	}
 
+	private _getText(): string {
+		let txt = '';
+
+		for ( const root of this.editor.model.document.getRoots() ) {
+			if ( txt !== '' ) {
+				// Add a delimiter, so words from each root are treated independently.
+				txt += '\n';
+			}
+
+			txt += modelElementToPlainText( root );
+		}
+
+		return txt;
+	}
+
 	/**
 	 * Determines the number of characters in the current editor's model.
 	 */
-	private _getCharacters(): number {
-		const txt = modelElementToPlainText( this.editor.model.document.getRoot()! );
-
+	private _getCharacters( txt: string ): number {
 		return txt.replace( /\n/g, '' ).length;
 	}
 
 	/**
 	 * Determines the number of words in the current editor's model.
 	 */
-	private _getWords(): number {
-		const txt = modelElementToPlainText( this.editor.model.document.getRoot()! );
+	private _getWords( txt: string ): number {
 		const detectedWords = txt.match( this._wordsMatchRegExp ) || [];
 
 		return detectedWords.length;
@@ -277,8 +296,9 @@ export default class WordCount extends Plugin {
 	 * @fires update
 	 */
 	private _refreshStats(): void {
-		const words = this.words = this._getWords();
-		const characters = this.characters = this._getCharacters();
+		const txt = this._getText();
+		const words = this.words = this._getWords( txt );
+		const characters = this.characters = this._getCharacters( txt );
 
 		this.fire<WordCountUpdateEvent>( 'update', {
 			words,

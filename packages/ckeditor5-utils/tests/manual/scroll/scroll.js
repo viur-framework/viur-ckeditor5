@@ -1,11 +1,9 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* global document */
-
-import { scrollViewportToShowTarget } from '../../../src/dom/scroll';
+import { scrollViewportToShowTarget } from '../../../src/dom/scroll.js';
 
 document.getElementById( 'scrollToBlue' ).addEventListener( 'click', () => {
 	const target = document.querySelector( '#target-blue .target' );

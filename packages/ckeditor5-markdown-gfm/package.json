@@ -1,6 +1,6 @@
 {
   "name": "@ckeditor/ckeditor5-markdown-gfm",
-  "version": "38.0.1",
+  "version": "45.1.0",
   "description": "GitHub Flavored Markdown data processor for CKEditor 5.",
   "keywords": [
     "ckeditor",
@@ -10,34 +10,51 @@
     "ckeditor5-plugin",
     "ckeditor5-dll"
   ],
+  "sideEffects": [
+    "*.css",
+    "build/**/*.js",
+    "dist/translations/*.umd.js"
+  ],
+  "type": "module",
   "main": "src/index.ts",
   "dependencies": {
-    "ckeditor5": "^38.0.1",
+    "@ckeditor/ckeditor5-clipboard": "45.1.0",
+    "@ckeditor/ckeditor5-core": "45.1.0",
+    "@ckeditor/ckeditor5-engine": "45.1.0",
+    "@types/marked": "4.3.2",
+    "@types/turndown": "5.0.5",
+    "ckeditor5": "45.1.0",
     "marked": "4.0.12",
-    "turndown": "^6.0.0",
-    "turndown-plugin-gfm": "^1.0.2"
+    "turndown": "7.2.0",
+    "turndown-plugin-gfm": "1.0.2"
   },
   "devDependencies": {
-    "@ckeditor/ckeditor5-basic-styles": "^38.0.1",
-    "@ckeditor/ckeditor5-code-block": "^38.0.1",
-    "@ckeditor/ckeditor5-core": "^38.0.1",
-    "@ckeditor/ckeditor5-dev-utils": "^37.0.0",
-    "@ckeditor/ckeditor5-editor-classic": "^38.0.1",
-    "@ckeditor/ckeditor5-engine": "^38.0.1",
-    "@ckeditor/ckeditor5-list": "^38.0.1",
-    "@ckeditor/ckeditor5-table": "^38.0.1",
-    "@ckeditor/ckeditor5-theme-lark": "^38.0.1",
-    "@types/marked": "^4.0.8",
-    "typescript": "^4.8.4",
-    "webpack": "^5.58.1",
-    "webpack-cli": "^4.9.0"
-  },
-  "engines": {
-    "node": ">=16.0.0",
-    "npm": ">=5.7.1"
+    "@ckeditor/ckeditor5-autoformat": "45.1.0",
+    "@ckeditor/ckeditor5-basic-styles": "45.1.0",
+    "@ckeditor/ckeditor5-block-quote": "45.1.0",
+    "@ckeditor/ckeditor5-code-block": "45.1.0",
+    "@ckeditor/ckeditor5-dev-utils": "^49.0.0",
+    "@ckeditor/ckeditor5-editor-classic": "45.1.0",
+    "@ckeditor/ckeditor5-essentials": "45.1.0",
+    "@ckeditor/ckeditor5-font": "45.1.0",
+    "@ckeditor/ckeditor5-heading": "45.1.0",
+    "@ckeditor/ckeditor5-horizontal-line": "45.1.0",
+    "@ckeditor/ckeditor5-image": "45.1.0",
+    "@ckeditor/ckeditor5-indent": "45.1.0",
+    "@ckeditor/ckeditor5-link": "45.1.0",
+    "@ckeditor/ckeditor5-list": "45.1.0",
+    "@ckeditor/ckeditor5-media-embed": "45.1.0",
+    "@ckeditor/ckeditor5-paragraph": "45.1.0",
+    "@ckeditor/ckeditor5-table": "45.1.0",
+    "@ckeditor/ckeditor5-theme-lark": "45.1.0",
+    "@ckeditor/ckeditor5-undo": "45.1.0",
+    "@ckeditor/ckeditor5-utils": "45.1.0",
+    "typescript": "5.0.4",
+    "webpack": "^5.94.0",
+    "webpack-cli": "^5.1.4"
   },
   "author": "CKSource (http://cksource.com/)",
-  "license": "GPL-2.0-or-later",
+  "license": "SEE LICENSE IN LICENSE.md",
   "homepage": "https://ckeditor.com/ckeditor-5",
   "bugs": "https://github.com/ckeditor/ckeditor5/issues",
   "repository": {
@@ -46,6 +63,7 @@
     "directory": "packages/ckeditor5-markdown-gfm"
   },
   "files": [
+    "dist",
     "lang",
     "src/**/*.js",
     "src/**/*.d.ts",
@@ -61,8 +79,8 @@
     "block-elements"
   ],
   "scripts": {
-    "build": "tsc -p ./tsconfig.json",
-    "postversion": "npm run build",
-    "dll:build": "webpack"
+    "dll:build": "webpack",
+    "build": "tsc --build --force ./tsconfig.json",
+    "build:dist": "node ../../scripts/nim/build-package.mjs"
   }
 }

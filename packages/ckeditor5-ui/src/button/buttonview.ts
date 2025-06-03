@@ -1,18 +1,20 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module ui/button/buttonview
  */
 
-import View from '../view';
-import IconView from '../icon/iconview';
+import View from '../view.js';
+import IconView from '../icon/iconview.js';
 
-import type { TemplateDefinition } from '../template';
-import type ViewCollection from '../viewcollection';
-import type { default as Button, ButtonExecuteEvent } from './button';
+import type { TemplateDefinition } from '../template.js';
+import type ViewCollection from '../viewcollection.js';
+import type { default as Button, ButtonExecuteEvent } from './button.js';
+import type ButtonLabel from './buttonlabel.js';
+import ButtonLabelView from './buttonlabelview.js';
 
 import {
 	env,
@@ -50,9 +52,12 @@ export default class ButtonView extends View<HTMLButtonElement> implements Butto
 	public readonly children: ViewCollection;
 
 	/**
-	 * Label of the button view. It is configurable using the {@link #label label attribute}.
+	 * Label of the button view. Its text is configurable using the {@link #label label attribute}.
+	 *
+	 * If not configured otherwise in the `constructor()`, by default the label is an instance
+	 * of {@link module:ui/button/buttonlabelview~ButtonLabelView}.
 	 */
-	public readonly labelView: View;
+	public readonly labelView: ButtonLabel;
 
 	/**
 	 * The icon view of the button. Will be added to {@link #children} when the
@@ -150,17 +155,30 @@ export default class ButtonView extends View<HTMLButtonElement> implements Butto
 	/**
 	 * @inheritDoc
 	 */
-	declare public ariaChecked: boolean | undefined;
-
-	/**
-	 * @inheritDoc
-	 */
 	declare public ariaLabel?: string | undefined;
 
 	/**
 	 * @inheritDoc
 	 */
 	declare public ariaLabelledBy: string | undefined;
+
+	/**
+	 * Aria-pressed attribute of element. It is calculated based on {@link #isToggleable isToggleable} and {@link #role}.
+	 * It's set to true if the button is on and the role is not checkable.
+	 *
+	 * @readonly
+	 * @internal
+	 */
+	declare public _ariaPressed: string | false;
+
+	/**
+	 * Aria-checked attribute of element. It is calculated based on {@link #isToggleable isToggleable} and {@link #role}.
+	 * It's set to true if the button is on and the role is checkable.
+	 *
+	 * @readonly
+	 * @internal
+	 */
+	declare public _ariaChecked: string | false;
 
 	/**
 	 * Tooltip of the button bound to the template.
@@ -178,16 +196,21 @@ export default class ButtonView extends View<HTMLButtonElement> implements Butto
 	private _focusDelayed: DelayedFunc<() => void> | null = null;
 
 	/**
-	 * @inheritDoc
+	 * Creates an instance of the button view class.
+	 *
+	 * @param locale The {@link module:core/editor/editor~Editor#locale} instance.
+	 * @param labelView The instance of the button's label. If not provided, an instance of
+	 * {@link module:ui/button/buttonlabelview~ButtonLabelView} is used.
 	 */
-	constructor( locale?: Locale ) {
+	constructor( locale?: Locale, labelView: ButtonLabel = new ButtonLabelView() ) {
 		super( locale );
 
 		const bind = this.bindTemplate;
 		const ariaLabelUid = uid();
 
 		// Implement the Button interface.
-		this.set( 'ariaChecked', undefined );
+		this.set( '_ariaPressed', false );
+		this.set( '_ariaChecked', false );
 		this.set( 'ariaLabel', undefined );
 		this.set( 'ariaLabelledBy', `ck-editor__aria-label_${ ariaLabelUid }` );
 		this.set( 'class', undefined );
@@ -208,7 +231,7 @@ export default class ButtonView extends View<HTMLButtonElement> implements Butto
 		this.set( 'withKeystroke', false );
 
 		this.children = this.createCollection();
-		this.labelView = this._createLabelView();
+		this.labelView = this._setupLabelView( labelView );
 
 		this.iconView = new IconView();
 		this.iconView.extendTemplate( {
@@ -216,6 +239,7 @@ export default class ButtonView extends View<HTMLButtonElement> implements Butto
 				class: 'ck-button__icon'
 			}
 		} );
+		this.iconView.bind( 'content' ).to( this, 'icon' );
 
 		this.keystrokeView = this._createKeystrokeView();
 
@@ -243,11 +267,11 @@ export default class ButtonView extends View<HTMLButtonElement> implements Butto
 				role: bind.to( 'role' ),
 				type: bind.to( 'type', value => value ? value : 'button' ),
 				tabindex: bind.to( 'tabindex' ),
+				'aria-checked': bind.to( '_ariaChecked' ),
+				'aria-pressed': bind.to( '_ariaPressed' ),
 				'aria-label': bind.to( 'ariaLabel' ),
 				'aria-labelledby': bind.to( 'ariaLabelledBy' ),
 				'aria-disabled': bind.if( 'isEnabled', true, value => !value ),
-				'aria-checked': bind.to( 'isOn' ),
-				'aria-pressed': bind.to( 'isOn', value => this.isToggleable ? String( !!value ) : false ),
 				'data-cke-tooltip-text': bind.to( '_tooltipString' ),
 				'data-cke-tooltip-position': bind.to( 'tooltipPosition' )
 			},
@@ -268,6 +292,28 @@ export default class ButtonView extends View<HTMLButtonElement> implements Butto
 				} )
 			}
 		};
+
+		this.bind( '_ariaPressed' ).to(
+			this, 'isOn', this, 'isToggleable', this, 'role',
+			( isOn, isToggleable, role ) => {
+				if ( !isToggleable || isCheckableRole( role ) ) {
+					return false;
+				}
+
+				return String( !!isOn );
+			}
+		);
+
+		this.bind( '_ariaChecked' ).to(
+			this, 'isOn', this, 'isToggleable', this, 'role',
+			( isOn, isToggleable, role ) => {
+				if ( !isToggleable || !isCheckableRole( role ) ) {
+					return false;
+				}
+
+				return String( !!isOn );
+			}
+		);
 
 		// On Safari we have to force the focus on a button on click as it's the only browser
 		// that doesn't do that automatically. See #12115.
@@ -295,9 +341,16 @@ export default class ButtonView extends View<HTMLButtonElement> implements Butto
 		super.render();
 
 		if ( this.icon ) {
-			this.iconView.bind( 'content' ).to( this, 'icon' );
 			this.children.add( this.iconView );
 		}
+
+		this.on( 'change:icon', ( evt, prop, newIcon, oldIcon ) => {
+			if ( newIcon && !oldIcon ) {
+				this.children.add( this.iconView, 0 );
+			} else if ( !newIcon && oldIcon ) {
+				this.children.remove( this.iconView );
+			}
+		} );
 
 		this.children.add( this.labelView );
 
@@ -325,30 +378,10 @@ export default class ButtonView extends View<HTMLButtonElement> implements Butto
 	}
 
 	/**
-	 * Creates a label view instance and binds it with button attributes.
+	 * Binds the label view instance it with button attributes.
 	 */
-	private _createLabelView() {
-		const labelView = new View();
-		const bind = this.bindTemplate;
-
-		labelView.setTemplate( {
-			tag: 'span',
-
-			attributes: {
-				class: [
-					'ck',
-					'ck-button__label'
-				],
-				style: bind.to( 'labelStyle' ),
-				id: this.ariaLabelledBy
-			},
-
-			children: [
-				{
-					text: bind.to( 'label' )
-				}
-			]
-		} );
+	private _setupLabelView( labelView: ButtonLabelView ) {
+		labelView.bind( 'text', 'style', 'id' ).to( this, 'label', 'labelStyle', 'ariaLabelledBy' );
 
 		return labelView;
 	}
@@ -412,5 +445,23 @@ export default class ButtonView extends View<HTMLButtonElement> implements Butto
 		}
 
 		return '';
+	}
+}
+
+/**
+ * Checks if `aria-checkbox` can be used with specified role.
+ */
+function isCheckableRole( role: string | undefined ) {
+	switch ( role ) {
+		case 'radio':
+		case 'checkbox':
+		case 'option':
+		case 'switch':
+		case 'menuitemcheckbox':
+		case 'menuitemradio':
+			return true;
+
+		default:
+			return false;
 	}
 }

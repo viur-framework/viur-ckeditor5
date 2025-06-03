@@ -1,6 +1,6 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
@@ -9,17 +9,17 @@
 
 import {
 	type Editor
-} from 'ckeditor5/src/core';
+} from 'ckeditor5/src/core.js';
 
 import {
 	EditorUI,
 	type EditorUIReadyEvent,
 	type InlineEditableUIView
-} from 'ckeditor5/src/ui';
+} from 'ckeditor5/src/ui.js';
 
-import { enablePlaceholder } from 'ckeditor5/src/engine';
+import { enablePlaceholder } from 'ckeditor5/src/engine.js';
 
-import type MultiRootEditorUIView from './multirooteditoruiview';
+import type MultiRootEditorUIView from './multirooteditoruiview.js';
 
 /**
  * The multi-root editor UI class.
@@ -84,6 +84,7 @@ export default class MultiRootEditorUI extends EditorUI {
 		}
 
 		this._initToolbar();
+		this.initMenuBar( this.view.menuBarView! );
 		this.fire<EditorUIReadyEvent>( 'ready' );
 	}
 
@@ -156,7 +157,12 @@ export default class MultiRootEditorUI extends EditorUI {
 	 * @param editable Editable to remove from the editor UI.
 	 */
 	public removeEditable( editable: InlineEditableUIView ): void {
-		this.editor.editing.view.detachDomRoot( editable.name! );
+		const editingView = this.editor.editing.view;
+
+		if ( editingView.getDomRoot( editable.name! ) ) {
+			editingView.detachDomRoot( editable.name! );
+		}
+
 		editable.unbind( 'isFocused' );
 		this.removeEditableElement( editable.name! );
 	}
@@ -189,7 +195,7 @@ export default class MultiRootEditorUI extends EditorUI {
 	}
 
 	/**
-	 * Enables the placeholder text on a given editable, if the placeholder was configured.
+	 * Enables the placeholder text on a given editable.
 	 *
 	 * @param editable Editable on which the placeholder should be set.
 	 * @param placeholder Placeholder for the editable element. If not set, placeholder value from the
@@ -204,17 +210,16 @@ export default class MultiRootEditorUI extends EditorUI {
 			}
 		}
 
-		if ( !placeholder ) {
-			return;
-		}
-
 		const editingView = this.editor.editing.view;
 		const editingRoot = editingView.document.getRoot( editable.name! )!;
+
+		if ( placeholder ) {
+			editingRoot.placeholder = placeholder;
+		}
 
 		enablePlaceholder( {
 			view: editingView,
 			element: editingRoot,
-			text: placeholder,
 			isDirectHost: false,
 			keepOnFocus: true
 		} );

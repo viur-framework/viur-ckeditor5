@@ -1,11 +1,9 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* global document, window */
-
-import BalloonPanelView from '../../../../src/panel/balloon/balloonpanelview';
+import BalloonPanelView from '../../../../src/panel/balloon/balloonpanelview.js';
 
 window.createPanel = selector => {
 	const view = new BalloonPanelView();

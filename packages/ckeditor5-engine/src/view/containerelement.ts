@@ -1,15 +1,15 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module engine/view/containerelement
  */
 
-import Element, { type ElementAttributes } from './element';
-import type Document from './document';
-import type Node from './node';
+import Element, { type ElementAttributes } from './element.js';
+import type Document from './document.js';
+import type Node from './node.js';
 
 /**
  * Containers are elements which define document structure. They define boundaries for

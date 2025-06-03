@@ -1,27 +1,27 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-import ClipboardPipeline from '../src/clipboardpipeline';
-import ClipboardObserver from '../src/clipboardobserver';
-import DataTransfer from '@ckeditor/ckeditor5-engine/src/view/datatransfer';
+import ClipboardPipeline from '../src/clipboardpipeline.js';
+import ClipboardObserver from '../src/clipboardobserver.js';
+import DataTransfer from '@ckeditor/ckeditor5-engine/src/view/datatransfer.js';
 
-import VirtualTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/virtualtesteditor';
-import Paragraph from '@ckeditor/ckeditor5-paragraph/src/paragraph';
-import ViewDocumentFragment from '@ckeditor/ckeditor5-engine/src/view/documentfragment';
-import ModelDocumentFragment from '@ckeditor/ckeditor5-engine/src/model/documentfragment';
-import ViewText from '@ckeditor/ckeditor5-engine/src/view/text';
+import VirtualTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/virtualtesteditor.js';
+import Paragraph from '@ckeditor/ckeditor5-paragraph/src/paragraph.js';
+import ViewDocumentFragment from '@ckeditor/ckeditor5-engine/src/view/documentfragment.js';
+import ModelDocumentFragment from '@ckeditor/ckeditor5-engine/src/model/documentfragment.js';
+import ViewText from '@ckeditor/ckeditor5-engine/src/view/text.js';
 import {
 	stringify as stringifyView,
 	parse as parseView
-} from '@ckeditor/ckeditor5-engine/src/dev-utils/view';
+} from '@ckeditor/ckeditor5-engine/src/dev-utils/view.js';
 import {
 	stringify as stringifyModel,
 	setData as setModelData,
 	getData as getModelData
-} from '@ckeditor/ckeditor5-engine/src/dev-utils/model';
-import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils';
+} from '@ckeditor/ckeditor5-engine/src/dev-utils/model.js';
+import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils.js';
 
 describe( 'ClipboardPipeline feature', () => {
 	let editor, view, viewDocument, clipboardPlugin, scrollSpy;
@@ -43,6 +43,18 @@ describe( 'ClipboardPipeline feature', () => {
 				// Otherwise it will throw as it accesses the DOM to do its job.
 				scrollSpy = sinon.stub( view, 'scrollToTheSelection' );
 			} );
+	} );
+
+	afterEach( async () => {
+		await editor.destroy();
+	} );
+
+	it( 'should have `isOfficialPlugin` static flag set to `true`', () => {
+		expect( ClipboardPipeline.isOfficialPlugin ).to.be.true;
+	} );
+
+	it( 'should have `isPremiumPlugin` static flag set to `false`', () => {
+		expect( ClipboardPipeline.isPremiumPlugin ).to.be.false;
 	} );
 
 	describe( 'constructor()', () => {
@@ -450,16 +462,173 @@ describe( 'ClipboardPipeline feature', () => {
 			expect( spy.callCount ).to.equal( 1 );
 		} );
 
+		describe( 'source editor ID in events', () => {
+			it( 'should be null when pasting content from outside the editor', () => {
+				const dataTransferMock = createDataTransfer( { 'text/html': '<p>external content</p>' } );
+				const inputTransformationSpy = sinon.spy();
+
+				clipboardPlugin.on( 'inputTransformation', ( evt, data ) => {
+					inputTransformationSpy( data.sourceEditorId );
+				} );
+
+				viewDocument.fire( 'paste', {
+					dataTransfer: dataTransferMock,
+					preventDefault: () => {},
+					stopPropagation: () => {}
+				} );
+
+				sinon.assert.calledWith( inputTransformationSpy, null );
+			} );
+
+			it( 'should contain an editor ID when pasting content copied from the same editor (in dataTransfer)', () => {
+				const spy = sinon.spy();
+
+				setModelData( editor.model, '<paragraph>f[oo]bar</paragraph>' );
+
+				// Copy selected content.
+				const dataTransferMock = createDataTransfer();
+
+				viewDocument.fire( 'copy', {
+					dataTransfer: dataTransferMock,
+					preventDefault: () => {}
+				} );
+
+				clipboardPlugin.on( 'inputTransformation', ( evt, data ) => {
+					spy( data.dataTransfer.getData( 'application/ckeditor5-editor-id' ) );
+				} );
+
+				// Paste the copied content.
+				viewDocument.fire( 'paste', {
+					dataTransfer: dataTransferMock,
+					preventDefault: () => {},
+					stopPropagation: () => {}
+				} );
+
+				sinon.assert.calledWith( spy, editor.id );
+			} );
+
+			it( 'should contain an editor ID when pasting content copied from the same editor', () => {
+				const spy = sinon.spy();
+
+				setModelData( editor.model, '<paragraph>f[oo]bar</paragraph>' );
+
+				// Copy selected content.
+				const dataTransferMock = createDataTransfer();
+
+				viewDocument.fire( 'copy', {
+					dataTransfer: dataTransferMock,
+					preventDefault: () => {}
+				} );
+
+				clipboardPlugin.on( 'inputTransformation', ( evt, data ) => {
+					spy( data.sourceEditorId );
+				} );
+
+				// Paste the copied content.
+				viewDocument.fire( 'paste', {
+					dataTransfer: dataTransferMock,
+					preventDefault: () => {},
+					stopPropagation: () => {}
+				} );
+
+				sinon.assert.calledWith( spy, editor.id );
+			} );
+
+			it( 'should be propagated to contentInsertion event (when it\'s external content)', () => {
+				const dataTransferMock = createDataTransfer( { 'text/html': '<p>external content</p>' } );
+				const contentInsertionSpy = sinon.spy();
+
+				clipboardPlugin.on( 'contentInsertion', ( evt, data ) => {
+					contentInsertionSpy( data.sourceEditorId );
+				} );
+
+				viewDocument.fire( 'paste', {
+					dataTransfer: dataTransferMock,
+					preventDefault: () => {},
+					stopPropagation: () => {}
+				} );
+
+				sinon.assert.calledWith( contentInsertionSpy, null );
+			} );
+
+			it( 'should be propagated to contentInsertion event (when it\'s internal content)', () => {
+				const dataTransferMock = createDataTransfer( {
+					'text/html': '<p>internal content</p>',
+					'application/ckeditor5-editor-id': editor.id
+				} );
+
+				const contentInsertionSpy = sinon.spy();
+
+				clipboardPlugin.on( 'contentInsertion', ( evt, data ) => {
+					contentInsertionSpy( data.sourceEditorId );
+				} );
+
+				viewDocument.fire( 'paste', {
+					dataTransfer: dataTransferMock,
+					preventDefault: () => {},
+					stopPropagation: () => {}
+				} );
+
+				sinon.assert.calledWith( contentInsertionSpy, editor.id );
+			} );
+		} );
+
 		function createDataTransfer( data ) {
+			const state = Object.create( data || {} );
+
 			return {
 				getData( type ) {
-					return data[ type ];
+					return state[ type ];
+				},
+				setData( type, newData ) {
+					state[ type ] = newData;
 				}
 			};
 		}
 	} );
 
 	describe( 'clipboard copy/cut pipeline', () => {
+		it( 'fires the outputTransformation event on the clipboardPlugin', done => {
+			const dataTransferMock = createDataTransfer();
+			const preventDefaultSpy = sinon.spy();
+
+			setModelData( editor.model, '<paragraph>a[bc</paragraph><paragraph>de]f</paragraph>' );
+
+			clipboardPlugin.on( 'outputTransformation', ( evt, data ) => {
+				expect( preventDefaultSpy.calledOnce ).to.be.true;
+
+				expect( data.method ).to.equal( 'copy' );
+				expect( data.dataTransfer ).to.equal( dataTransferMock );
+				expect( data.content ).is.instanceOf( ModelDocumentFragment );
+				expect( stringifyModel( data.content ) ).to.equal( '<paragraph>bc</paragraph><paragraph>de</paragraph>' );
+				done();
+			} );
+
+			viewDocument.fire( 'copy', {
+				dataTransfer: dataTransferMock,
+				preventDefault: preventDefaultSpy
+			} );
+		} );
+
+		it( 'triggers the conversion with the `isClipboardPipeline` flag', done => {
+			const dataTransferMock = createDataTransfer();
+			const preventDefaultSpy = sinon.spy();
+			const toViewSpy = sinon.spy( editor.data, 'toView' );
+
+			setModelData( editor.model, '<paragraph>a[bc</paragraph><paragraph>de]f</paragraph>' );
+
+			clipboardPlugin.on( 'outputTransformation', ( evt, data ) => {
+				expect( toViewSpy ).calledWithExactly( data.content, { isClipboardPipeline: true } );
+
+				done();
+			}, { priority: 'lowest' } );
+
+			viewDocument.fire( 'copy', {
+				dataTransfer: dataTransferMock,
+				preventDefault: preventDefaultSpy
+			} );
+		} );
+
 		it( 'fires clipboardOutput for copy with the selected content and correct method', done => {
 			const dataTransferMock = createDataTransfer();
 			const preventDefaultSpy = sinon.spy();

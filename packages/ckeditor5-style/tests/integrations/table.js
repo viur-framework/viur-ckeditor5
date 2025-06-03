@@ -1,24 +1,22 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* globals console */
-/* global document */
-
-import Paragraph from '@ckeditor/ckeditor5-paragraph/src/paragraph';
-import Heading from '@ckeditor/ckeditor5-heading/src/heading';
-import GeneralHtmlSupport from '@ckeditor/ckeditor5-html-support/src/generalhtmlsupport';
-import ClassicTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/classictesteditor';
-import ImageBlock from '@ckeditor/ckeditor5-image/src/imageblock';
-import ImageCaption from '@ckeditor/ckeditor5-image/src/imagecaption';
-import CodeBlock from '@ckeditor/ckeditor5-code-block/src/codeblock';
-import BlockQuote from '@ckeditor/ckeditor5-block-quote/src/blockquote';
-import Table from '@ckeditor/ckeditor5-table/src/table';
-import TableCaption from '@ckeditor/ckeditor5-table/src/tablecaption';
-import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils';
-import Style from '../../src/style';
-import { setData, getData } from '@ckeditor/ckeditor5-engine/src/dev-utils/model';
+import Paragraph from '@ckeditor/ckeditor5-paragraph/src/paragraph.js';
+import Heading from '@ckeditor/ckeditor5-heading/src/heading.js';
+import GeneralHtmlSupport from '@ckeditor/ckeditor5-html-support/src/generalhtmlsupport.js';
+import ClassicTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/classictesteditor.js';
+import ImageBlock from '@ckeditor/ckeditor5-image/src/imageblock.js';
+import ImageCaption from '@ckeditor/ckeditor5-image/src/imagecaption.js';
+import CodeBlock from '@ckeditor/ckeditor5-code-block/src/codeblock.js';
+import BlockQuote from '@ckeditor/ckeditor5-block-quote/src/blockquote.js';
+import Table from '@ckeditor/ckeditor5-table/src/table.js';
+import TableCaption from '@ckeditor/ckeditor5-table/src/tablecaption.js';
+import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils.js';
+import Style from '../../src/style.js';
+import TableStyleSupport from '../../src/integrations/table.js';
+import { setData, getData } from '@ckeditor/ckeditor5-engine/src/dev-utils/model.js';
 
 describe( 'TableStyleSupport', () => {
 	let editor, editorElement, command, model;
@@ -84,6 +82,14 @@ describe( 'TableStyleSupport', () => {
 		await editor.destroy();
 	} );
 
+	it( 'should have `isOfficialPlugin` static flag set to `true`', () => {
+		expect( TableStyleSupport.isOfficialPlugin ).to.be.true;
+	} );
+
+	it( 'should have `isPremiumPlugin` static flag set to `false`', () => {
+		expect( TableStyleSupport.isPremiumPlugin ).to.be.false;
+	} );
+
 	it( 'should add class to table element', () => {
 		setData( model,
 			'<table>' +
@@ -98,7 +104,7 @@ describe( 'TableStyleSupport', () => {
 		command.execute( { styleName: 'Test table style' } );
 
 		expect( getData( model, { withoutSelection: true } ) ).to.equal(
-			'<table htmlAttributes="{"classes":["test-table-style"]}">' +
+			'<table htmlTableAttributes="{"classes":["test-table-style"]}">' +
 				'<tableRow>' +
 					'<tableCell>' +
 						'<paragraph>foo</paragraph>' +
@@ -333,7 +339,7 @@ describe( 'TableStyleSupport', () => {
 		expect( getData( model, { withoutSelection: true } ) ).to.equal(
 			'<table headingRows="1">' +
 				'<tableRow>' +
-					'<tableCell htmlAttributes="{"classes":["test-th-style"]}">' +
+					'<tableCell htmlThAttributes="{"classes":["test-th-style"]}">' +
 						'<paragraph>foo</paragraph>' +
 					'</tableCell>' +
 				'</tableRow>' +
@@ -400,7 +406,7 @@ describe( 'TableStyleSupport', () => {
 
 		expect( getData( model, { withoutSelection: true } ) ).to.equal(
 			'<table>' +
-				'<tableRow htmlAttributes="{"classes":["test-tr-style"]}">' +
+				'<tableRow htmlTrAttributes="{"classes":["test-tr-style"]}">' +
 					'<tableCell>' +
 						'<paragraph>foo</paragraph>' +
 					'</tableCell>' +
@@ -427,7 +433,7 @@ describe( 'TableStyleSupport', () => {
 		expect( getData( model, { withoutSelection: true } ) ).to.equal(
 			'<table>' +
 				'<tableRow>' +
-					'<tableCell htmlAttributes="{"classes":["test-td-style"]}">' +
+					'<tableCell htmlTdAttributes="{"classes":["test-td-style"]}">' +
 						'<paragraph>foo</paragraph>' +
 					'</tableCell>' +
 				'</tableRow>' +
@@ -457,7 +463,7 @@ describe( 'TableStyleSupport', () => {
 						'<paragraph>foo</paragraph>' +
 					'</tableCell>' +
 				'</tableRow>' +
-				'<caption htmlAttributes="{"classes":["test-caption-style"]}">abc</caption>' +
+				'<caption htmlCaptionAttributes="{"classes":["test-caption-style"]}">abc</caption>' +
 			'</table>'
 		);
 	} );
@@ -485,7 +491,11 @@ describe( 'TableStyleSupport', () => {
 						'<paragraph>foo</paragraph>' +
 					'</tableCell>' +
 				'</tableRow>' +
-				'<caption htmlAttributes="{"classes":["test-caption-style","test-figcaption-style"]}">abc</caption>' +
+				'<caption' +
+					' htmlCaptionAttributes="{"classes":["test-caption-style"]}"' +
+					' htmlFigcaptionAttributes="{"classes":["test-figcaption-style"]}"' +
+					'>' +
+					'abc</caption>' +
 			'</table>'
 		);
 	} );
@@ -516,7 +526,7 @@ describe( 'TableStyleSupport', () => {
 		expect( getData( model, { withoutSelection: true } ) ).to.equal(
 			'<table headingRows="1">' +
 				'<tableRow>' +
-					'<tableCell htmlAttributes="{"classes":["test-th-style"]}">' +
+					'<tableCell htmlThAttributes="{"classes":["test-th-style"]}">' +
 						'<paragraph>header</paragraph>' +
 					'</tableCell>' +
 				'</tableRow>' +

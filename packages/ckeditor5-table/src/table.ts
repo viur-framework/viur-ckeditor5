@@ -1,21 +1,21 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module table/table
  */
 
-import { Plugin } from 'ckeditor5/src/core';
-import { Widget } from 'ckeditor5/src/widget';
+import { Plugin } from 'ckeditor5/src/core.js';
+import { Widget } from 'ckeditor5/src/widget.js';
 
-import TableEditing from './tableediting';
-import TableUI from './tableui';
-import TableSelection from './tableselection';
-import TableClipboard from './tableclipboard';
-import TableKeyboard from './tablekeyboard';
-import TableMouse from './tablemouse';
+import TableEditing from './tableediting.js';
+import TableUI from './tableui.js';
+import TableSelection from './tableselection.js';
+import TableClipboard from './tableclipboard.js';
+import TableKeyboard from './tablekeyboard.js';
+import TableMouse from './tablemouse.js';
 
 import '../theme/table.css';
 
@@ -44,7 +44,14 @@ export default class Table extends Plugin {
 	/**
 	 * @inheritDoc
 	 */
-	public static get pluginName(): 'Table' {
-		return 'Table';
+	public static get pluginName() {
+		return 'Table' as const;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public static override get isOfficialPlugin(): true {
+		return true;
 	}
 }

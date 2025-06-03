@@ -1,22 +1,20 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module engine/dataprocessor/xmldataprocessor
  */
 
-/* globals DOMParser */
+import BasicHtmlWriter from './basichtmlwriter.js';
+import DomConverter from '../view/domconverter.js';
 
-import BasicHtmlWriter from './basichtmlwriter';
-import DomConverter from '../view/domconverter';
-
-import type DataProcessor from './dataprocessor';
-import type HtmlWriter from './htmlwriter';
-import type ViewDocument from '../view/document';
-import type ViewDocumentFragment from '../view/documentfragment';
-import type { MatcherPattern } from '../view/matcher';
+import type DataProcessor from './dataprocessor.js';
+import type HtmlWriter from './htmlwriter.js';
+import type ViewDocument from '../view/document.js';
+import type ViewDocumentFragment from '../view/documentfragment.js';
+import type { MatcherPattern } from '../view/matcher.js';
 
 /**
  * The XML data processor class.
@@ -67,13 +65,13 @@ export default class XmlDataProcessor implements DataProcessor {
 
 	/**
 	 * Converts the provided {@link module:engine/view/documentfragment~DocumentFragment document fragment}
-	 * to data format &mdash; in this case an XML string.
+	 * to data format &ndash; in this case an XML string.
 	 *
 	 * @returns An XML string.
 	 */
 	public toData( viewFragment: ViewDocumentFragment ): string {
 		// Convert view DocumentFragment to DOM DocumentFragment.
-		const domFragment = this.domConverter.viewToDom( viewFragment ) as DocumentFragment;
+		const domFragment = this.domConverter.viewToDom( viewFragment );
 
 		// Convert DOM DocumentFragment to XML output.
 		// There is no need to use dedicated for XML serializing method because BasicHtmlWriter works well in this case.

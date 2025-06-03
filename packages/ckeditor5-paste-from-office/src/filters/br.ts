@@ -1,6 +1,6 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
@@ -14,7 +14,7 @@ import {
 	type ViewDocumentFragment,
 	type ViewElement,
 	type ViewNode
-} from 'ckeditor5/src/engine';
+} from 'ckeditor5/src/engine.js';
 
 /**
  * Transforms `<br>` elements that are siblings to some block element into a paragraphs.

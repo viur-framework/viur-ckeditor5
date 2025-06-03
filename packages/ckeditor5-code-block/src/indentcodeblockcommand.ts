@@ -1,17 +1,17 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module code-block/indentcodeblockcommand
  */
-import { Command, type Editor } from 'ckeditor5/src/core';
+import { Command, type Editor } from 'ckeditor5/src/core.js';
 
 import {
 	getIndentOutdentPositions,
 	isModelSelectionInCodeBlock
-} from './utils';
+} from './utils.js';
 
 /**
  * The code block indentation increase command plugin.

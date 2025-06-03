@@ -1,17 +1,15 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-import VirtualTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/virtualtesteditor';
-import Paragraph from '@ckeditor/ckeditor5-paragraph/src/paragraph';
-import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils';
-import { getCode } from '@ckeditor/ckeditor5-utils/src/keyboard';
-import { getData as getModelData, setData as setModelData } from '@ckeditor/ckeditor5-engine/src/dev-utils/model';
+import VirtualTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/virtualtesteditor.js';
+import Paragraph from '@ckeditor/ckeditor5-paragraph/src/paragraph.js';
+import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils.js';
+import { getCode } from '@ckeditor/ckeditor5-utils/src/keyboard.js';
+import { getData as getModelData, setData as setModelData } from '@ckeditor/ckeditor5-engine/src/dev-utils/model.js';
 
-import PastePlainText from '../src/pasteplaintext';
-
-/* global document */
+import PastePlainText from '../src/pasteplaintext.js';
 
 // https://github.com/ckeditor/ckeditor5/issues/1006
 describe( 'PastePlainText', () => {
@@ -48,6 +46,18 @@ describe( 'PastePlainText', () => {
 					view: 'br'
 				} );
 			} );
+	} );
+
+	afterEach( async () => {
+		await editor.destroy();
+	} );
+
+	it( 'should have `isOfficialPlugin` static flag set to `true`', () => {
+		expect( PastePlainText.isOfficialPlugin ).to.be.true;
+	} );
+
+	it( 'should have `isPremiumPlugin` static flag set to `false`', () => {
+		expect( PastePlainText.isPremiumPlugin ).to.be.false;
 	} );
 
 	it( 'should inherit selection attributes (collapsed selection)', () => {
@@ -150,6 +160,23 @@ describe( 'PastePlainText', () => {
 		expect( getModelData( model ) ).to.equal( '<paragraph><$text bold="true">Bolded foo[]text.</$text></paragraph>' );
 	} );
 
+	it( 'should inherit selection attributes if only one block element was in the clipboard', () => {
+		setModelData( model, '<paragraph><$text bold="true">Bolded []text.</$text></paragraph>' );
+
+		const dataTransferMock = createDataTransfer( {
+			'text/html': '<p>foo</p>',
+			'text/plain': 'foo'
+		} );
+
+		viewDocument.fire( 'paste', {
+			dataTransfer: dataTransferMock,
+			stopPropagation() {},
+			preventDefault() {}
+		} );
+
+		expect( getModelData( model ) ).to.equal( '<paragraph><$text bold="true">Bolded foo[]text.</$text></paragraph>' );
+	} );
+
 	it( 'should inherit selection attributes if shift key was pressed while pasting', () => {
 		setModelData( model, '<paragraph><$text bold="true">Bolded []text.</$text></paragraph>' );
 
@@ -176,28 +203,6 @@ describe( 'PastePlainText', () => {
 				'<$text bold="true">bar[]text.</$text>' +
 			'</paragraph>'
 		);
-	} );
-
-	it( 'should discard selection attributes if shift key was not pressed while pasting', () => {
-		setModelData( model, '<paragraph><$text bold="true">Bolded []text.</$text></paragraph>' );
-
-		const dataTransferMock = createDataTransfer( {
-			'text/html': 'foo<br>bar',
-			'text/plain': 'foo\nbar'
-		} );
-
-		viewDocument.fire( 'clipboardInput', {
-			dataTransfer: dataTransferMock,
-			stopPropagation() {},
-			preventDefault() {}
-		} );
-
-		expect( getModelData( model ) ).to.equal(
-			'<paragraph>' +
-				'<$text bold="true">Bolded </$text>' +
-				'foo<softBreak></softBreak>bar[]' +
-				'<$text bold="true">text.</$text>' +
-			'</paragraph>' );
 	} );
 
 	it( 'should work if the insertContent event is cancelled', () => {
@@ -276,38 +281,6 @@ describe( 'PastePlainText', () => {
 			'<paragraph><$text bold="true">Bolded </$text></paragraph>' +
 			'[<obj></obj>]' +
 			'<paragraph><$text bold="true">.</$text></paragraph>'
-		);
-	} );
-
-	it( 'ignores clipboard input as plain text when shift was released', () => {
-		setModelData( model, '<paragraph><$text bold="true">Bolded []text.</$text></paragraph>' );
-
-		const dataTransferMock = createDataTransfer( {
-			'text/html': 'foo<br>bar',
-			'text/plain': 'foo\nbar'
-		} );
-
-		fireKeyEvent( 'a', {
-			shiftKey: true
-		} );
-
-		fireKeyEvent( 'v', {
-			shiftKey: false,
-			ctrlKey: true
-		} );
-
-		viewDocument.fire( 'clipboardInput', {
-			dataTransfer: dataTransferMock,
-			stopPropagation() {},
-			preventDefault() {}
-		} );
-
-		expect( getModelData( model ) ).to.equal(
-			'<paragraph>' +
-			'<$text bold="true">Bolded </$text>' +
-			'foo<softBreak></softBreak>bar[]' +
-			'<$text bold="true">text.</$text>' +
-			'</paragraph>'
 		);
 	} );
 

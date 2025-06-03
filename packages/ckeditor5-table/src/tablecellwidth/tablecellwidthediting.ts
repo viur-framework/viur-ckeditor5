@@ -1,18 +1,18 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module table/tablecellwidth/tablecellwidthediting
  */
 
-import { Plugin } from 'ckeditor5/src/core';
+import { Plugin } from 'ckeditor5/src/core.js';
 
-import TableEditing from './../tableediting';
-import TableCellWidthCommand from './commands/tablecellwidthcommand';
-import { getNormalizedDefaultProperties } from '../utils/table-properties';
-import { enableProperty } from '../utils/common';
+import TableEditing from './../tableediting.js';
+import TableCellWidthCommand from './commands/tablecellwidthcommand.js';
+import { getNormalizedDefaultCellProperties } from '../utils/table-properties.js';
+import { enableProperty } from '../utils/common.js';
 
 /**
  * The table cell width editing feature.
@@ -24,8 +24,15 @@ export default class TableCellWidthEditing extends Plugin {
 	/**
 	 * @inheritDoc
 	 */
-	public static get pluginName(): 'TableCellWidthEditing' {
-		return 'TableCellWidthEditing';
+	public static get pluginName() {
+		return 'TableCellWidthEditing' as const;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public static override get isOfficialPlugin(): true {
+		return true;
 	}
 
 	/**
@@ -41,13 +48,15 @@ export default class TableCellWidthEditing extends Plugin {
 	public init(): void {
 		const editor = this.editor;
 
-		const defaultTableCellProperties = getNormalizedDefaultProperties(
+		const defaultTableCellProperties = getNormalizedDefaultCellProperties(
 			editor.config.get( 'table.tableCellProperties.defaultProperties' )!
 		);
 
 		enableProperty( editor.model.schema, editor.conversion, {
 			modelAttribute: 'tableCellWidth',
 			styleName: 'width',
+			attributeName: 'width',
+			attributeType: 'length',
 			defaultValue: defaultTableCellProperties.width
 		} );
 

@@ -1,37 +1,37 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-import UpcastDispatcher from '../../src/conversion/upcastdispatcher';
+import UpcastDispatcher from '../../src/conversion/upcastdispatcher.js';
 
-import ViewContainerElement from '../../src/view/containerelement';
-import ViewDocumentFragment from '../../src/view/documentfragment';
-import ViewText from '../../src/view/text';
-import ViewUIElement from '../../src/view/uielement';
-import ViewAttributeElement from '../../src/view/attributeelement';
-import ViewDocument from '../../src/view/document';
+import ViewContainerElement from '../../src/view/containerelement.js';
+import ViewDocumentFragment from '../../src/view/documentfragment.js';
+import ViewText from '../../src/view/text.js';
+import ViewUIElement from '../../src/view/uielement.js';
+import ViewAttributeElement from '../../src/view/attributeelement.js';
+import ViewDocument from '../../src/view/document.js';
 
-import Model from '../../src/model/model';
-import ModelDocumentFragment from '../../src/model/documentfragment';
-import ModelElement from '../../src/model/element';
-import ModelText from '../../src/model/text';
-import ModelRange from '../../src/model/range';
-import ModelPosition from '../../src/model/position';
+import Model from '../../src/model/model.js';
+import ModelDocumentFragment from '../../src/model/documentfragment.js';
+import ModelElement from '../../src/model/element.js';
+import ModelText from '../../src/model/text.js';
+import ModelRange from '../../src/model/range.js';
+import ModelPosition from '../../src/model/position.js';
 
-import UpcastHelpers, { convertToModelFragment, convertText, convertSelectionChange } from '../../src/conversion/upcasthelpers';
+import UpcastHelpers, { convertToModelFragment, convertText, convertSelectionChange } from '../../src/conversion/upcasthelpers.js';
 
-import { getData as modelGetData, setData as modelSetData, stringify } from '../../src/dev-utils/model';
-import View from '../../src/view/view';
-import createViewRoot from '../view/_utils/createroot';
-import { setData as viewSetData, parse as viewParse } from '../../src/dev-utils/view';
-import Mapper from '../../src/conversion/mapper';
-import ViewSelection from '../../src/view/selection';
-import ViewRange from '../../src/view/range';
-import { StylesProcessor } from '../../src/view/stylesmap';
-import Writer from '../../src/model/writer';
+import { getData as modelGetData, setData as modelSetData, stringify } from '../../src/dev-utils/model.js';
+import View from '../../src/view/view.js';
+import createViewRoot from '../view/_utils/createroot.js';
+import { setData as viewSetData, parse as viewParse } from '../../src/dev-utils/view.js';
+import Mapper from '../../src/conversion/mapper.js';
+import ViewSelection from '../../src/view/selection.js';
+import ViewRange from '../../src/view/range.js';
+import { StylesProcessor } from '../../src/view/stylesmap.js';
+import Writer from '../../src/model/writer.js';
 
-import toArray from '@ckeditor/ckeditor5-utils/src/toarray';
+import toArray from '@ckeditor/ckeditor5-utils/src/toarray.js';
 
 describe( 'UpcastHelpers', () => {
 	let upcastDispatcher, model, schema, upcastHelpers, viewDocument;
@@ -251,12 +251,17 @@ describe( 'UpcastHelpers', () => {
 				},
 				model: {
 					key: 'fontSize',
-					value: ( viewElement, conversionApi ) => {
+					value: ( viewElement, conversionApi, data ) => {
 						const fontSize = viewElement.getStyle( 'font-size' );
 						const value = fontSize.substr( 0, fontSize.length - 2 );
 
 						// To ensure conversion API is provided.
 						expect( conversionApi.writer ).to.instanceof( Writer );
+
+						// To ensure upcast conversion data is provided.
+						expect( data.modelCursor ).to.be.instanceof( ModelPosition );
+						expect( data.viewItem ).to.equal( viewElement );
+						expect( data.modelRange ).to.be.null;
 
 						if ( value <= 10 ) {
 							return 'small';
@@ -296,11 +301,32 @@ describe( 'UpcastHelpers', () => {
 
 		it( 'should not do anything if returned model attribute is null', () => {
 			upcastHelpers.elementToAttribute( { view: 'strong', model: 'bold' } );
+
+			// On a high priority, so we could check if it does not consume anything before the above converter.
 			upcastHelpers.elementToAttribute( {
 				view: 'strong',
 				model: {
 					key: 'bold',
 					value: () => null
+				},
+				converterPriority: 'high'
+			} );
+
+			expectResult(
+				new ViewAttributeElement( viewDocument, 'strong', null, new ViewText( viewDocument, 'foo' ) ),
+				'<$text bold="true">foo</$text>'
+			);
+		} );
+
+		it( 'should not do anything if returned model attribute is undefined', () => {
+			upcastHelpers.elementToAttribute( { view: 'strong', model: 'bold' } );
+
+			// On a high priority, so we could check if it does not consume anything before the above converter.
+			upcastHelpers.elementToAttribute( {
+				view: 'strong',
+				model: {
+					key: 'bold',
+					value: () => undefined
 				},
 				converterPriority: 'high'
 			} );
@@ -603,6 +629,64 @@ describe( 'UpcastHelpers', () => {
 			);
 		} );
 
+		it( 'config.view does not have value set for style key', () => {
+			schema.extend( 'imageBlock', {
+				allowAttributes: [ 'styled' ]
+			} );
+
+			upcastHelpers.attributeToAttribute( {
+				view: 'style',
+				model: 'styled'
+			} );
+
+			// Ensure that proper consumables are consumed.
+			upcastDispatcher.on( 'element', ( evt, data, { consumable } ) => {
+				expect( consumable.test( data.viewItem, { styles: [ 'border', 'padding' ] } ) ).to.be.true;
+				expect( consumable.test( data.viewItem, { styles: [ 'border' ] } ) ).to.be.true;
+				expect( consumable.test( data.viewItem, { styles: [ 'padding' ] } ) ).to.be.true;
+			}, { priority: 'highest' } );
+
+			upcastDispatcher.on( 'element', ( evt, data, { consumable } ) => {
+				expect( consumable.test( data.viewItem, { styles: [ 'border', 'padding' ] } ) ).to.be.false;
+				expect( consumable.test( data.viewItem, { styles: [ 'border' ] } ) ).to.be.false;
+				expect( consumable.test( data.viewItem, { styles: [ 'padding' ] } ) ).to.be.false;
+			}, { priority: 'lowest' } );
+
+			expectResult(
+				new ViewAttributeElement( viewDocument, 'img', { 'style': 'border: 2px solid red; padding: 6px 3px;' } ),
+				'<imageBlock styled="border:2px solid red;padding:6px 3px;"></imageBlock>'
+			);
+		} );
+
+		it( 'config.view does not have value set for class key', () => {
+			schema.extend( 'imageBlock', {
+				allowAttributes: [ 'classNames' ]
+			} );
+
+			upcastHelpers.attributeToAttribute( {
+				view: 'class',
+				model: 'classNames'
+			} );
+
+			// Ensure that proper consumables are consumed.
+			upcastDispatcher.on( 'element', ( evt, data, { consumable } ) => {
+				expect( consumable.test( data.viewItem, { classes: [ 'foo', 'bar' ] } ) ).to.be.true;
+				expect( consumable.test( data.viewItem, { classes: [ 'foo' ] } ) ).to.be.true;
+				expect( consumable.test( data.viewItem, { classes: [ 'bar' ] } ) ).to.be.true;
+			}, { priority: 'highest' } );
+
+			upcastDispatcher.on( 'element', ( evt, data, { consumable } ) => {
+				expect( consumable.test( data.viewItem, { classes: [ 'foo', 'bar' ] } ) ).to.be.false;
+				expect( consumable.test( data.viewItem, { classes: [ 'foo' ] } ) ).to.be.false;
+				expect( consumable.test( data.viewItem, { classes: [ 'bar' ] } ) ).to.be.false;
+			}, { priority: 'lowest' } );
+
+			expectResult(
+				new ViewAttributeElement( viewDocument, 'img', { 'class': 'foo bar' } ),
+				'<imageBlock classNames="foo bar"></imageBlock>'
+			);
+		} );
+
 		it( 'model attribute value is a string', () => {
 			schema.extend( 'imageBlock', {
 				allowAttributes: [ 'styled' ]
@@ -650,12 +734,19 @@ describe( 'UpcastHelpers', () => {
 				},
 				model: {
 					key: 'styled',
-					value: ( viewElement, conversionApi ) => {
+					value: ( viewElement, conversionApi, data ) => {
 						const regexp = /styled-([\S]+)/;
 						const match = viewElement.getAttribute( 'class' ).match( regexp );
 
 						// To ensure conversion API is provided.
 						expect( conversionApi.writer ).to.instanceof( Writer );
+
+						// To ensure upcast conversion data is provided.
+						expect( data.modelCursor ).to.be.instanceof( ModelPosition );
+						expect( data.viewItem ).to.equal( viewElement );
+						expect( data.modelRange ).to.be.instanceOf( ModelRange );
+						expect( data.modelRange.start.path ).to.be.deep.equal( [ 0 ] );
+						expect( data.modelRange.end.path ).to.be.deep.equal( [ 1 ] );
 
 						return match[ 1 ];
 					}
@@ -682,6 +773,19 @@ describe( 'UpcastHelpers', () => {
 				allowAttributes: [ 'styled' ]
 			} );
 
+			// Run this first to verify if it does not consume.
+			upcastHelpers.attributeToAttribute( {
+				view: {
+					key: 'class',
+					value: 'styled'
+				},
+				model: {
+					key: 'styled',
+					value: () => null
+				}
+			} );
+
+			// This runs later as the above should not consume anything.
 			upcastHelpers.attributeToAttribute( {
 				view: {
 					key: 'class',
@@ -693,6 +797,18 @@ describe( 'UpcastHelpers', () => {
 				}
 			} );
 
+			expectResult(
+				new ViewAttributeElement( viewDocument, 'img', { class: 'styled' } ),
+				'<imageBlock styled="true"></imageBlock>'
+			);
+		} );
+
+		it( 'should not do anything if returned model attribute is undefined', () => {
+			schema.extend( 'imageBlock', {
+				allowAttributes: [ 'styled' ]
+			} );
+
+			// Run this first to verify if it does not consume.
 			upcastHelpers.attributeToAttribute( {
 				view: {
 					key: 'class',
@@ -700,7 +816,19 @@ describe( 'UpcastHelpers', () => {
 				},
 				model: {
 					key: 'styled',
-					value: () => null
+					value: () => undefined
+				}
+			} );
+
+			// This runs later as the above should not consume anything.
+			upcastHelpers.attributeToAttribute( {
+				view: {
+					key: 'class',
+					value: 'styled'
+				},
+				model: {
+					key: 'styled',
+					value: true
 				}
 			} );
 
@@ -1198,31 +1326,6 @@ describe( 'upcast-converters', () => {
 			expect( conversionResult.childCount ).to.equal( 1 );
 			expect( conversionResult.getChild( 0 ) ).to.be.instanceof( ModelText );
 			expect( conversionResult.getChild( 0 ).data ).to.equal( 'foobar' );
-		} );
-
-		it( 'should also include $marker when auto-paragraphing $text.', () => {
-			// Make $text invalid to trigger auto-paragraphing.
-			schema.addChildCheck( ( ctx, childDef ) => {
-				if ( ( childDef.name == '$text' ) && ctx.endsWith( '$root' ) ) {
-					return false;
-				}
-			} );
-
-			const viewText = new ViewText( viewDocument, 'foobar' );
-			dispatcher.on( 'text', ( evt, data, conversionApi ) => {
-				// Add $marker element before processing $text.
-				const element = new ModelElement( '$marker', { 'data-name': 'marker1' } );
-				conversionApi.writer.insert( element, data.modelCursor );
-				data.modelCursor = conversionApi.writer.createPositionAfter( element );
-
-				// Convert $text.
-				convertText()( evt, data, conversionApi );
-			} );
-
-			const conversionResult = model.change( writer => dispatcher.convert( viewText, writer, context ) );
-
-			// Check that marker is in paragraph.
-			expect( conversionResult.markers.get( 'marker1' ).start.parent.name ).to.be.equal( 'paragraph' );
 		} );
 
 		it( 'should auto-paragraph a text if it is not allowed at the insertion position but would be inserted if auto-paragraphed', () => {

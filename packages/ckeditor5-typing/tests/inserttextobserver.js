@@ -1,18 +1,16 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* globals document */
+import InsertTextObserver from '../src/inserttextobserver.js';
+import { fireBeforeInputDomEvent, fireCompositionEndDomEvent } from './_utils/utils.js';
 
-import InsertTextObserver from '../src/inserttextobserver';
-import { fireBeforeInputDomEvent, fireCompositionEndDomEvent } from './_utils/utils';
-
-import View from '@ckeditor/ckeditor5-engine/src/view/view';
-import createViewRoot from '@ckeditor/ckeditor5-engine/tests/view/_utils/createroot';
-import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils';
-import { setData as viewSetData } from '@ckeditor/ckeditor5-engine/src/dev-utils/view';
-import env from '@ckeditor/ckeditor5-utils/src/env';
+import View from '@ckeditor/ckeditor5-engine/src/view/view.js';
+import createViewRoot from '@ckeditor/ckeditor5-engine/tests/view/_utils/createroot.js';
+import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils.js';
+import { setData as viewSetData } from '@ckeditor/ckeditor5-engine/src/dev-utils/view.js';
+import env from '@ckeditor/ckeditor5-utils/src/env.js';
 
 describe( 'InsertTextObserver', () => {
 	let view, viewDocument, insertTextEventSpy;
@@ -151,6 +149,30 @@ describe( 'InsertTextObserver', () => {
 
 		expect( firstCallArgs.text ).to.equal( 'bar' );
 		expect( firstCallArgs.selection.isEqual( viewSelection ) ).to.be.true;
+		expect( firstCallArgs.isComposing ).to.be.undefined;
+	} );
+
+	it( 'should handle the insertText input type and fire the insertText event while composing', () => {
+		viewSetData( view, '<p>fo{}o</p>' );
+
+		const viewRange = view.document.selection.getFirstRange();
+		const domRange = view.domConverter.viewRangeToDom( viewRange );
+		const viewSelection = view.createSelection( viewRange );
+
+		fireBeforeInputDomEvent( domRoot, {
+			inputType: 'insertText',
+			ranges: [ domRange ],
+			data: 'bar',
+			isComposing: true
+		} );
+
+		sinon.assert.calledOnce( insertTextEventSpy );
+
+		const firstCallArgs = insertTextEventSpy.firstCall.args[ 1 ];
+
+		expect( firstCallArgs.text ).to.equal( 'bar' );
+		expect( firstCallArgs.selection.isEqual( viewSelection ) ).to.be.true;
+		expect( firstCallArgs.isComposing ).to.be.true;
 	} );
 
 	it( 'should handle the insertReplacementText input type and fire the insertText event', () => {
@@ -186,7 +208,8 @@ describe( 'InsertTextObserver', () => {
 		const firstCallArgs = insertTextEventSpy.firstCall.args[ 1 ];
 
 		expect( firstCallArgs.text ).to.equal( 'bar' );
-		expect( firstCallArgs.selection.isEqual( view.document.selection ) ).to.be.true;
+		expect( firstCallArgs.selection ).to.be.undefined;
+		expect( firstCallArgs.isComposing ).to.be.true;
 	} );
 
 	it( 'should ignore the empty compositionend event (without any data)', () => {
@@ -197,6 +220,31 @@ describe( 'InsertTextObserver', () => {
 		} );
 
 		sinon.assert.notCalled( insertTextEventSpy );
+	} );
+
+	// See https://github.com/ckeditor/ckeditor5/issues/14569.
+	it( 'should flush focus observer to enable selection rendering', () => {
+		viewSetData( view, '<p>fo{}o</p>' );
+
+		const flushSpy = testUtils.sinon.spy( view.getObserver( InsertTextObserver ).focusObserver, 'flush' );
+
+		const viewRange = view.document.selection.getFirstRange();
+		const domRange = view.domConverter.viewRangeToDom( viewRange );
+		const viewSelection = view.createSelection( viewRange );
+
+		fireBeforeInputDomEvent( domRoot, {
+			inputType: 'insertText',
+			ranges: [ domRange ],
+			data: 'bar'
+		} );
+
+		sinon.assert.calledOnce( insertTextEventSpy );
+		sinon.assert.calledOnce( flushSpy );
+
+		const firstCallArgs = insertTextEventSpy.firstCall.args[ 1 ];
+
+		expect( firstCallArgs.text ).to.equal( 'bar' );
+		expect( firstCallArgs.selection.isEqual( viewSelection ) ).to.be.true;
 	} );
 
 	describe( 'in Android environment', () => {

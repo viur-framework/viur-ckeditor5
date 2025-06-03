@@ -1,28 +1,37 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module table/tablecellproperties/tablecellpropertiesediting
  */
 
-import { Plugin } from 'ckeditor5/src/core';
-import { addBorderRules, addPaddingRules, addBackgroundRules, type Schema, type Conversion, type ViewElement } from 'ckeditor5/src/engine';
+import { Plugin } from 'ckeditor5/src/core.js';
+import {
+	addBorderRules,
+	addPaddingRules,
+	addBackgroundRules,
+	type Schema,
+	type Conversion,
+	type ViewElement,
+	type UpcastConversionApi,
+	type UpcastConversionData
+} from 'ckeditor5/src/engine.js';
 
-import { downcastAttributeToStyle, upcastBorderStyles } from './../converters/tableproperties';
-import TableEditing from './../tableediting';
-import TableCellWidthEditing from '../tablecellwidth/tablecellwidthediting';
-import TableCellPaddingCommand from './commands/tablecellpaddingcommand';
-import TableCellHeightCommand from './commands/tablecellheightcommand';
-import TableCellBackgroundColorCommand from './commands/tablecellbackgroundcolorcommand';
-import TableCellVerticalAlignmentCommand from './commands/tablecellverticalalignmentcommand';
-import TableCellHorizontalAlignmentCommand from './commands/tablecellhorizontalalignmentcommand';
-import TableCellBorderStyleCommand from './commands/tablecellborderstylecommand';
-import TableCellBorderColorCommand from './commands/tablecellbordercolorcommand';
-import TableCellBorderWidthCommand from './commands/tablecellborderwidthcommand';
-import { getNormalizedDefaultProperties } from '../utils/table-properties';
-import { enableProperty } from '../utils/common';
+import { downcastAttributeToStyle, getDefaultValueAdjusted, upcastBorderStyles } from '../converters/tableproperties.js';
+import TableEditing from './../tableediting.js';
+import TableCellWidthEditing from '../tablecellwidth/tablecellwidthediting.js';
+import TableCellPaddingCommand from './commands/tablecellpaddingcommand.js';
+import TableCellHeightCommand from './commands/tablecellheightcommand.js';
+import TableCellBackgroundColorCommand from './commands/tablecellbackgroundcolorcommand.js';
+import TableCellVerticalAlignmentCommand from './commands/tablecellverticalalignmentcommand.js';
+import TableCellHorizontalAlignmentCommand from './commands/tablecellhorizontalalignmentcommand.js';
+import TableCellBorderStyleCommand from './commands/tablecellborderstylecommand.js';
+import TableCellBorderColorCommand from './commands/tablecellbordercolorcommand.js';
+import TableCellBorderWidthCommand from './commands/tablecellborderwidthcommand.js';
+import { getNormalizedDefaultCellProperties } from '../utils/table-properties.js';
+import { enableProperty } from '../utils/common.js';
 
 const VALIGN_VALUES_REG_EXP = /^(top|middle|bottom)$/;
 const ALIGN_VALUES_REG_EXP = /^(left|center|right|justify)$/;
@@ -50,8 +59,15 @@ export default class TableCellPropertiesEditing extends Plugin {
 	/**
 	 * @inheritDoc
 	 */
-	public static get pluginName(): 'TableCellPropertiesEditing' {
-		return 'TableCellPropertiesEditing';
+	public static get pluginName() {
+		return 'TableCellPropertiesEditing' as const;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public static override get isOfficialPlugin(): true {
+		return true;
 	}
 
 	/**
@@ -69,9 +85,9 @@ export default class TableCellPropertiesEditing extends Plugin {
 		const schema = editor.model.schema;
 		const conversion = editor.conversion;
 
-		editor.config.define( 'table.tableCellProperties.defaultProperties', {} );
+		editor.config.define( 'table.tableCellProperties.defaultProperties', { } );
 
-		const defaultTableCellProperties = getNormalizedDefaultProperties(
+		const defaultTableCellProperties = getNormalizedDefaultCellProperties(
 			editor.config.get( 'table.tableCellProperties.defaultProperties' )!,
 			{
 				includeVerticalAlignmentProperty: true,
@@ -94,6 +110,8 @@ export default class TableCellPropertiesEditing extends Plugin {
 		enableProperty( schema, conversion, {
 			modelAttribute: 'tableCellHeight',
 			styleName: 'height',
+			attributeName: 'height',
+			attributeType: 'length',
 			defaultValue: defaultTableCellProperties.height
 		} );
 		editor.commands.add( 'tableCellHeight', new TableCellHeightCommand( editor, defaultTableCellProperties.height ) );
@@ -111,6 +129,8 @@ export default class TableCellPropertiesEditing extends Plugin {
 		enableProperty( schema, conversion, {
 			modelAttribute: 'tableCellBackgroundColor',
 			styleName: 'background-color',
+			attributeName: 'bgcolor',
+			attributeType: 'color',
 			defaultValue: defaultTableCellProperties.backgroundColor
 		} );
 		editor.commands.add(
@@ -193,10 +213,16 @@ function enableHorizontalAlignmentProperty( schema: Schema, conversion: Conversi
 			},
 			model: {
 				key: 'tableCellHorizontalAlignment',
-				value: ( viewElement: ViewElement ) => {
+				value: ( viewElement: ViewElement, conversionApi: UpcastConversionApi, data: UpcastConversionData<ViewElement> ) => {
+					const localDefaultValue = getDefaultValueAdjusted( defaultValue, 'left', data );
 					const align = viewElement.getStyle( 'text-align' );
 
-					return align === defaultValue ? null : align;
+					if ( align !== localDefaultValue ) {
+						return align;
+					}
+
+					// Consume the style even if not applied to the element so it won't be processed by other converters.
+					conversionApi.consumable.consume( viewElement, { styles: 'text-align' } );
 				}
 			}
 		} )
@@ -210,10 +236,16 @@ function enableHorizontalAlignmentProperty( schema: Schema, conversion: Conversi
 			},
 			model: {
 				key: 'tableCellHorizontalAlignment',
-				value: ( viewElement: ViewElement ) => {
+				value: ( viewElement: ViewElement, conversionApi: UpcastConversionApi, data: UpcastConversionData<ViewElement> ) => {
+					const localDefaultValue = getDefaultValueAdjusted( defaultValue, 'left', data );
 					const align = viewElement.getAttribute( 'align' );
 
-					return align === defaultValue ? null : align;
+					if ( align !== localDefaultValue ) {
+						return align;
+					}
+
+					// Consume the style even if not applied to the element so it won't be processed by other converters.
+					conversionApi.consumable.consume( viewElement, { attributes: 'align' } );
 				}
 			}
 		} );
@@ -254,10 +286,16 @@ function enableVerticalAlignmentProperty( schema: Schema, conversion: Conversion
 			},
 			model: {
 				key: 'tableCellVerticalAlignment',
-				value: ( viewElement: ViewElement ) => {
+				value: ( viewElement: ViewElement, conversionApi: UpcastConversionApi, data: UpcastConversionData<ViewElement> ) => {
+					const localDefaultValue = getDefaultValueAdjusted( defaultValue, 'middle', data );
 					const align = viewElement.getStyle( 'vertical-align' );
 
-					return align === defaultValue ? null : align;
+					if ( align !== localDefaultValue ) {
+						return align;
+					}
+
+					// Consume the style even if not applied to the element so it won't be processed by other converters.
+					conversionApi.consumable.consume( viewElement, { styles: 'vertical-align' } );
 				}
 			}
 		} )
@@ -271,10 +309,16 @@ function enableVerticalAlignmentProperty( schema: Schema, conversion: Conversion
 			},
 			model: {
 				key: 'tableCellVerticalAlignment',
-				value: ( viewElement: ViewElement ) => {
+				value: ( viewElement: ViewElement, conversionApi: UpcastConversionApi, data: UpcastConversionData<ViewElement> ) => {
+					const localDefaultValue = getDefaultValueAdjusted( defaultValue, 'middle', data );
 					const valign = viewElement.getAttribute( 'valign' );
 
-					return valign === defaultValue ? null : valign;
+					if ( valign !== localDefaultValue ) {
+						return valign;
+					}
+
+					// Consume the attribute even if not applied to the element so it won't be processed by other converters.
+					conversionApi.consumable.consume( viewElement, { attributes: 'valign' } );
 				}
 			}
 		} );

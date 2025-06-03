@@ -1,29 +1,33 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* globals window, console */
+import { IconAlignLeft, IconAlignCenter, IconAlignRight } from '@ckeditor/ckeditor5-icons';
+import Model from '../../../src/model.js';
+import Collection from '@ckeditor/ckeditor5-utils/src/collection.js';
 
-import Model from '../../../src/model';
-import Collection from '@ckeditor/ckeditor5-utils/src/collection';
+import testUtils from '../../_utils/utils.js';
+import ButtonView from '../../../src/button/buttonview.js';
+import SplitButtonView from '../../../src/dropdown/button/splitbuttonview.js';
 
-import testUtils from '../../_utils/utils';
+import BodyCollection from '../../../src/editorui/bodycollection.js';
 
-import alignLeftIcon from '@ckeditor/ckeditor5-core/theme/icons/object-left.svg';
-import alignRightIcon from '@ckeditor/ckeditor5-core/theme/icons/object-right.svg';
-import alignCenterIcon from '@ckeditor/ckeditor5-core/theme/icons/object-center.svg';
-import ButtonView from '../../../src/button/buttonview';
-import SplitButtonView from '../../../src/dropdown/button/splitbuttonview';
-
-import { createDropdown, addToolbarToDropdown, addListToDropdown } from '../../../src/dropdown/utils';
+import {
+	createDropdown,
+	addToolbarToDropdown,
+	addListToDropdown,
+	addMenuToDropdown
+} from '../../../src/dropdown/utils.js';
 
 const ui = testUtils.createTestUIView( {
 	dropdown: '#dropdown',
 	listDropdown: '#list-dropdown',
+	listDropdownWithGroups: '#list-dropdown-with-groups',
 	dropdownLabel: '#dropdown-label',
 	toolbarDropdown: '#dropdown-toolbar',
-	splitButton: '#dropdown-splitbutton'
+	splitButton: '#dropdown-splitbutton',
+	menuDropdown: '#menu-dropdown'
 } );
 
 function testEmpty() {
@@ -76,6 +80,80 @@ function testList() {
 	window.Model = Model;
 }
 
+function testListWithGroups() {
+	const collection = new Collection( { idProperty: 'label' } );
+
+	collection.addMany( [
+		{
+			type: 'button',
+			model: new Model( {
+				label: 'Item 1',
+				withText: true
+			} )
+		},
+		{
+			type: 'group',
+			label: 'Group 1',
+			items: new Collection( [
+				{
+					type: 'button',
+					model: new Model( {
+						label: 'Group 1, Item 1',
+						withText: true
+					} )
+				},
+				{
+					type: 'button',
+					model: new Model( {
+						label: 'Group 1, Item 1',
+						withText: true
+					} )
+				}
+			] )
+		},
+		{
+			type: 'group',
+			label: 'Group 2',
+			items: new Collection( [
+				{
+					type: 'button',
+					model: new Model( {
+						label: 'Group 2, Item 1',
+						withText: true
+					} )
+				},
+				{
+					type: 'button',
+					model: new Model( {
+						label: 'Group 2, Item 1',
+						withText: true
+					} )
+				}
+			] )
+		}
+	] );
+
+	const dropdownView = createDropdown( {} );
+
+	dropdownView.buttonView.set( {
+		label: 'ListDropdown (with groups)',
+		isEnabled: true,
+		isOn: false,
+		withText: true
+	} );
+
+	addListToDropdown( dropdownView, collection );
+
+	dropdownView.on( 'execute', evt => {
+		console.log( 'List#execute:', evt.source.label );
+	} );
+
+	ui.listDropdownWithGroups.add( dropdownView );
+
+	window.listDropdownWithGroupsCollection = collection;
+	window.Model = Model;
+}
+
 function testLongLabel() {
 	const dropdownView = createDropdown( {} );
 
@@ -94,7 +172,7 @@ function testLongLabel() {
 function testToolbar() {
 	const locale = { t: langString => langString };
 
-	const icons = { left: alignLeftIcon, right: alignRightIcon, center: alignCenterIcon };
+	const icons = { left: IconAlignLeft, right: IconAlignRight, center: IconAlignCenter };
 
 	// Buttons to be obtained from factory later on.
 	const buttons = Object.keys( icons ).map( icon => new Model( { label: icon, isEnabled: true, isOn: false, icon: icons[ icon ] } ) );
@@ -142,7 +220,7 @@ function testSplitButton() {
 
 	dropdownView.buttonView.set( {
 		label: 'Dropdown',
-		icon: alignCenterIcon
+		icon: IconAlignCenter
 	} );
 
 	ui.splitButton.add( dropdownView );
@@ -158,8 +236,146 @@ function testSplitButton() {
 	} );
 }
 
+function testMenu() {
+	const locale = { t: langString => langString, uiLanguageDirection: 'ltr' };
+	const bodyCollection = new BodyCollection( locale );
+	bodyCollection.attachToDom();
+
+	const definitions = [
+		{
+			id: 'topA',
+			label: 'Top A'
+		},
+		{
+			id: 'menuA',
+			menu: 'Menu A',
+			children: [
+				{
+					id: 'menuAA',
+					menu: 'Menu A',
+					children: [
+						{
+							id: 'menuAAA',
+							menu: 'Menu A',
+							children: [
+								{
+									id: 'itemAAA1',
+									label: 'Item 1'
+								},
+								{
+									id: 'itemAAA2',
+									label: 'Item 2'
+								}
+							]
+						},
+						{
+							id: 'itemAA1',
+							label: 'Item 1'
+						},
+						{
+							id: 'itemAA2',
+							label: 'Item 2'
+						}
+					]
+				},
+				{
+					id: 'menuAB',
+					menu: 'Menu B',
+					children: [
+						{
+							id: 'itemAB1',
+							label: 'Item 1'
+						},
+						{
+							id: 'itemAB2',
+							label: 'Item 2'
+						},
+						{
+							id: 'itemAB3',
+							label: 'Item 3'
+						},
+						{
+							id: 'itemAB4',
+							label: 'Item 4'
+						}
+					]
+				},
+				{
+					id: 'menuAC',
+					menu: 'Menu C',
+					children: [
+						{
+							id: 'itemAC1',
+							label: 'Item 1'
+						},
+						{
+							id: 'itemAC2',
+							label: 'Item 2'
+						}
+					]
+				}
+			]
+		},
+		{
+			id: 'menuB',
+			menu: 'Menu B',
+			children: [
+				{
+					id: 'itemB1',
+					label: 'Item 1'
+				},
+				{
+					id: 'itemB2',
+					label: 'Item 2'
+				},
+				{
+					id: 'itemB3',
+					label: 'Item 3'
+				},
+				{
+					id: 'itemB4',
+					label: 'Item 4'
+				}
+			]
+		},
+		{
+			id: 'menuC',
+			menu: 'Menu C',
+			children: [
+				{
+					id: 'itemC1',
+					label: 'Item 1'
+				},
+				{
+					id: 'itemC2',
+					label: 'Item 2'
+				}
+			]
+		}
+	];
+
+	const dropdownView = createDropdown( locale );
+
+	addMenuToDropdown( dropdownView, bodyCollection, definitions );
+
+	dropdownView.buttonView.set( {
+		label: 'Menu dropdown',
+		isEnabled: true,
+		isOn: false,
+		withText: true
+	} );
+
+	dropdownView.on( 'execute', evt => {
+		console.log( evt.source.id );
+	} );
+
+	ui.menuDropdown.add( dropdownView );
+}
+
 testEmpty();
 testList();
+testListWithGroups();
 testLongLabel();
 testToolbar();
 testSplitButton();
+testMenu();

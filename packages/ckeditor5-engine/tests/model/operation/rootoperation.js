@@ -1,11 +1,10 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-import Model from '../../../src/model/model';
-import RootOperation from '../../../src/model/operation/rootoperation';
-import { expectToThrowCKEditorError } from '@ckeditor/ckeditor5-utils/tests/_utils/utils';
+import Model from '../../../src/model/model.js';
+import RootOperation from '../../../src/model/operation/rootoperation.js';
 
 describe( 'RootOperation', () => {
 	let model, doc;
@@ -94,29 +93,6 @@ describe( 'RootOperation', () => {
 		expect( clone.rootName ).to.equal( 'new' );
 		expect( clone.elementName ).to.equal( '$root' );
 		expect( clone.isAdd ).to.equal( true );
-	} );
-
-	describe( '_validate()', () => {
-		it( 'should throw an error when trying to add an existing and attached root', () => {
-			doc.createRoot( '$root', 'new' );
-
-			expectToThrowCKEditorError( () => {
-				const op = new RootOperation( 'new', '$root', true, doc, doc.version );
-
-				op._validate();
-			}, /root-operation-root-attached/ );
-		} );
-
-		it( 'should throw an error when trying to detach a detached root', () => {
-			const root = doc.createRoot( '$root', 'new' );
-			root._isAttached = false;
-
-			expectToThrowCKEditorError( () => {
-				const op = new RootOperation( 'new', '$root', false, doc, doc.version );
-
-				op._validate();
-			}, /root-operation-root-detached/ );
-		} );
 	} );
 
 	describe( 'toJSON', () => {

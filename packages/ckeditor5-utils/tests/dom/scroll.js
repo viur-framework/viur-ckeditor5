@@ -1,13 +1,11 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* global window, document, Text */
-
-import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils';
-import { stubGeometry, assertScrollPosition } from '../_utils/scroll';
-import { scrollViewportToShowTarget, scrollAncestorsToShowTarget } from '../../src/dom/scroll';
+import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils.js';
+import { stubGeometry, assertScrollPosition } from '../_utils/scroll.js';
+import { scrollViewportToShowTarget, scrollAncestorsToShowTarget } from '../../src/dom/scroll.js';
 
 describe( 'scrollAncestorsToShowTarget()', () => {
 	let target, element, firstAncestor, secondAncestor;
@@ -115,6 +113,15 @@ describe( 'scrollAncestorsToShowTarget()', () => {
 			assertScrollPosition( document.body, { scrollLeft: 1000, scrollTop: 1000 } );
 		} );
 
+		it( 'should not change the scroll of the ancestors of the given limiter', () => {
+			stubGeometry( testUtils, target, { top: 25, right: 75, bottom: 75, left: 25, width: 50, height: 50 } );
+
+			scrollAncestorsToShowTarget( target, 0, firstAncestor );
+
+			assertScrollPosition( firstAncestor, { scrollTop: 100, scrollLeft: 100 } );
+			assertScrollPosition( secondAncestor, { scrollTop: 100, scrollLeft: 100 } );
+		} );
+
 		it( 'should set #scrollTop and #scrollLeft of the ancestor to show the target (above)', () => {
 			stubGeometry( testUtils, target, { top: -100, right: 75, bottom: 0, left: 25, width: 50, height: 100 } );
 
@@ -169,6 +176,15 @@ describe( 'scrollAncestorsToShowTarget()', () => {
 
 			scrollAncestorsToShowTarget( target, ancestorOffset );
 			assertScrollPosition( document.body, { scrollLeft: 1000, scrollTop: 1000 } );
+		} );
+
+		it( 'should not change the scroll of the ancestors of the given limiter', () => {
+			stubGeometry( testUtils, target, { top: 25, right: 75, bottom: 75, left: 25, width: 50, height: 50 } );
+
+			scrollAncestorsToShowTarget( target, 20, firstAncestor );
+
+			assertScrollPosition( firstAncestor, { scrollTop: 100, scrollLeft: 100 } );
+			assertScrollPosition( secondAncestor, { scrollTop: 100, scrollLeft: 100 } );
 		} );
 
 		it( 'should set #scrollTop and #scrollLeft of the ancestor to show the target (above)', () => {
@@ -415,6 +431,24 @@ describe( 'scrollViewportToShowTarget()', () => {
 			sinon.assert.calledWithExactly( window.scrollTo, 1820, 1520 );
 		} );
 
+		it( 'scroll content to the ancestor viewport if target is larger than it', () => {
+			stubGeometry( testUtils, target,
+				{ top: -500, right: 200, bottom: 200, left: 100, width: 100, height: 900 } );
+			stubGeometry( testUtils, targetAncestor,
+				{ top: 500, right: 300, bottom: 400, left: 0, width: 300, height: 300 },
+				{ scrollLeft: 200, scrollTop: -100 } );
+
+			stubGeometry( testUtils, iframe,
+				{ top: 200, right: 400, bottom: 400, left: 200, width: 200, height: 200 } );
+			stubGeometry( testUtils, iframeAncestor,
+				{ top: 0, right: 400, bottom: 400, left: 0, width: 400, height: 400 },
+				{ scrollLeft: 100, scrollTop: 100 } );
+
+			scrollViewportToShowTarget( { target } );
+			assertScrollPosition( targetAncestor, { scrollLeft: 200, scrollTop: -1100 } );
+			assertScrollPosition( iframeAncestor, { scrollTop: -200, scrollLeft: 100 } );
+		} );
+
 		// https://github.com/ckeditor/ckeditor5/issues/930
 		it( 'should not throw if the child frame has no access to the #frameElement of the parent', () => {
 			sinon.stub( iframeWindow, 'frameElement' ).get( () => null );
@@ -579,6 +613,14 @@ describe( 'scrollViewportToShowTarget()', () => {
 			scrollViewportToShowTarget( { target, viewportOffset } );
 			assertScrollPosition( firstAncestor, { scrollTop: 100, scrollLeft: 1050 } );
 			sinon.assert.calledWithExactly( window.scrollTo, 200, 70 );
+		} );
+
+		it( 'works for the viewportOffset option provided as an object', () => {
+			stubGeometry( testUtils, target, { top: -200, right: 1050, bottom: -100, left: 950, width: 100, height: 100 } );
+
+			scrollViewportToShowTarget( { target, viewportOffset: { top: 10, bottom: 20, left: 30, right: 40 } } );
+			assertScrollPosition( firstAncestor, { scrollTop: -100, scrollLeft: 1050 } );
+			sinon.assert.calledWithExactly( window.scrollTo, 210, -110 );
 		} );
 	}
 

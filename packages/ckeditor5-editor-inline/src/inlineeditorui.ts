@@ -1,6 +1,6 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
@@ -8,20 +8,19 @@
  */
 
 import {
-	type ElementApi,
 	type Editor
-} from 'ckeditor5/src/core';
+} from 'ckeditor5/src/core.js';
 
 import {
 	EditorUI,
 	normalizeToolbarConfig,
 	type EditorUIReadyEvent,
 	type EditorUIUpdateEvent
-} from 'ckeditor5/src/ui';
+} from 'ckeditor5/src/ui.js';
 
-import { enablePlaceholder } from 'ckeditor5/src/engine';
+import { enablePlaceholder } from 'ckeditor5/src/engine.js';
 
-import type InlineEditorUIView from './inlineeditoruiview';
+import type InlineEditorUIView from './inlineeditoruiview.js';
 
 /**
  * The inline editor UI class.
@@ -98,6 +97,11 @@ export default class InlineEditorUI extends EditorUI {
 
 		this._initPlaceholder();
 		this._initToolbar();
+
+		if ( view.menuBarView ) {
+			this.initMenuBar( view.menuBarView );
+		}
+
 		this.fire<EditorUIReadyEvent>( 'ready' );
 	}
 
@@ -110,7 +114,10 @@ export default class InlineEditorUI extends EditorUI {
 		const view = this.view;
 		const editingView = this.editor.editing.view;
 
-		editingView.detachDomRoot( view.editable.name! );
+		if ( editingView.getDomRoot( view.editable.name! ) ) {
+			editingView.detachDomRoot( view.editable.name! );
+		}
+
 		view.destroy();
 	}
 
@@ -126,7 +133,7 @@ export default class InlineEditorUI extends EditorUI {
 		// Set–up the view#panel.
 		view.panel.bind( 'isVisible' ).to( this.focusTracker, 'isFocused' );
 
-		view.bind( 'viewportTopOffset' ).to( this, 'viewportOffset', ( { top } ) => top || 0 );
+		view.bind( 'viewportTopOffset' ).to( this, 'viewportOffset', ( { visualTop } ) => visualTop || 0 );
 
 		// https://github.com/ckeditor/ckeditor5-editor-inline/issues/4
 		view.listenTo<EditorUIUpdateEvent>( editor.ui, 'update', () => {
@@ -147,28 +154,27 @@ export default class InlineEditorUI extends EditorUI {
 	}
 
 	/**
-	 * Enable the placeholder text on the editing root, if any was configured.
+	 * Enable the placeholder text on the editing root.
 	 */
 	private _initPlaceholder(): void {
 		const editor = this.editor;
 		const editingView = editor.editing.view;
 		const editingRoot = editingView.document.getRoot()!;
-		const sourceElement = ( editor as Editor & ElementApi ).sourceElement;
-
 		const placeholder = editor.config.get( 'placeholder' );
 
 		if ( placeholder ) {
 			const placeholderText = typeof placeholder === 'string' ? placeholder : placeholder[ editingRoot.rootName ];
 
 			if ( placeholderText ) {
-				enablePlaceholder( {
-					view: editingView,
-					element: editingRoot,
-					text: placeholderText,
-					isDirectHost: false,
-					keepOnFocus: true
-				} );
+				editingRoot.placeholder = placeholderText;
 			}
 		}
+
+		enablePlaceholder( {
+			view: editingView,
+			element: editingRoot,
+			isDirectHost: false,
+			keepOnFocus: true
+		} );
 	}
 }

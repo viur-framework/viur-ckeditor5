@@ -1,18 +1,18 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module table/tablemouse
  */
 
-import { Plugin } from 'ckeditor5/src/core';
+import { Plugin } from 'ckeditor5/src/core.js';
 
-import TableSelection from './tableselection';
-import MouseEventsObserver from './tablemouse/mouseeventsobserver';
-import TableUtils from './tableutils';
-import type { DomEventData, Element } from 'ckeditor5/src/engine';
+import TableSelection from './tableselection.js';
+import MouseEventsObserver from './tablemouse/mouseeventsobserver.js';
+import TableUtils from './tableutils.js';
+import type { DomEventData, Element } from 'ckeditor5/src/engine.js';
 
 /**
  * This plugin enables a table cells' selection with the mouse.
@@ -22,8 +22,15 @@ export default class TableMouse extends Plugin {
 	/**
 	 * @inheritDoc
 	 */
-	public static get pluginName(): 'TableMouse' {
-		return 'TableMouse';
+	public static get pluginName() {
+		return 'TableMouse' as const;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public static override get isOfficialPlugin(): true {
+		return true;
 	}
 
 	/**

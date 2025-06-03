@@ -1,19 +1,20 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module ui/dropdown/dropdownview
  */
 
-import View from '../view';
+import View from '../view.js';
 
-import type { default as DropdownButton, DropdownButtonOpenEvent } from './button/dropdownbutton';
-import type { default as DropdownPanelView, PanelPosition } from './dropdownpanelview';
-import type { FocusableView } from '../focuscycler';
-import type ListView from '../list/listview';
-import type ToolbarView from '../toolbar/toolbarview';
+import type { default as DropdownButton, DropdownButtonOpenEvent } from './button/dropdownbutton.js';
+import type { default as DropdownPanelView, PanelPosition } from './dropdownpanelview.js';
+import type { FocusableView } from '../focuscycler.js';
+import type ListView from '../list/listview.js';
+import type ToolbarView from '../toolbar/toolbarview.js';
+import type DropdownMenuRootListView from './menu/dropdownmenurootlistview.js';
 
 import {
 	KeystrokeHandler,
@@ -125,9 +126,17 @@ export default class DropdownView extends View<HTMLDivElement> {
 	 * A child toolbar of the dropdown located in the
 	 * {@link module:ui/dropdown/dropdownview~DropdownView#panelView panel}.
 	 *
-	 * **Note**: Only supported when dropdown has list view added using {@link module:ui/dropdown/utils~addToolbarToDropdown}.
+	 * **Note**: Only supported when dropdown has a toolbar added using {@link module:ui/dropdown/utils~addToolbarToDropdown}.
 	 */
 	public toolbarView?: ToolbarView;
+
+	/**
+	 * A child menu component of the dropdown located
+	 * in its {@link module:ui/dropdown/dropdownview~DropdownView#panelView panel}.
+	 *
+	 * **Note**: Only supported when dropdown has a menu added using {@link module:ui/dropdown/utils~addMenuToDropdown}.
+	 */
+	public menuView?: DropdownMenuRootListView;
 
 	/**
 	 * Controls whether the dropdown view is open, i.e. shows or hides the {@link #panelView panel}.
@@ -209,6 +218,9 @@ export default class DropdownView extends View<HTMLDivElement> {
 		this.set( 'id', undefined );
 		this.set( 'panelPosition', 'auto' );
 
+		// Toggle the visibility of the panel when the dropdown becomes open.
+		this.panelView.bind( 'isVisible' ).to( this, 'isOpen' );
+
 		this.keystrokes = new KeystrokeHandler();
 		this.focusTracker = new FocusTracker();
 
@@ -256,9 +268,6 @@ export default class DropdownView extends View<HTMLDivElement> {
 			this.isOpen = !this.isOpen;
 		} );
 
-		// Toggle the visibility of the panel when the dropdown becomes open.
-		this.panelView.bind( 'isVisible' ).to( this, 'isOpen' );
-
 		// Let the dropdown control the position of the panel. The position must
 		// be updated every time the dropdown is open.
 		this.on<ObservableChangeEvent<boolean>>( 'change:isOpen', ( evt, name, isOpen ) => {
@@ -269,12 +278,16 @@ export default class DropdownView extends View<HTMLDivElement> {
 			// If "auto", find the best position of the panel to fit into the viewport.
 			// Otherwise, simply assign the static position.
 			if ( this.panelPosition === 'auto' ) {
-				this.panelView.position = DropdownView._getOptimalPosition( {
+				const optimalPanelPosition = DropdownView._getOptimalPosition( {
 					element: this.panelView.element!,
 					target: this.buttonView.element!,
 					fitInViewport: true,
 					positions: this._panelPositions
-				} ).name as PanelPosition;
+				} );
+
+				this.panelView.position = (
+					optimalPanelPosition ? optimalPanelPosition.name : this._defaultPanelPositionName
+				) as PanelPosition;
 			} else {
 				this.panelView.position = this.panelPosition;
 			}
@@ -343,6 +356,15 @@ export default class DropdownView extends View<HTMLDivElement> {
 				northWest, northEast, northMiddleWest, northMiddleEast, north
 			];
 		}
+	}
+
+	/**
+	 * Returns the default position of the dropdown panel based on the direction of the UI language.
+	 * It is used when the {@link #panelPosition} is set to `'auto'` and the panel has not found a
+	 * suitable position to fit into the viewport.
+	 */
+	private get _defaultPanelPositionName(): PanelPosition {
+		return this.locale!.uiLanguageDirection === 'rtl' ? 'sw' : 'se';
 	}
 
 	/**
@@ -447,7 +469,7 @@ export default class DropdownView extends View<HTMLDivElement> {
 	 *		       [ Button ]
 	 * ```
 	 *
-	 * Positioning functions are compatible with {@link module:utils/dom/position~Position}.
+	 * Positioning functions are compatible with {@link module:utils/dom/position~DomPoint}.
 	 *
 	 * The name that position function returns will be reflected in dropdown panel's class that
 	 * controls its placement. See {@link module:ui/dropdown/dropdownview~DropdownView#panelPosition}
@@ -533,16 +555,21 @@ export default class DropdownView extends View<HTMLDivElement> {
 }
 
 /**
- * Fired when the toolbar button or list item is executed.
+ * Fired when an item inside the dropdown is executed.
  *
- * For {@link ~DropdownView#listView} It fires when a child of some {@link module:ui/list/listitemview~ListItemView}
- * fired `execute`.
+ * **Note**: Only supported when dropdown was integrated with its child view using one of the helper functions:
+ * {@link module:ui/dropdown/utils~addListToDropdown}, {@link module:ui/dropdown/utils~addToolbarToDropdown}, or
+ * {@link module:ui/dropdown/utils~addMenuToDropdown}.
  *
- * For {@link ~DropdownView#toolbarView} It fires when one of the buttons has been
- * {@link module:ui/button/button~Button#event:execute executed}.
+ * When integrated with a list, it fires when a child of one of {@link module:ui/list/listitemview~ListItemView}s
+ * fired `execute` event.
  *
- * **Note**: Only supported when dropdown has list view added using {@link module:ui/dropdown/utils~addListToDropdown}
- * or {@link module:ui/dropdown/utils~addToolbarToDropdown}.
+ * When integrated with a toolbar, it fires when one of the buttons has been {@link module:ui/button/button~Button#event:execute executed}.
+ *
+ * When integrated with a nested menu, it fires when one of the menu buttons has been executed.
+ *
+ * In each case, the event is delegated from the component which fired it. It does not have additional parameters and `event.source` is the
+ * original component.
  *
  * @eventName ~DropdownView#execute
  */

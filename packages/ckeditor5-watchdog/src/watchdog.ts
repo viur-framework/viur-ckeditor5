@@ -1,18 +1,15 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module watchdog/watchdog
  */
 
-/* globals window */
-
-// eslint-disable-next-line ckeditor5-rules/no-cross-package-imports
-import type { CKEditorError } from 'ckeditor5/src/utils';
-import type { EditorWatchdogRestartEvent } from './editorwatchdog';
-import type { ContextWatchdogItemErrorEvent, ContextWatchdogItemRestartEvent } from './contextwatchdog';
+import type { CKEditorError } from '@ckeditor/ckeditor5-utils';
+import type { EditorWatchdogRestartEvent } from './editorwatchdog.js';
+import type { ContextWatchdogItemErrorEvent, ContextWatchdogItemRestartEvent } from './contextwatchdog.js';
 
 /**
  * An abstract watchdog class that handles most of the error handling process and the state of the underlying component.

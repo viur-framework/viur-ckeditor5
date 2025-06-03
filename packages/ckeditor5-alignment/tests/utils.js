@@ -1,13 +1,11 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* globals console */
-
-import { CKEditorError } from 'ckeditor5/src/utils';
-import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils';
-import { isDefault, isSupported, supportedOptions, normalizeAlignmentOptions } from '../src/utils';
+import { CKEditorError } from 'ckeditor5/src/utils.js';
+import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils.js';
+import { isDefault, isSupported, supportedOptions, normalizeAlignmentOptions } from '../src/utils.js';
 
 describe( 'utils', () => {
 	testUtils.createSinonSandbox();

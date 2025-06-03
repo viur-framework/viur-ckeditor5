@@ -1,15 +1,13 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* eslint-disable new-cap */
-
-import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils';
-import { assertBinding, expectToThrowCKEditorError } from '../tests/_utils/utils';
-import ObservableMixin from '../src/observablemixin';
-import EmitterMixin from '../src/emittermixin';
-import EventInfo from '../src/eventinfo';
+import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils.js';
+import { assertBinding, expectToThrowCKEditorError } from '../tests/_utils/utils.js';
+import ObservableMixin from '../src/observablemixin.js';
+import EmitterMixin from '../src/emittermixin.js';
+import EventInfo from '../src/eventinfo.js';
 
 describe( 'ObservableMixin', () => {
 	const Observable = ObservableMixin();
@@ -1162,7 +1160,7 @@ describe( 'Observable', () => {
 
 			expect( foo.method ).to.not.equal( originalMethod );
 
-			foo.stopListening( Object.create( ObservableMixin ) );
+			foo.stopListening( new ( ObservableMixin() )() );
 
 			expect( foo.method ).to.not.equal( originalMethod );
 		} );

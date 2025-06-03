@@ -1,16 +1,14 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module ui/template
  */
 
-/* global document */
-
-import View from './view';
-import ViewCollection from './viewcollection';
+import View from './view.js';
+import ViewCollection from './viewcollection.js';
 
 import {
 	CKEditorError,
@@ -23,7 +21,7 @@ import {
 	type ObservableChangeEvent
 } from '@ckeditor/ckeditor5-utils';
 
-import { isObject, cloneDeepWith } from 'lodash-es';
+import { isObject, cloneDeepWith } from 'es-toolkit/compat';
 
 const xhtmlNs = 'http://www.w3.org/1999/xhtml';
 
@@ -65,7 +63,7 @@ const xhtmlNs = 'http://www.w3.org/1999/xhtml';
  * See {@link module:ui/template~TemplateDefinition} to know more about templates and complex
  * template definitions.
  */
-export default class Template extends EmitterMixin() {
+export default class Template extends /* #__PURE__ */ EmitterMixin() {
 	public ns?: string;
 
 	/**
@@ -1815,8 +1813,8 @@ export type TemplateListenerSchema = ArrayOrItem<ListenerBinding>;
 // So let's invent some opaque types for outside use and only keep using `TemplateBinding` internally. They can be different for
 // `attribute` and `on` contexts.
 // To make them opaque, a non-exported symbol is used, so it's not possible to accidentally create an instance outside.
-declare const AttributeBindingSymbol: unique symbol;
-declare const ListenerBindingSymbol: unique symbol;
+declare const AttributeBindingSymbol: unique symbol; // eslint-disable-line @typescript-eslint/no-unused-vars
+declare const ListenerBindingSymbol: unique symbol; // eslint-disable-line @typescript-eslint/no-unused-vars
 
 export interface AttributeBinding { _opaqueAttributeBinding: typeof AttributeBindingSymbol }
 export interface ListenerBinding { _opaqueListenerBinding: typeof ListenerBindingSymbol }

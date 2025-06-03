@@ -1,6 +1,6 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 import type { ToolbarConfig, ToolbarConfigItem } from '@ckeditor/ckeditor5-core';
@@ -38,10 +38,11 @@ import type { ToolbarConfig, ToolbarConfigItem } from '@ckeditor/ckeditor5-core'
 export default function normalizeToolbarConfig(
 	config: ToolbarConfig | undefined
 ): {
-	items: Array<ToolbarConfigItem>;
-	removeItems: Array<string>;
-	shouldNotGroupWhenFull?: boolean;
-} {
+		items: Array<ToolbarConfigItem>;
+		removeItems: Array<string>;
+		shouldNotGroupWhenFull?: boolean;
+		icon?: string;
+	} {
 	if ( Array.isArray( config ) ) {
 		return {
 			items: config,
@@ -49,15 +50,17 @@ export default function normalizeToolbarConfig(
 		};
 	}
 
-	if ( !config ) {
-		return {
-			items: [],
-			removeItems: []
-		};
-	}
-
-	return Object.assign( {
+	const predefinedConfigOptions = {
 		items: [],
 		removeItems: []
-	}, config );
+	};
+
+	if ( !config ) {
+		return predefinedConfigOptions;
+	}
+
+	return {
+		...predefinedConfigOptions,
+		...config
+	};
 }

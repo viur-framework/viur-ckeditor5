@@ -1,6 +1,6 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
@@ -14,11 +14,11 @@ import {
 
 import type { Position } from '@ckeditor/ckeditor5-engine';
 
-import TextWatcher, { type TextWatcherMatchedDataEvent } from './textwatcher';
-import type { TextTransformationConfig, TextTransformationDescription } from './typingconfig';
-import type Delete from './delete';
+import TextWatcher, { type TextWatcherMatchedDataEvent } from './textwatcher.js';
+import type { TextTransformationConfig, TextTransformationDescription } from './typingconfig.js';
+import type Delete from './delete.js';
 
-import { escapeRegExp } from 'lodash-es';
+import { escapeRegExp } from 'es-toolkit/compat';
 
 // All named transformations.
 const TRANSFORMATIONS: Record<string, TextTransformationDescription> = {
@@ -91,8 +91,15 @@ export default class TextTransformation extends Plugin {
 	/**
 	 * @inheritDoc
 	 */
-	public static get pluginName(): 'TextTransformation' {
-		return 'TextTransformation';
+	public static get pluginName() {
+		return 'TextTransformation' as const;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public static override get isOfficialPlugin(): true {
+		return true;
 	}
 
 	/**

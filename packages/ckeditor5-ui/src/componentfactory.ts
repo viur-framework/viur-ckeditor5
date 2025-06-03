@@ -1,6 +1,6 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
@@ -10,7 +10,7 @@
 import { CKEditorError, type Locale } from '@ckeditor/ckeditor5-utils';
 import type { Editor } from '@ckeditor/ckeditor5-core';
 
-import type View from './view';
+import type View from './view.js';
 
 /**
  * A helper class implementing the UI component ({@link module:ui/view~View view}) factory.
@@ -96,7 +96,7 @@ export default class ComponentFactory {
 			 * {@link module:ui/componentfactory~ComponentFactory#add added} to the factory.
 			 *
 			 * @error componentfactory-item-missing
-			 * @param name The name of the missing component.
+			 * @param {string} name The name of the missing component.
 			 */
 			throw new CKEditorError(
 				'componentfactory-item-missing',

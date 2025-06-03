@@ -1,17 +1,17 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module style/ui/stylegroupview
  */
 
-import { LabelView, View } from 'ckeditor5/src/ui';
-import type { Locale } from 'ckeditor5/src/utils';
+import { LabelView, View } from 'ckeditor5/src/ui.js';
+import type { Locale } from 'ckeditor5/src/utils.js';
 
-import StyleGridView from './stylegridview';
-import type { NormalizedStyleDefinition } from '../styleutils';
+import StyleGridView from './stylegridview.js';
+import type { NormalizedStyleDefinition } from '../styleutils.js';
 
 import '../../theme/stylegroup.css';
 

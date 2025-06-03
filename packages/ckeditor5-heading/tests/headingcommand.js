@@ -1,12 +1,12 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-import ModelTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/modeltesteditor';
-import ParagraphCommand from '@ckeditor/ckeditor5-paragraph/src/paragraphcommand';
-import HeadingCommand from '../src/headingcommand';
-import { setData, getData } from '@ckeditor/ckeditor5-engine/src/dev-utils/model';
+import ModelTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/modeltesteditor.js';
+import ParagraphCommand from '@ckeditor/ckeditor5-paragraph/src/paragraphcommand.js';
+import HeadingCommand from '../src/headingcommand.js';
+import { setData, getData } from '@ckeditor/ckeditor5-engine/src/dev-utils/model.js';
 
 const options = [
 	{ model: 'heading1', view: { name: 'h2' }, title: 'H2' },

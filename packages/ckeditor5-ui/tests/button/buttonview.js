@@ -1,16 +1,15 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* globals Event, document */
-
-import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils';
-import ButtonView from '../../src/button/buttonview';
-import IconView from '../../src/icon/iconview';
-import View from '../../src/view';
-import ViewCollection from '../../src/viewcollection';
-import env from '@ckeditor/ckeditor5-utils/src/env';
+import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils.js';
+import ButtonView from '../../src/button/buttonview.js';
+import IconView from '../../src/icon/iconview.js';
+import View from '../../src/view.js';
+import ViewCollection from '../../src/viewcollection.js';
+import env from '@ckeditor/ckeditor5-utils/src/env.js';
+import { ButtonLabelView } from '../../src/index.js';
 
 describe( 'ButtonView', () => {
 	let locale, view;
@@ -45,6 +44,64 @@ describe( 'ButtonView', () => {
 
 		it( 'creates #iconView', () => {
 			expect( view.iconView ).to.be.instanceOf( IconView );
+		} );
+
+		describe( 'label', () => {
+			it( 'uses ButtonLabelView by default', () => {
+				expect( view.labelView ).to.be.instanceOf( ButtonLabelView );
+
+				view.set( {
+					labelStyle: 'color: red',
+					label: 'bar'
+				} );
+
+				expect( view.labelView.id ).to.equal( view.element.getAttribute( 'aria-labelledby' ) );
+				expect( view.labelView.element.getAttribute( 'style' ) ).to.equal( 'color: red' );
+				expect( view.labelView.element.textContent ).to.equal( 'bar' );
+			} );
+
+			it( 'accepts a custom label instance that implements the same button label interface', () => {
+				class CustomLabel extends View {
+					constructor() {
+						super();
+
+						const bind = this.bindTemplate;
+
+						this.set( {
+							text: undefined,
+							style: undefined,
+							id: undefined
+						} );
+
+						this.setTemplate( {
+							tag: 'span',
+							attributes: {
+								id: bind.to( 'id' ),
+								style: bind.to( 'style' )
+							},
+							children: [
+								{ text: bind.to( 'text' ) }
+							]
+						} );
+					}
+				}
+
+				const view = new ButtonView( locale, new CustomLabel() );
+
+				view.set( {
+					labelStyle: 'color: red',
+					label: 'bar'
+				} );
+
+				view.render();
+
+				expect( view.labelView ).to.be.instanceOf( CustomLabel );
+				expect( view.labelView.element.id ).to.equal( view.element.getAttribute( 'aria-labelledby' ) );
+				expect( view.labelView.element.getAttribute( 'style' ) ).to.equal( 'color: red' );
+				expect( view.labelView.element.textContent ).to.equal( 'bar' );
+
+				view.destroy();
+			} );
 		} );
 	} );
 
@@ -284,27 +341,43 @@ describe( 'ButtonView', () => {
 			it( '-pressed reacts to #isOn', () => {
 				view.isToggleable = true;
 				view.isOn = true;
+
 				expect( view.element.attributes[ 'aria-pressed' ].value ).to.equal( 'true' );
+				expect( view.element.hasAttribute( 'aria-checked' ) ).to.be.false;
 
 				view.isOn = false;
+
 				expect( view.element.attributes[ 'aria-pressed' ].value ).to.equal( 'false' );
+				expect( view.element.hasAttribute( 'aria-checked' ) ).to.be.false;
 			} );
 
 			it( '-pressed is not present for non–toggleable button', () => {
 				view.isOn = true;
+
 				expect( view.element.hasAttribute( 'aria-pressed' ) ).to.be.false;
+				expect( view.element.hasAttribute( 'aria-checked' ) ).to.be.false;
 
 				view.isOn = false;
+
 				expect( view.element.hasAttribute( 'aria-pressed' ) ).to.be.false;
-			} );
-
-			it( '-checked reacts on #isOn', () => {
-				view.isOn = true;
-				expect( view.element.attributes[ 'aria-checked' ].value ).to.equal( 'true' );
-
-				view.isOn = false;
 				expect( view.element.hasAttribute( 'aria-checked' ) ).to.be.false;
 			} );
+
+			for ( const role of [ 'radio', 'checkbox', 'option', 'switch', 'menuitemcheckbox', 'menuitemradio' ] ) {
+				it( `-checked reacts to #isOn and "${ role }" button role`, () => {
+					view.role = role;
+					view.isToggleable = true;
+					view.isOn = true;
+
+					expect( view.element.attributes[ 'aria-checked' ].value ).to.equal( 'true' );
+					expect( view.element.hasAttribute( 'aria-pressed' ) ).to.be.false;
+
+					view.isOn = false;
+
+					expect( view.element.attributes[ 'aria-checked' ].value ).to.equal( 'false' );
+					expect( view.element.hasAttribute( 'aria-pressed' ) ).to.be.false;
+				} );
+			}
 
 			it( '-label reacts on #ariaLabel', () => {
 				view.ariaLabel = undefined;
@@ -312,6 +385,11 @@ describe( 'ButtonView', () => {
 
 				view.ariaLabel = 'Foo';
 				expect( view.element.attributes[ 'aria-label' ].value ).to.equal( 'Foo' );
+			} );
+
+			it( '-checked is not present', () => {
+				view.isOn = true;
+				expect( view.element.hasAttribute( 'aria-checked' ) ).to.be.false;
 			} );
 		} );
 
@@ -406,6 +484,36 @@ describe( 'ButtonView', () => {
 
 			view.icon = '<svg>bar</svg>';
 			expect( view.iconView.content ).to.equal( '<svg>bar</svg>' );
+		} );
+
+		it( 'is added to the #children when view#icon is defined after render', () => {
+			view = new ButtonView( locale );
+			view.render();
+
+			view.icon = '<svg></svg>';
+			expect( view.element.childNodes ).to.have.length( 2 );
+			expect( view.element.childNodes[ 0 ] ).to.equal( view.iconView.element );
+
+			expect( view.iconView ).to.instanceOf( IconView );
+			expect( view.iconView.content ).to.equal( '<svg></svg>' );
+			expect( view.iconView.element.classList.contains( 'ck-button__icon' ) ).to.be.true;
+
+			view.icon = '<svg>bar</svg>';
+			expect( view.iconView.content ).to.equal( '<svg>bar</svg>' );
+		} );
+
+		it( 'is removed from the #children when view#icon is removed', () => {
+			view = new ButtonView( locale );
+			view.icon = '<svg></svg>';
+			view.render();
+
+			expect( view.element.childNodes ).to.have.length( 2 );
+			expect( view.element.childNodes[ 0 ] ).to.equal( view.iconView.element );
+			expect( view.element.childNodes[ 1 ] ).to.equal( view.labelView.element );
+
+			view.icon = undefined;
+			expect( view.element.childNodes ).to.have.length( 1 );
+			expect( view.element.childNodes[ 0 ] ).to.equal( view.labelView.element );
 		} );
 
 		it( 'is destroyed with the view', () => {

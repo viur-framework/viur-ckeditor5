@@ -1,10 +1,10 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-import { setData } from '@ckeditor/ckeditor5-engine/src/dev-utils/model';
-import TableWalker from '../../src/tablewalker';
+import { setData } from '@ckeditor/ckeditor5-engine/src/dev-utils/model.js';
+import TableWalker from '../../src/tablewalker.js';
 
 const WIDGET_TABLE_CELL_CLASS = 'ck-editor__editable ck-editor__nested-editable';
 
@@ -334,7 +334,7 @@ function assertNodeIsNotSelected( model, path ) {
 // Formats table cell attributes
 //
 // @param {Object} attributes Attributes of a cell.
-function formatAttributes( attributes ) {
+export function formatAttributes( attributes ) {
 	let attributesString = '';
 
 	if ( attributes ) {
@@ -379,7 +379,7 @@ function makeRows( tableData, options ) {
 				if ( asWidget ) {
 					attributes.class = getClassToSet( attributes );
 					attributes.contenteditable = 'true';
-					attributes.role = 'textbox';
+					attributes.tabindex = '-1';
 				}
 
 				if ( isObject ) {

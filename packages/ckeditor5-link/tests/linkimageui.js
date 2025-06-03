@@ -1,20 +1,18 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* globals document */
+import ClassicTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/classictesteditor.js';
+import ButtonView from '@ckeditor/ckeditor5-ui/src/button/buttonview.js';
+import EventInfo from '@ckeditor/ckeditor5-utils/src/eventinfo.js';
+import DomEventData from '@ckeditor/ckeditor5-engine/src/view/observer/domeventdata.js';
+import Paragraph from '@ckeditor/ckeditor5-paragraph/src/paragraph.js';
+import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils.js';
 
-import ClassicTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/classictesteditor';
-import ButtonView from '@ckeditor/ckeditor5-ui/src/button/buttonview';
-import EventInfo from '@ckeditor/ckeditor5-utils/src/eventinfo';
-import DomEventData from '@ckeditor/ckeditor5-engine/src/view/observer/domeventdata';
-import Paragraph from '@ckeditor/ckeditor5-paragraph/src/paragraph';
-import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils';
-
-import LinkImage from '../src/linkimage';
-import LinkImageUI from '../src/linkimageui';
-import Image from '@ckeditor/ckeditor5-image/src/image';
+import LinkImage from '../src/linkimage.js';
+import LinkImageUI from '../src/linkimageui.js';
+import Image from '@ckeditor/ckeditor5-image/src/image.js';
 
 describe( 'LinkImageUI', () => {
 	let editor, viewDocument, editorElement;
@@ -47,6 +45,14 @@ describe( 'LinkImageUI', () => {
 
 	it( 'should be named"', () => {
 		expect( LinkImageUI.pluginName ).to.equal( 'LinkImageUI' );
+	} );
+
+	it( 'should have `isOfficialPlugin` static flag set to `true`', () => {
+		expect( LinkImageUI.isOfficialPlugin ).to.be.true;
+	} );
+
+	it( 'should have `isPremiumPlugin` static flag set to `false`', () => {
+		expect( LinkImageUI.isPremiumPlugin ).to.be.false;
 	} );
 
 	it( 'should require ImageBlockEditing by name', () => {
@@ -195,7 +201,7 @@ describe( 'LinkImageUI', () => {
 		} );
 
 		describe( 'when a block image is selected', () => {
-			it( 'should show plugin#actionsView after "execute" if an image is already linked', () => {
+			it( 'should show plugin#toolbarView after "execute" if an image is already linked', () => {
 				const linkUIPlugin = editor.plugins.get( 'LinkUI' );
 
 				editor.setData( '<figure class="image"><a href="https://example.com"><img src="" /></a></figure>' );
@@ -209,7 +215,7 @@ describe( 'LinkImageUI', () => {
 				linkButton.fire( 'execute' );
 
 				expect( linkUIPlugin._balloon.visibleView ).to.be.not.null;
-				expect( linkUIPlugin._balloon.visibleView ).to.equals( linkUIPlugin.actionsView );
+				expect( linkUIPlugin._balloon.visibleView ).to.equals( linkUIPlugin.toolbarView );
 			} );
 
 			it( 'should show plugin#formView after "execute" if image is not linked', () => {
@@ -228,7 +234,7 @@ describe( 'LinkImageUI', () => {
 		} );
 
 		describe( 'when an inline image is selected', () => {
-			it( 'should show plugin#actionsView after "execute" if an image is already linked', () => {
+			it( 'should show plugin#toolbarView after "execute" if an image is already linked', () => {
 				const linkUIPlugin = editor.plugins.get( 'LinkUI' );
 
 				editor.setData( '<p><a href="https://example.com"><img src="/assets/sample.png" /></a></p>' );
@@ -239,7 +245,7 @@ describe( 'LinkImageUI', () => {
 
 				linkButton.fire( 'execute' );
 
-				expect( linkUIPlugin._balloon.visibleView ).to.equals( linkUIPlugin.actionsView );
+				expect( linkUIPlugin._balloon.visibleView ).to.equals( linkUIPlugin.toolbarView );
 			} );
 
 			it( 'should show plugin#formView after "execute" if image is not linked', () => {

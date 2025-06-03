@@ -1,13 +1,13 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module table/converters/table-cell-paragraph-post-fixer
  */
 
-import type { Model, Writer, Element, DiffItemInsert, DiffItemRemove } from 'ckeditor5/src/engine';
+import type { Model, Writer, Element, DiffItemInsert, DiffItemRemove } from 'ckeditor5/src/engine.js';
 
 /**
  * Injects a table cell post-fixer into the model which inserts a `paragraph` element into empty table cells.

@@ -1,22 +1,22 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module engine/view/documentfragment
  */
 
-import TypeCheckable from './typecheckable';
-import Text from './text';
-import TextProxy from './textproxy';
+import TypeCheckable from './typecheckable.js';
+import Text from './text.js';
+import TextProxy from './textproxy.js';
 
 import { EmitterMixin, isIterable } from '@ckeditor/ckeditor5-utils';
 
-import type { default as Document, ChangeType } from './document';
+import type { default as Document, ChangeType } from './document.js';
 
-import type Item from './item';
-import type Node from './node';
+import type Item from './item.js';
+import type Node from './node.js';
 
 /**
  * Document fragment.
@@ -25,7 +25,7 @@ import type Node from './node';
  * {@link module:engine/view/upcastwriter~UpcastWriter#createDocumentFragment `UpcastWriter#createDocumentFragment()`}
  * method.
  */
-export default class DocumentFragment extends EmitterMixin( TypeCheckable ) implements Iterable<Node> {
+export default class DocumentFragment extends /* #__PURE__ */ EmitterMixin( TypeCheckable ) implements Iterable<Node> {
 	/**
 	 * The document to which this document fragment belongs.
 	 */
@@ -104,6 +104,13 @@ export default class DocumentFragment extends EmitterMixin( TypeCheckable ) impl
 	}
 
 	/**
+	 * Artificial element getFillerOffset. Returns `undefined`. Added for compatibility reasons.
+	 */
+	public get getFillerOffset(): undefined {
+		return undefined;
+	}
+
+	/**
 	 * Returns the custom property value for the given key.
 	 */
 	public getCustomProperty( key: string | symbol ): unknown {
@@ -169,7 +176,7 @@ export default class DocumentFragment extends EmitterMixin( TypeCheckable ) impl
 	 * @returns Number of inserted nodes.
 	 */
 	public _insertChild( index: number, items: Item | string | Iterable<Item | string> ): number {
-		this._fireChange( 'children', this );
+		this._fireChange( 'children', this, { index } );
 		let count = 0;
 
 		const nodes = normalize( this.document, items );
@@ -199,7 +206,7 @@ export default class DocumentFragment extends EmitterMixin( TypeCheckable ) impl
 	 * @returns The array of removed nodes.
 	 */
 	public _removeChildren( index: number, howMany: number = 1 ): Array<Node> {
-		this._fireChange( 'children', this );
+		this._fireChange( 'children', this, { index } );
 
 		for ( let i = index; i < index + howMany; i++ ) {
 			( this._children[ i ] as any ).parent = null;
@@ -209,14 +216,14 @@ export default class DocumentFragment extends EmitterMixin( TypeCheckable ) impl
 	}
 
 	/**
-	 * Fires `change` event with given type of the change.
-	 *
 	 * @internal
 	 * @param type Type of the change.
 	 * @param node Changed node.
+	 * @param data Additional data.
+	 * @fires module:engine/view/node~Node#event:change
 	 */
-	public _fireChange( type: ChangeType, node: Node | DocumentFragment ): void {
-		this.fire( 'change:' + type, node );
+	public _fireChange( type: ChangeType, node: Node | DocumentFragment, data?: { index: number } ): void {
+		this.fire( `change:${ type }`, node, data );
 	}
 
 	/**

@@ -1,21 +1,21 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module engine/model/selection
  */
 
-import TypeCheckable from './typecheckable';
-import Node from './node';
-import Position, { type PositionOffset } from './position';
-import Range from './range';
+import TypeCheckable from './typecheckable.js';
+import Node from './node.js';
+import Position, { type PositionOffset } from './position.js';
+import Range from './range.js';
 
-import type DocumentFragment from './documentfragment';
-import type DocumentSelection from './documentselection';
-import type Element from './element';
-import type Item from './item';
+import type DocumentFragment from './documentfragment.js';
+import type DocumentSelection from './documentselection.js';
+import type Element from './element.js';
+import type Item from './item.js';
 
 import { CKEditorError, EmitterMixin, isIterable } from '@ckeditor/ckeditor5-utils';
 
@@ -26,7 +26,7 @@ import { CKEditorError, EmitterMixin, isIterable } from '@ckeditor/ckeditor5-uti
  * Additionally, selection may have its own attributes (think – whether text typed in in this selection
  * should have those attributes – e.g. whether you type a bolded text).
  */
-export default class Selection extends EmitterMixin( TypeCheckable ) {
+export default class Selection extends /* #__PURE__ */ EmitterMixin( TypeCheckable ) {
 	/**
 	 * Specifies whether the last added range was added as a backward or forward range.
 	 */
@@ -667,11 +667,21 @@ export default class Selection extends EmitterMixin( TypeCheckable ) {
 				yield startBlock as any;
 			}
 
-			for ( const value of range.getWalker() ) {
+			const treewalker = range.getWalker();
+
+			for ( const value of treewalker ) {
 				const block = value.item;
 
 				if ( value.type == 'elementEnd' && isUnvisitedTopBlock( block as any, visited, range ) ) {
 					yield block as Element;
+				}
+				// If element is block, we can skip its children and jump to the end of it.
+				else if (
+					value.type == 'elementStart' &&
+					block.is( 'model:element' ) &&
+					block.root.document!.model.schema.isBlock( block )
+				) {
+					treewalker.jumpTo( Position._createAt( block, 'end' ) );
 				}
 			}
 
@@ -718,8 +728,8 @@ export default class Selection extends EmitterMixin( TypeCheckable ) {
 				 * Trying to add a range that intersects with another range in the selection.
 				 *
 				 * @error model-selection-range-intersects
-				 * @param addedRange Range that was added to the selection.
-				 * @param intersectingRange Range in the selection that intersects with `addedRange`.
+				 * @param {module:engine/model/range~Range} addedRange Range that was added to the selection.
+				 * @param {module:engine/model/range~Range} intersectingRange Range in the selection that intersects with `addedRange`.
 				 */
 				throw new CKEditorError(
 					'model-selection-range-intersects',

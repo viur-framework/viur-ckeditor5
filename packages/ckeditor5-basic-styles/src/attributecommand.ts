@@ -1,13 +1,13 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module basic-styles/attributecommand
  */
 
-import { Command, type Editor } from 'ckeditor5/src/core';
+import { Command, type Editor } from 'ckeditor5/src/core.js';
 
 /**
  * An extension of the base {@link module:core/command~Command} class, which provides utilities for a command
@@ -59,7 +59,7 @@ export default class AttributeCommand extends Command {
 	}
 
 	/**
-	 * Executes the command &mdash; applies the attribute to the selection or removes it from the selection.
+	 * Executes the command &ndash; applies the attribute to the selection or removes it from the selection.
 	 *
 	 * If the command is active (`value == true`), it will remove attributes. Otherwise, it will set attributes.
 	 *

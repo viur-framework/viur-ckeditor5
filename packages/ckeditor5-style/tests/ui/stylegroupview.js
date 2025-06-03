@@ -1,13 +1,13 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 import { LabelView } from '@ckeditor/ckeditor5-ui';
 import { Locale } from '@ckeditor/ckeditor5-utils';
 
-import StyleGridView from '../../src/ui/stylegridview';
-import StyleGroupView from '../../src/ui/stylegroupview';
+import StyleGridView from '../../src/ui/stylegridview.js';
+import StyleGroupView from '../../src/ui/stylegroupview.js';
 
 describe( 'StyleGroupView', () => {
 	let locale, group;

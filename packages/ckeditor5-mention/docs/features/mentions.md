@@ -1,10 +1,9 @@
 ---
 category: features
 menu-title: Mentions
+meta-title: Mentions| CKEditor 5 Documentation
 modified_at: 2021-10-20
 ---
-
-{@snippet features/build-mention-source}
 
 # Mentions (autocompletion)
 
@@ -12,31 +11,55 @@ The mention feature enables smart autocompletion based on user input. When you t
 
 ## Demo
 
-You can type the "@" character to invoke the mention autocomplete UI. The demo below is configured to suggest a static list of names ("Barney", "Lily", "Marry Ann", "Marshall", "Robin", and "Ted").
+You can type the "@" character to invoke the mention autocomplete UI. The demo below is configured to suggest a static list of names (`Barney`, `Lily`, `Marry Ann`, `Marshall`, `Robin`, and `Ted`).
 
 {@snippet features/mention}
 
 <info-box info>
-	This demo only presents a limited set of features. Visit the {@link examples/builds/full-featured-editor full-featured editor example} to see more in action.
+	This demo presents a limited set of features. Visit the {@link examples/builds/full-featured-editor feature-rich editor example} to see more in action.
 
 	You can also check out the {@link examples/chat-with-mentions more advanced example} of the mention feature used in a chat application.
 </info-box>
 
 You can read more about possible implementations of the mention feature in a [dedicated blog post](https://ckeditor.com/blog/mentions-in-ckeditor-5-feature-of-the-month/).
 
+## Installation
+
+<info-box info>
+	⚠️ **New import paths**
+
+	Starting with {@link updating/update-to-42 version 42.0.0}, we changed the format of import paths. This guide uses the new, shorter format. Refer to the {@link getting-started/legacy-getting-started/legacy-imports Packages in the legacy setup} guide if you use an older version of CKEditor&nbsp;5.
+</info-box>
+
+After {@link getting-started/integrations-cdn/quick-start installing the editor}, add the feature to your plugin list and toolbar configuration:
+
+<code-switcher>
+```js
+import { ClassicEditor, Mention } from 'ckeditor5';
+
+ClassicEditor
+	.create( document.querySelector( '#editor' ), {
+		licenseKey: '<YOUR_LICENSE_KEY>', // Or 'GPL'.
+		plugins: [ Mention, /* ... */ ],
+		mention: {
+			// Configuration.
+		}
+	} )
+	.then( /* ... */ )
+	.catch( /* ... */ );
+```
+</code-switcher>
+
 ## Configuration
 
 The minimal configuration of the mention feature requires defining a {@link module:mention/mentionconfig~MentionFeed `feed`} and a {@link module:mention/mentionconfig~MentionFeed `marker`}. You can also define the `minimumCharacters` parameter, setting the number of letters after which the autocomplete panel will show up. Moreover, feed items' IDs may include whitespaces.
 
-The code snippet below was used to configure the demo above. It defines the list of names that will be autocompleted after the user types the "@" character.
+The code snippet below was used to configure the demo above. It defines the list of names that the editor will autocomplete after the user types the "@" character.
 
 ```js
 ClassicEditor
 	.create( document.querySelector( '#editor' ), {
-		// This feature is available in the superbuild only.
-		// See the "Installation" section.
-		plugins: [ Mention, /* ... */ ],
-
+		// ... Other configuration options ...
 		mention: {
 			feeds: [
 				{
@@ -53,8 +76,8 @@ ClassicEditor
 
 Additionally, you can configure:
 
-* How the item is rendered in the autocomplete panel (via setting {@link module:mention/mentionconfig~MentionFeed `itemRenderer`}). See ["Customizing the autocomplete list"](#customizing-the-autocomplete-list).
-* How the item is converted during the {@link framework/architecture/editing-engine#conversion conversion}. See ["Customizing the output"](#customizing-the-output).
+* How the item is rendered in the autocomplete panel (via setting {@link module:mention/mentionconfig~MentionFeed `itemRenderer`}). See [Customizing the autocomplete list](#customizing-the-autocomplete-list).
+* How the item is converted during the {@link framework/architecture/editing-engine#conversion conversion}. See [Customizing the output](#customizing-the-output).
 * Multiple feeds. The demo above uses only one feed, which is triggered by the `'@'` character. You can define multiple feeds but they must use different markers. For example, you can use `'@'` for people and `'#'` for tags.
 
 ### Providing the feed
@@ -62,9 +85,9 @@ Additionally, you can configure:
 The {@link module:mention/mentionconfig~MentionFeed `feed`} can be provided as:
 
 * A static array &ndash; Good for scenarios with a relatively small set of autocomplete items.
-* A callback &ndash; It provides more control over the returned list of items.
+* A callback &ndash; Provides more control over the returned list of items.
 
-When using a callback you can return a `Promise` that resolves with the list of {@link module:mention/mentionconfig~MentionFeedItem matching feed items}. These can be simple strings or plain objects with at least the `name` property. The other properties of this object can later be used e.g. when [customizing the autocomplete list](#customizing-the-autocomplete-list) or [customizing the output](#customizing-the-output).
+When using a callback you can return a `Promise` that resolves with the list of {@link module:mention/mentionconfig~MentionFeedItem matching feed items}. These can be simple strings or plain objects with at least the `name` property. The other properties of this object can later be used when [customizing the autocomplete list](#customizing-the-autocomplete-list) or [customizing the output](#customizing-the-output).
 
 <info-box>
 	When using external resources to obtain the feed it is recommended to add some caching mechanism so subsequent calls for the same suggestion would load faster.
@@ -77,10 +100,7 @@ The callback receives the query text which should be used to filter item suggest
 ```js
 ClassicEditor
 	.create( document.querySelector( '#editor' ), {
-		// This feature is available in the superbuild only.
-		// See the "Installation" section.
-		plugins: [ Mention, /* ... */ ],
-
+		// ... Other configuration options ...
 		mention: {
 			feeds: [
 				{
@@ -145,7 +165,7 @@ This callback takes a feed item (it contains at least the `name` property) and m
 ```js
 ClassicEditor
 	.create( document.querySelector( '#editor' ), {
-		plugins: [ Mention, /* ... */ ],
+		// ... Other configuration options ...
 		mention: {
 			feeds: [
 				{
@@ -186,7 +206,7 @@ The number of items displayed in the autocomplete list can be customized by defi
 ```js
 ClassicEditor
 	.create( document.querySelector( '#editor' ), {
-		plugins: [ Mention, /* ... */ ],
+		// ... Other configuration options ...
 		mention: {
 			// Define the custom number of visible mentions.
 			dropdownLimit: 4
@@ -203,9 +223,41 @@ ClassicEditor
 
 A full, working demo with all possible customizations and its source code is available {@link features/mentions#fully-customized-mention-feed at the end of this section}.
 
+### Customizing the text inserted into the editor
+
+You can control the text inserted into the editor when creating a mention via the {@link module:mention/mentionconfig~MentionFeedObjectItem `text`} property in the mention configuration.
+
+```js
+ClassicEditor
+	.create( editorElement, {
+		// ... Other configuration options ...
+		mention: {
+			feeds: [
+				// Feed items as objects.
+				{
+					marker: '@',
+					feed: [
+						{
+							id: '@Barney',
+							fullName: 'Barney Stinson',
+							// Custom text to be inserted into the editor
+							text: 'Swarley'
+						},
+						// ...
+					]
+				},
+			]
+		}
+	} )
+	.then( /* ... */ )
+	.catch( /* ... */ );
+```
+
+The string that you specify in this property will be displayed in the editor when a mention is created.
+
 ### Customizing the output
 
-In order to change the markup generated by the editor for mentions, you can overwrite the default converter of the mention feature. To do that, you must specify both {@link module:engine/conversion/upcastdispatcher~UpcastDispatcher upcast} and {@link module:engine/conversion/downcastdispatcher~DowncastDispatcher downcast} converters using {@link module:engine/view/attributeelement~AttributeElement}.
+To change the markup generated by the editor for mentions, you can overwrite the default converter of the mention feature. To do that, you must specify both {@link module:engine/conversion/upcastdispatcher~UpcastDispatcher upcast} and {@link module:engine/conversion/downcastdispatcher~DowncastDispatcher downcast} converters using {@link module:engine/view/attributeelement~AttributeElement}.
 
 The example below defines a plugin that overrides the default output:
 
@@ -223,13 +275,14 @@ The converters must be defined with a `'high'` priority to be executed before th
 
 To control how the mention element is wrapped by other attribute elements (like bold, italic, etc) set its {@link module:engine/view/attributeelement~AttributeElement#priority}. To replicate default plugin behavior and make mention to be wrapped by other elements set priority to `20`.
 
-By default, attribute elements that are next to each other and have the same value will be rendered as a single HTML element. To prevent this the model attribute value object expose a unique id of each inserted mention to the model as `uid`. To prevent merging subsequent mentions set it as {@link module:engine/view/attributeelement~AttributeElement#id}.
+By default, attribute elements that are next to each other and have the same value will be rendered as a single HTML element. To prevent this, the model attribute value object exposes a unique ID of each inserted mention to the model as `uid`. To prevent merging subsequent mentions, set it as {@link module:engine/view/attributeelement~AttributeElement#id}.
 
-**Note:** The feature prevents copying fragments of existing mentions. If only a part of a mention is selected, it will be copied as plain text. The internal converter with the {@link module:utils/priorities~PrioritiesType#highest `'highest'` priority} controls this behaviour; thus, we do not recommend adding mention converters with the `'highest'` priority to avoid collisions and quirky results.
+**Note:** The feature prevents copying fragments of existing mentions. If only a part of a mention is selected, it will be copied as plain text. The internal converter with the {@link module:utils/priorities~PrioritiesType#highest `'highest'` priority} controls this behavior. We do not recommend adding mention converters with the `'highest'` priority to avoid collisions and quirky results.
 
 ```js
 ClassicEditor
 	.create( document.querySelector( '#editor' ), {
+		// ... Other configuration options ...
 		plugins: [ Mention, MentionCustomization, /* ... */ ], // Add the custom mention plugin function.
 		mention: {
 			// Configuration.
@@ -314,6 +367,7 @@ Below is an example of a customized mention feature that:
 ```js
 ClassicEditor
 	.create( document.querySelector( '#snippet-mention-customization' ), {
+		// ... Other configuration options ...
 		plugins: [ Mention, MentionCustomization, /* ... */ ],
 		mention: {
 			dropdownLimit: 4,
@@ -449,7 +503,7 @@ function customItemRenderer( item ) {
 
 #### Using CSS variables
 
-The mention feature is using the power of [CSS variables](https://developer.mozilla.org/en-US/docs/Web/CSS/Using_CSS_variables) which are defined in the [Lark theme stylesheet](https://github.com/ckeditor/ckeditor5/blob/master/packages/ckeditor5-theme-lark/theme/ckeditor5-mention/mention.css). Thanks to that, mention styles can be {@link framework/theme-customization easily customized}:
+The mention feature uses the power of [CSS variables](https://developer.mozilla.org/en-US/docs/Web/CSS/Using_CSS_variables) which are defined in the [Lark theme style sheet](https://github.com/ckeditor/ckeditor5/blob/master/packages/ckeditor5-theme-lark/theme/ckeditor5-mention/mention.css). Thanks to that, mention styles can be {@link framework/theme-customization easily customized}:
 
 ```css
 :root {
@@ -467,39 +521,6 @@ The mention feature is using the power of [CSS variables](https://developer.mozi
 
 It is possible to configure the Mentions feature to work with the {@link features/comments Comments feature}. Here you can find {@link features/annotations-custom-configuration#comment-editor-configuration detailed guidance on that matter}.
 
-## Installation
-
-<info-box info>
-	This feature is enabled by default in the {@link installation/getting-started/predefined-builds#superbuild superbuild} only.
-</info-box>
-
-To add this feature to your editor, install the [`@ckeditor/ckeditor5-mention`](https://www.npmjs.com/package/@ckeditor/ckeditor5-mention) package:
-
-```bash
-npm install --save @ckeditor/ckeditor5-mention
-```
-
-Then add `Mention` to your plugin list and {@link module:mention/mentionconfig~MentionConfig  configure} the feature:
-
-```js
-import { Mention } from '@ckeditor/ckeditor5-mention';
-
-ClassicEditor
-	.create( document.querySelector( '#editor' ), {
-		plugins: [ Mention, /* ... */ ],
-		mention: {
-			// Configuration.
-			// ...
-		}
-	} )
-	.then( /* ... */ )
-	.catch( /* ... */ );
-```
-
-<info-box info>
-	Read more about {@link installation/plugins/installing-plugins installing plugins}.
-</info-box>
-
 ## Related features
 
 In addition to enabling mentions, you may want to check the following productivity features:
@@ -507,6 +528,7 @@ In addition to enabling mentions, you may want to check the following productivi
 * {@link features/text-transformation Automatic text transformation} &ndash; Lets you automatically turn snippets such as `(tm)` into `™` and `"foo"` into `“foo”`.
 * {@link features/link#autolink-feature Autolink} &ndash; Turns the links and email addresses typed or pasted into the editor into active URLs.
 * {@link features/autoformat Autoformatting} &ndash; Lets you quickly apply formatting to the content you are writing.
+* {@link features/emoji Emoji} &ndash; Lets you quickly insert desired emoji.
 
 ## Common API
 
@@ -520,7 +542,7 @@ The {@link module:mention/mention~Mention} plugin registers:
 	```
 
 <info-box>
-	We recommend using the official {@link framework/development-tools#ckeditor-5-inspector CKEditor 5 inspector} for development and debugging. It will give you tons of useful information about the state of the editor such as internal data structures, selection, commands, and many more.
+	We recommend using the official {@link framework/development-tools/inspector CKEditor&nbsp;5 inspector} for development and debugging. It will give you tons of useful information about the state of the editor such as internal data structures, selection, commands, and many more.
 </info-box>
 
 ## Contribute

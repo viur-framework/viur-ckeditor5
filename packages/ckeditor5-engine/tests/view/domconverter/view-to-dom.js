@@ -1,33 +1,31 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* globals Range, DocumentFragment, HTMLElement, Comment, document, Text, console */
+import ViewText from '../../../src/view/text.js';
+import ViewElement from '../../../src/view/element.js';
+import ViewUIElement from '../../../src/view/uielement.js';
+import ViewPosition from '../../../src/view/position.js';
+import ViewContainerElement from '../../../src/view/containerelement.js';
+import ViewAttributeElement from '../../../src/view/attributeelement.js';
+import ViewEmptyElement from '../../../src/view/emptyelement.js';
+import DomConverter from '../../../src/view/domconverter.js';
+import ViewDocumentFragment from '../../../src/view/documentfragment.js';
+import ViewDocument from '../../../src/view/document.js';
+import DowncastWriter from '../../../src/view/downcastwriter.js';
+import { INLINE_FILLER, INLINE_FILLER_LENGTH, BR_FILLER, NBSP_FILLER, MARKED_NBSP_FILLER } from '../../../src/view/filler.js';
 
-import ViewText from '../../../src/view/text';
-import ViewElement from '../../../src/view/element';
-import ViewUIElement from '../../../src/view/uielement';
-import ViewPosition from '../../../src/view/position';
-import ViewContainerElement from '../../../src/view/containerelement';
-import ViewAttributeElement from '../../../src/view/attributeelement';
-import ViewEmptyElement from '../../../src/view/emptyelement';
-import DomConverter from '../../../src/view/domconverter';
-import ViewDocumentFragment from '../../../src/view/documentfragment';
-import ViewDocument from '../../../src/view/document';
-import DowncastWriter from '../../../src/view/downcastwriter';
-import { INLINE_FILLER, INLINE_FILLER_LENGTH, BR_FILLER, NBSP_FILLER, MARKED_NBSP_FILLER } from '../../../src/view/filler';
+import { parse, getData as getViewData } from '../../../src/dev-utils/view.js';
+import { setData as setModelData } from '../../../src/dev-utils/model.js';
 
-import { parse, getData as getViewData } from '../../../src/dev-utils/view';
-import { setData as setModelData } from '../../../src/dev-utils/model';
+import createElement from '@ckeditor/ckeditor5-utils/src/dom/createelement.js';
+import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils.js';
+import global from '@ckeditor/ckeditor5-utils/src/dom/global.js';
+import ClassicTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/classictesteditor.js';
+import Paragraph from '@ckeditor/ckeditor5-paragraph/src/paragraph.js';
 
-import createElement from '@ckeditor/ckeditor5-utils/src/dom/createelement';
-import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils';
-import global from '@ckeditor/ckeditor5-utils/src/dom/global';
-import ClassicTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/classictesteditor';
-import Paragraph from '@ckeditor/ckeditor5-paragraph/src/paragraph';
-
-import { StylesProcessor } from '../../../src/view/stylesmap';
+import { StylesProcessor } from '../../../src/view/stylesmap.js';
 
 describe( 'DomConverter', () => {
 	let converter, viewDocument;
@@ -743,6 +741,8 @@ describe( 'DomConverter', () => {
 				return html.replace( /&nbsp;/g, '_' );
 			}
 
+			/* eslint-disable @stylistic/no-multi-spaces */
+
 			// At the beginning.
 			testConvert( ' x', '_x' );
 			testConvert( '  x', '_ x' );
@@ -888,6 +888,8 @@ describe( 'DomConverter', () => {
 			testConvert( [ '  ', '   ' ], '__ __' );
 			testConvert( [ '   ', '  ' ], '_ _ _' );
 			testConvert( [ '   ', '   ' ], '_ _ __' );
+
+			/* eslint-enable @stylistic/no-multi-spaces */
 
 			it( 'not in preformatted blocks', () => {
 				const viewPre = new ViewContainerElement( viewDocument, 'pre', null, [
@@ -1230,6 +1232,24 @@ describe( 'DomConverter', () => {
 				expect( domUl2Children[ 1 ].firstChild.data ).to.equal( '123' );
 
 				sinon.assert.notCalled( warnStub );
+			} );
+
+			it( 'should yield the `RawElement` children properly', () => {
+				const downcastWriter = new DowncastWriter( viewDocument );
+				const dataConverter = new DomConverter( viewDocument, {
+					renderingMode: 'data'
+				} );
+				const parentElement = downcastWriter.createContainerElement( 'p' );
+				const transparentRawElement = downcastWriter.createRawElement( 'span', {}, function( domElement ) {
+					domElement.innerHTML = 'foo <span style="color:red;">bar</span> <strong>is</strong> good';
+				} );
+
+				downcastWriter.insert( downcastWriter.createPositionAt( parentElement, 'end' ), transparentRawElement );
+				downcastWriter.setCustomProperty( 'dataPipeline:transparentRendering', true, transparentRawElement );
+
+				expect( dataConverter.viewToDom( parentElement ).outerHTML ).to.equal(
+					'<p>foo <span style="color:red;">bar</span> <strong>is</strong> good</p>'
+				);
 			} );
 
 			it( 'should not be transparent in the editing pipeline', () => {

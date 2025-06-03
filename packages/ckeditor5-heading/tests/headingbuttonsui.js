@@ -1,17 +1,15 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* globals document */
-
-import ClassicTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/classictesteditor';
-import HeadingEditing from '../src/headingediting';
-import HeadingButtonsUI from '../src/headingbuttonsui';
-import { setData } from '@ckeditor/ckeditor5-engine/src/dev-utils/model';
-import ButtonView from '@ckeditor/ckeditor5-ui/src/button/buttonview';
-import { getLocalizedOptions } from '../src/utils';
-import iconHeading2 from '../theme/icons/heading2.svg';
+import { IconHeading2 } from 'ckeditor5/src/icons.js';
+import ClassicTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/classictesteditor.js';
+import HeadingEditing from '../src/headingediting.js';
+import HeadingButtonsUI from '../src/headingbuttonsui.js';
+import { setData } from '@ckeditor/ckeditor5-engine/src/dev-utils/model.js';
+import ButtonView from '@ckeditor/ckeditor5-ui/src/button/buttonview.js';
+import { getLocalizedOptions } from '../src/utils.js';
 
 describe( 'HeadingButtonUI', () => {
 	let editorElement, editor;
@@ -67,7 +65,7 @@ describe( 'HeadingButtonUI', () => {
 			const heading2Button = editor.ui.componentFactory.create( 'heading2' );
 
 			expect( heading2Button.label ).to.equal( localizedOptions.title );
-			expect( heading2Button.icon ).to.equal( iconHeading2 );
+			expect( heading2Button.icon ).to.equal( IconHeading2 );
 			expect( heading2Button.tooltip ).to.equal( true );
 		} );
 

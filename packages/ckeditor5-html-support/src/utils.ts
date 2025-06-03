@@ -1,6 +1,6 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
@@ -13,8 +13,8 @@ import type {
 	Item,
 	ViewElement,
 	Writer
-} from 'ckeditor5/src/engine';
-import { cloneDeep } from 'lodash-es';
+} from 'ckeditor5/src/engine.js';
+import { startCase, cloneDeep } from 'es-toolkit/compat';
 
 export interface GHSViewAttributes {
 	attributes?: Record<string, unknown>;
@@ -203,4 +203,21 @@ export function modifyGhsAttribute(
 			writer.removeAttribute( ghsAttributeName, item );
 		}
 	}
+}
+
+/**
+ * Transforms passed string to PascalCase format. Examples:
+ * * `div` => `Div`
+ * * `h1` => `H1`
+ * * `table` => `Table`
+ */
+export function toPascalCase( data: string ): string {
+	return startCase( data ).replace( / /g, '' );
+}
+
+/**
+ * Returns the attribute name of the model element that holds raw HTML attributes.
+ */
+export function getHtmlAttributeName( viewElementName: string ): string {
+	return `html${ toPascalCase( viewElementName ) }Attributes`;
 }

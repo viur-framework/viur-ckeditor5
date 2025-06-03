@@ -1,26 +1,24 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* global window, document, setTimeout, Event, console */
+import ClassicTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/classictesteditor.js';
+import Plugin from '@ckeditor/ckeditor5-core/src/plugin.js';
+import Paragraph from '@ckeditor/ckeditor5-paragraph/src/paragraph.js';
+import { keyCodes } from '@ckeditor/ckeditor5-utils/src/keyboard.js';
+import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils.js';
+import global from '@ckeditor/ckeditor5-utils/src/dom/global.js';
+import { setData } from '@ckeditor/ckeditor5-engine/src/dev-utils/model.js';
+import DomEventData from '@ckeditor/ckeditor5-engine/src/view/observer/domeventdata.js';
+import EventInfo from '@ckeditor/ckeditor5-utils/src/eventinfo.js';
+import ContextualBalloon from '@ckeditor/ckeditor5-ui/src/panel/balloon/contextualballoon.js';
+import env from '@ckeditor/ckeditor5-utils/src/env.js';
 
-import ClassicTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/classictesteditor';
-import Plugin from '@ckeditor/ckeditor5-core/src/plugin';
-import Paragraph from '@ckeditor/ckeditor5-paragraph/src/paragraph';
-import { keyCodes } from '@ckeditor/ckeditor5-utils/src/keyboard';
-import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils';
-import global from '@ckeditor/ckeditor5-utils/src/dom/global';
-import { setData } from '@ckeditor/ckeditor5-engine/src/dev-utils/model';
-import DomEventData from '@ckeditor/ckeditor5-engine/src/view/observer/domeventdata';
-import EventInfo from '@ckeditor/ckeditor5-utils/src/eventinfo';
-import ContextualBalloon from '@ckeditor/ckeditor5-ui/src/panel/balloon/contextualballoon';
-import env from '@ckeditor/ckeditor5-utils/src/env';
-
-import MentionUI, { createRegExp } from '../src/mentionui';
-import MentionEditing from '../src/mentionediting';
-import MentionsView from '../src/ui/mentionsview';
-import { assertCKEditorError } from '@ckeditor/ckeditor5-utils/tests/_utils/utils';
+import MentionUI, { createRegExp } from '../src/mentionui.js';
+import MentionEditing from '../src/mentionediting.js';
+import MentionsView from '../src/ui/mentionsview.js';
+import { assertCKEditorError } from '@ckeditor/ckeditor5-utils/tests/_utils/utils.js';
 
 describe( 'MentionUI', () => {
 	let editor, model, doc, editingView, mentionUI, editorElement, mentionsView, panelView, clock;
@@ -52,6 +50,14 @@ describe( 'MentionUI', () => {
 		}
 	} );
 
+	it( 'should have `isOfficialPlugin` static flag set to `true`', () => {
+		expect( MentionUI.isOfficialPlugin ).to.be.true;
+	} );
+
+	it( 'should have `isPremiumPlugin` static flag set to `false`', () => {
+		expect( MentionUI.isPremiumPlugin ).to.be.false;
+	} );
+
 	it( 'should create a plugin instance', () => {
 		return createClassicTestEditor().then( () => {
 			expect( mentionUI ).to.instanceOf( Plugin );
@@ -78,10 +84,17 @@ describe( 'MentionUI', () => {
 			} );
 		} );
 
-		it( 'should throw if marker is longer then 1 character', () => {
-			return createClassicTestEditor( { feeds: [ { marker: '$$', feed: [ 'a' ] } ] } ).catch( error => {
-				assertCKEditorError( error, /mentionconfig-incorrect-marker/, null, { marker: '$$' } );
-			} );
+		it( 'should not throw if marker is longer then 1 character', done => {
+			expect( () => ClassicTestEditor
+				.create( editorElement, {
+					plugins: [ Paragraph, MentionEditing, MentionUI ],
+					mention: { feeds: [ { marker: '$$', feed: [ 'a' ] } ] }
+				} ).then( tempEditor => {
+					tempEditor.destroy();
+
+					done();
+				} )
+			).to.not.throw();
 		} );
 	} );
 
@@ -128,6 +141,12 @@ describe( 'MentionUI', () => {
 			editor.enableReadOnlyMode( 'unit-test' );
 
 			expect( panelView.isVisible ).to.be.false;
+		} );
+
+		// See #17964
+		it( 'should have the ck-mention-balloon class to make sure z-index does not conflict with the dialog system', () => {
+			expect( balloonAddSpy.callCount ).to.equal( 1 );
+			expect( balloonAddSpy.firstCall.args[ 0 ].balloonClassName ).to.equal( 'ck-mention-balloon' );
 		} );
 	} );
 
@@ -366,6 +385,65 @@ describe( 'MentionUI', () => {
 		} );
 	} );
 
+	describe( 'createRegExp()', () => {
+		let regExpStub;
+
+		// Cache the original value to restore it after the tests.
+		const originalGroupSupport = env.features.isRegExpUnicodePropertySupported;
+
+		before( () => {
+			env.features.isRegExpUnicodePropertySupported = false;
+		} );
+
+		beforeEach( () => {
+			return createClassicTestEditor( staticConfig )
+				.then( editor => {
+					regExpStub = sinon.stub( window, 'RegExp' );
+
+					return editor;
+				} );
+		} );
+
+		after( () => {
+			env.features.isRegExpUnicodePropertySupported = originalGroupSupport;
+		} );
+
+		it( 'returns a simplified RegExp for browsers not supporting Unicode punctuation groups', () => {
+			env.features.isRegExpUnicodePropertySupported = false;
+			createRegExp( '@', 2 );
+			sinon.assert.calledOnce( regExpStub );
+			sinon.assert.calledWithExactly( regExpStub, '(?:^|[ \\(\\[{"\'])(@)(.{2,})$', 'u' );
+		} );
+
+		it( 'returns a ES2018 RegExp for browsers supporting Unicode punctuation groups', () => {
+			env.features.isRegExpUnicodePropertySupported = true;
+			createRegExp( '@', 2 );
+			sinon.assert.calledOnce( regExpStub );
+			sinon.assert.calledWithExactly( regExpStub, '(?:^|[ \\p{Ps}\\p{Pi}"\'])(@)(.{2,})$', 'u' );
+		} );
+
+		it( 'returns a proper regexp for markers longer than 1 character', () => {
+			env.features.isRegExpUnicodePropertySupported = true;
+			createRegExp( '@@', 2 );
+			sinon.assert.calledOnce( regExpStub );
+			sinon.assert.calledWithExactly( regExpStub, '(?:^|[ \\p{Ps}\\p{Pi}"\'])(@@)(.{2,})$', 'u' );
+		} );
+
+		it( 'correctly escapes passed marker #1', () => {
+			env.features.isRegExpUnicodePropertySupported = true;
+			createRegExp( ']', 2 );
+			sinon.assert.calledOnce( regExpStub );
+			sinon.assert.calledWithExactly( regExpStub, '(?:^|[ \\p{Ps}\\p{Pi}"\'])(\\])(.{2,})$', 'u' );
+		} );
+
+		it( 'correctly escapes passed marker #2', () => {
+			env.features.isRegExpUnicodePropertySupported = true;
+			createRegExp( '\\', 2 );
+			sinon.assert.calledOnce( regExpStub );
+			sinon.assert.calledWithExactly( regExpStub, '(?:^|[ \\p{Ps}\\p{Pi}"\'])(\\\\)(.{2,})$', 'u' );
+		} );
+	} );
+
 	describe( 'typing integration', () => {
 		it( 'should show panel for matched marker after typing minimum characters', () => {
 			return createClassicTestEditor( { feeds: [ Object.assign( { minimumCharacters: 2 }, staticConfig.feeds[ 0 ] ) ] } )
@@ -400,6 +478,45 @@ describe( 'MentionUI', () => {
 
 					model.change( writer => {
 						writer.insertText( 'r', doc.selection.getFirstPosition() );
+					} );
+				} )
+				.then( waitForDebounce )
+				.then( () => {
+					expect( panelView.isVisible ).to.be.true;
+					expect( editor.model.markers.has( 'mention' ) ).to.be.true;
+					expect( mentionsView.items ).to.have.length( 1 );
+				} );
+		} );
+
+		it( 'should show panel after the whole marker is matched', () => {
+			return createClassicTestEditor( {
+				feeds: [ { marker: '@@', feed: [ '@Barney', '@Lily', '@Marshall', '@Robin', '@Ted' ] } ]
+			} )
+				.then( () => {
+					setData( editor.model, '<paragraph>foo []</paragraph>' );
+
+					model.change( writer => {
+						writer.insertText( '@', doc.selection.getFirstPosition() );
+					} );
+				} )
+				.then( waitForDebounce )
+				.then( () => {
+					expect( panelView.isVisible ).to.be.false;
+					expect( editor.model.markers.has( 'mention' ) ).to.be.false;
+				} )
+				.then( () => {
+					model.change( writer => {
+						writer.insertText( '@', doc.selection.getFirstPosition() );
+					} );
+				} )
+				.then( waitForDebounce )
+				.then( () => {
+					expect( panelView.isVisible ).to.be.true;
+					expect( editor.model.markers.has( 'mention' ) ).to.be.true;
+					expect( mentionsView.items ).to.have.length( 5 );
+
+					model.change( writer => {
+						writer.insertText( 't', doc.selection.getFirstPosition() );
 					} );
 				} )
 				.then( waitForDebounce )
@@ -560,44 +677,6 @@ describe( 'MentionUI', () => {
 
 						sinon.assert.callCount( mentionElementSpy.set, 2 );
 					} );
-			} );
-		} );
-
-		describe( 'ES2018 RegExp Unicode property escapes fallback', () => {
-			let regExpStub;
-
-			// Cache the original value to restore it after the tests.
-			const originalGroupSupport = env.features.isRegExpUnicodePropertySupported;
-
-			before( () => {
-				env.features.isRegExpUnicodePropertySupported = false;
-			} );
-
-			beforeEach( () => {
-				return createClassicTestEditor( staticConfig )
-					.then( editor => {
-						regExpStub = sinon.stub( window, 'RegExp' );
-
-						return editor;
-					} );
-			} );
-
-			after( () => {
-				env.features.isRegExpUnicodePropertySupported = originalGroupSupport;
-			} );
-
-			it( 'returns a simplified RegExp for browsers not supporting Unicode punctuation groups', () => {
-				env.features.isRegExpUnicodePropertySupported = false;
-				createRegExp( '@', 2 );
-				sinon.assert.calledOnce( regExpStub );
-				sinon.assert.calledWithExactly( regExpStub, '(?:^|[ \\(\\[{"\'])([@])(.{2,})$', 'u' );
-			} );
-
-			it( 'returns a ES2018 RegExp for browsers supporting Unicode punctuation groups', () => {
-				env.features.isRegExpUnicodePropertySupported = true;
-				createRegExp( '@', 2 );
-				sinon.assert.calledOnce( regExpStub );
-				sinon.assert.calledWithExactly( regExpStub, '(?:^|[ \\p{Ps}\\p{Pi}"\'])([@])(.{2,})$', 'u' );
 			} );
 		} );
 

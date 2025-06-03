@@ -1,50 +1,61 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* globals console, window, document, setTimeout */
-
-import { BalloonEditor as BalloonEditorBase } from '@ckeditor/ckeditor5-editor-balloon';
-
-import { Essentials } from '@ckeditor/ckeditor5-essentials';
-import { UploadAdapter } from '@ckeditor/ckeditor5-adapter-ckfinder';
-import { Autoformat } from '@ckeditor/ckeditor5-autoformat';
-import { BlockToolbar } from '@ckeditor/ckeditor5-ui';
-import { Bold, Italic } from '@ckeditor/ckeditor5-basic-styles';
-import { BlockQuote } from '@ckeditor/ckeditor5-block-quote';
-import { CKBox } from '@ckeditor/ckeditor5-ckbox';
-import { CKFinder } from '@ckeditor/ckeditor5-ckfinder';
-import { EasyImage } from '@ckeditor/ckeditor5-easy-image';
-import { Heading, Title } from '@ckeditor/ckeditor5-heading';
-import { Image, ImageCaption, ImageStyle, ImageToolbar, ImageUpload, PictureEditing } from '@ckeditor/ckeditor5-image';
-import { Indent } from '@ckeditor/ckeditor5-indent';
-import { Link } from '@ckeditor/ckeditor5-link';
-import { List } from '@ckeditor/ckeditor5-list';
-import { MediaEmbed } from '@ckeditor/ckeditor5-media-embed';
-import { Paragraph } from '@ckeditor/ckeditor5-paragraph';
-import { PasteFromOffice } from '@ckeditor/ckeditor5-paste-from-office';
-import { Table, TableToolbar } from '@ckeditor/ckeditor5-table';
-import { TextTransformation } from '@ckeditor/ckeditor5-typing';
-import { CloudServices } from '@ckeditor/ckeditor5-cloud-services';
-import { CS_CONFIG } from '@ckeditor/ckeditor5-cloud-services/tests/_utils/cloud-services-config';
-
-class BalloonEditor extends BalloonEditorBase {}
-
-BalloonEditor.builtinPlugins = [
+import {
+	BalloonEditor as BalloonEditorBase,
 	Essentials,
-	UploadAdapter,
 	Autoformat,
 	BlockToolbar,
 	Bold,
 	Italic,
 	BlockQuote,
 	CKBox,
-	CKFinder,
+	CKBoxImageEdit,
+	EasyImage,
+	Heading,
+	Title,
+	Image,
+	ImageInsert,
+	ImageCaption,
+	ImageStyle,
+	ImageToolbar,
+	ImageUpload,
+	PictureEditing,
+	Indent,
+	Link,
+	List,
+	MediaEmbed,
+	Paragraph,
+	PasteFromOffice,
+	Table,
+	TableToolbar,
+	TextTransformation,
+	CloudServices
+} from 'ckeditor5';
+import {
+	CS_CONFIG,
+	TOKEN_URL,
+	getViewportTopOffsetConfig
+} from '@snippets/index.js';
+
+class BalloonEditor extends BalloonEditorBase {}
+
+BalloonEditor.builtinPlugins = [
+	Essentials,
+	Autoformat,
+	BlockToolbar,
+	Bold,
+	Italic,
+	BlockQuote,
+	CKBox,
+	CKBoxImageEdit,
 	CloudServices,
 	EasyImage,
 	Heading,
 	Image,
+	ImageInsert,
 	ImageCaption,
 	ImageStyle,
 	ImageToolbar,
@@ -71,7 +82,7 @@ BalloonEditor.defaultConfig = {
 		'outdent',
 		'indent',
 		'|',
-		'uploadImage',
+		'insertImage',
 		'blockQuote',
 		'insertTable',
 		'mediaEmbed',
@@ -87,13 +98,15 @@ BalloonEditor.defaultConfig = {
 		]
 	},
 	image: {
+	// having this one here does not make the slightest sense
 		toolbar: [
 			'imageStyle:inline',
 			'imageStyle:block',
-			'imageStyle:side',
+			'imageStyle:wrapText',
 			'|',
 			'toggleImageCaption',
-			'imageTextAlternative'
+			'imageTextAlternative',
+			'ckboxImageEdit'
 		]
 	},
 	table: {
@@ -114,8 +127,12 @@ BalloonEditor
 		cloudServices: CS_CONFIG,
 		ui: {
 			viewportOffset: {
-				top: window.getViewportTopOffsetConfig()
+				top: getViewportTopOffsetConfig()
 			}
+		},
+		ckbox: {
+			tokenUrl: TOKEN_URL,
+			allowExternalImagesEditing: [ /^data:/, 'origin', /ckbox/ ]
 		},
 		blockToolbar: [
 			'bulletedList',
@@ -124,7 +141,7 @@ BalloonEditor
 			'outdent',
 			'indent',
 			'|',
-			'uploadImage',
+			'insertImage',
 			'blockQuote',
 			'insertTable',
 			'mediaEmbed'

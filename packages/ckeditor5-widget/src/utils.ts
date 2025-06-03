@@ -1,13 +1,15 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module widget/utils
  */
 
+import { IconDragHandle } from '@ckeditor/ckeditor5-icons';
 import {
+	Rect,
 	CKEditorError,
 	toArray,
 	type ObservableChangeEvent,
@@ -15,7 +17,6 @@ import {
 } from '@ckeditor/ckeditor5-utils';
 
 import {
-	findOptimalInsertionRange as engineFindOptimalInsertionRange,
 	type AddHighlightCallback,
 	type HighlightDescriptor,
 	type RemoveHighlightCallback,
@@ -33,10 +34,8 @@ import {
 
 import { IconView } from '@ckeditor/ckeditor5-ui';
 
-import HighlightStack, { type HighlightStackChangeEvent } from './highlightstack';
-import { getTypeAroundFakeCaretPosition } from './widgettypearound/utils';
-
-import dragHandleIcon from '../theme/icons/drag-handle.svg';
+import HighlightStack, { type HighlightStackChangeEvent } from './highlightstack.js';
+import { getTypeAroundFakeCaretPosition } from './widgettypearound/utils.js';
 
 /**
  * CSS class added to each widget element.
@@ -119,7 +118,7 @@ export function toWidget(
 		 * instance.
 		 *
 		 * @error widget-to-widget-wrong-element-type
-		 * @param element The view element passed to `toWidget()`.
+		 * @param {any} element The view element passed to `toWidget()`.
 		 */
 		throw new CKEditorError(
 			'widget-to-widget-wrong-element-type',
@@ -244,6 +243,7 @@ export function getLabel( element: ViewElement ): string {
  * * adds the `ck-editor__editable` and `ck-editor__nested-editable` CSS classes,
  * * adds the `ck-editor__nested-editable_focused` CSS class when the editable is focused and removes it when it is blurred.
  * * implements the {@link ~setHighlightHandling view highlight on widget's editable}.
+ * * sets the `role` attribute to `textbox` for accessibility purposes.
  *
  * Similarly to {@link ~toWidget `toWidget()`} this function should be used in `editingDowncast` only and it is usually
  * used together with {@link module:engine/conversion/downcasthelpers~DowncastHelpers#elementToElement `elementToElement()`}.
@@ -276,6 +276,7 @@ export function getLabel( element: ViewElement ): string {
  *
  * @param options Additional options.
  * @param options.label Editable's label used by assistive technologies (e.g. screen readers).
+ * @param options.withAriaRole Whether to add the role="textbox" attribute on the editable. Defaults to `true`.
  * @returns Returns the same element that was provided in the `editable` parameter
  */
 export function toWidgetEditable(
@@ -283,11 +284,17 @@ export function toWidgetEditable(
 	writer: DowncastWriter,
 	options: {
 		label?: string;
+		withAriaRole?: boolean;
 	} = {}
 ): ViewEditableElement {
 	writer.addClass( [ 'ck-editor__editable', 'ck-editor__nested-editable' ], editable );
 
-	writer.setAttribute( 'role', 'textbox', editable );
+	// Set role="textbox" only if explicitly requested (defaults to true for backward compatibility).
+	if ( options.withAriaRole !== false ) {
+		writer.setAttribute( 'role', 'textbox', editable );
+	}
+
+	writer.setAttribute( 'tabindex', '-1', editable );
 
 	if ( options.label ) {
 		writer.setAttribute( 'aria-label', options.label, editable );
@@ -345,7 +352,7 @@ export function findOptimalInsertionRange(
 		}
 	}
 
-	return engineFindOptimalInsertionRange( selection, model );
+	return model.schema.findOptimalInsertionRange( selection );
 }
 
 /**
@@ -433,7 +440,7 @@ function addSelectionHandle( widgetElement: ViewContainerElement, writer: Downca
 
 		// Use the IconView from the ui library.
 		const icon = new IconView();
-		icon.set( 'content', dragHandleIcon );
+		icon.set( 'content', IconDragHandle );
 
 		// Render the icon view right away to append its #element to the selectionHandle DOM element.
 		icon.render();
@@ -446,4 +453,69 @@ function addSelectionHandle( widgetElement: ViewContainerElement, writer: Downca
 	// Append the selection handle into the widget wrapper.
 	writer.insert( writer.createPositionAt( widgetElement, 0 ), selectionHandle );
 	writer.addClass( [ 'ck-widget_with-selection-handle' ], widgetElement );
+}
+
+/**
+ * Starting from a DOM resize host element (an element that receives dimensions as a result of resizing),
+ * this helper returns the width of the found ancestor element.
+ *
+ *	* It searches up to 5 levels of ancestors only.
+ *
+ * @param domResizeHost Resize host DOM element that receives dimensions as a result of resizing.
+ * @returns Width of ancestor element in pixels or 0 if no ancestor with a computed width has been found.
+ */
+export function calculateResizeHostAncestorWidth( domResizeHost: HTMLElement ): number {
+	const getElementComputedWidth = ( element: HTMLElement ) => {
+		const { width, paddingLeft, paddingRight } = element.ownerDocument.defaultView!.getComputedStyle( element! );
+
+		return parseFloat( width ) - ( parseFloat( paddingLeft ) || 0 ) - ( parseFloat( paddingRight ) || 0 );
+	};
+
+	const domResizeHostParent = domResizeHost.parentElement;
+
+	if ( !domResizeHostParent ) {
+		return 0;
+	}
+
+	// Need to use computed style as it properly excludes parent's paddings from the returned value.
+	let parentWidth = getElementComputedWidth( domResizeHostParent! );
+
+	// Sometimes parent width cannot be accessed. If that happens we should go up in the elements tree
+	// and try to get width from next ancestor.
+	// https://github.com/ckeditor/ckeditor5/issues/10776
+	const ancestorLevelLimit = 5;
+	let currentLevel = 0;
+
+	let checkedElement = domResizeHostParent!;
+
+	while ( isNaN( parentWidth ) ) {
+		checkedElement = checkedElement.parentElement!;
+
+		if ( ++currentLevel > ancestorLevelLimit ) {
+			return 0;
+		}
+
+		parentWidth = getElementComputedWidth( checkedElement );
+	}
+
+	return parentWidth;
+}
+
+/**
+ * Calculates a relative width of a `domResizeHost` compared to its ancestor in percents.
+ *
+ * @param domResizeHost Resize host DOM element.
+ * @returns Percentage value between 0 and 100.
+ */
+export function calculateResizeHostPercentageWidth(
+	domResizeHost: HTMLElement,
+	resizeHostRect: Rect = new Rect( domResizeHost )
+): number {
+	const parentWidth = calculateResizeHostAncestorWidth( domResizeHost );
+
+	if ( !parentWidth ) {
+		return 0;
+	}
+
+	return resizeHostRect.width / parentWidth * 100;
 }

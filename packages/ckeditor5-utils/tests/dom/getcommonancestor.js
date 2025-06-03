@@ -1,12 +1,10 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* globals document */
-
-import getCommonAncestor from '../../src/dom/getcommonancestor';
-import createElement from '../../src/dom/createelement';
+import getCommonAncestor from '../../src/dom/getcommonancestor.js';
+import createElement from '../../src/dom/createelement.js';
 
 describe( 'getParents', () => {
 	let b, span1, span2, p1, p2, i, div;

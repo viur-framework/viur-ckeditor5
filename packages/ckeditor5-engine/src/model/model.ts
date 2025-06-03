@@ -1,36 +1,36 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module engine/model/model
  */
 
-import Batch, { type BatchType } from './batch';
-import Document from './document';
-import MarkerCollection from './markercollection';
-import ModelPosition, { type PositionOffset, type PositionStickiness } from './position';
-import ModelRange from './range';
-import ModelSelection, { type PlaceOrOffset, type Selectable } from './selection';
-import OperationFactory from './operation/operationfactory';
-import DocumentSelection from './documentselection';
-import Schema from './schema';
-import Writer from './writer';
-import Node from './node';
+import Batch, { type BatchType } from './batch.js';
+import Document from './document.js';
+import MarkerCollection from './markercollection.js';
+import ModelPosition, { type PositionOffset, type PositionStickiness } from './position.js';
+import ModelRange from './range.js';
+import ModelSelection, { type PlaceOrOffset, type Selectable } from './selection.js';
+import OperationFactory from './operation/operationfactory.js';
+import DocumentSelection from './documentselection.js';
+import Schema from './schema.js';
+import Writer from './writer.js';
+import Node from './node.js';
 
-import { autoParagraphEmptyRoots } from './utils/autoparagraphing';
-import { injectSelectionPostFixer } from './utils/selection-post-fixer';
-import deleteContent from './utils/deletecontent';
-import getSelectedContent from './utils/getselectedcontent';
-import insertContent from './utils/insertcontent';
-import insertObject from './utils/insertobject';
-import modifySelection from './utils/modifyselection';
+import { autoParagraphEmptyRoots } from './utils/autoparagraphing.js';
+import { injectSelectionPostFixer } from './utils/selection-post-fixer.js';
+import deleteContent from './utils/deletecontent.js';
+import getSelectedContent from './utils/getselectedcontent.js';
+import insertContent from './utils/insertcontent.js';
+import insertObject from './utils/insertobject.js';
+import modifySelection from './utils/modifyselection.js';
 
-import type ModelDocumentFragment from './documentfragment';
-import type Item from './item';
-import type ModelElement from './element';
-import type Operation from './operation/operation';
+import type ModelDocumentFragment from './documentfragment.js';
+import type Item from './item.js';
+import type ModelElement from './element.js';
+import type Operation from './operation/operation.js';
 
 import {
 	CKEditorError,
@@ -45,7 +45,7 @@ import {
  * Editor's data model. Read about the model in the
  * {@glink framework/architecture/editing-engine engine architecture} guide.
  */
-export default class Model extends ObservableMixin() {
+export default class Model extends /* #__PURE__ */ ObservableMixin() {
 	/**
 	 * Model's marker collection.
 	 */
@@ -146,11 +146,7 @@ export default class Model extends ObservableMixin() {
 		// at the end of the conversion. `UpcastDispatcher` or at least `Conversion` class looks like a
 		// better place for this registration but both know nothing about `Schema`.
 		this.schema.register( '$marker' );
-		this.schema.addChildCheck( ( context, childDefinition ) => {
-			if ( childDefinition.name === '$marker' ) {
-				return true;
-			}
-		} );
+		this.schema.addChildCheck( () => true, '$marker' ); // Allow everywhere.
 
 		injectSelectionPostFixer( this );
 
@@ -401,7 +397,7 @@ export default class Model extends ObservableMixin() {
 	 * This is a high-level method. It takes the {@link #schema schema} into consideration when inserting
 	 * the content, clears the given selection's content before inserting nodes and moves the selection
 	 * to its target position at the end of the process.
-	 * It can split elements, merge them, wrap bare text nodes with paragraphs, etc. &mdash; just like the
+	 * It can split elements, merge them, wrap bare text nodes with paragraphs, etc. &ndash; just like the
 	 * pasting feature should do.
 	 *
 	 * For lower-level methods see {@link module:engine/model/writer~Writer `Writer`}.
@@ -1097,7 +1093,6 @@ export default class Model extends ObservableMixin() {
 	/**
 	 * Common part of {@link module:engine/model/model~Model#change} and {@link module:engine/model/model~Model#enqueueChange}
 	 * which calls callbacks and returns array of values returned by these callbacks.
-	 *
 	 */
 	private _runPendingChanges() {
 		const ret = [];

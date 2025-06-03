@@ -1,19 +1,19 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module engine/model/liveposition
  */
 
-import Position, { type PositionOffset, type PositionStickiness } from './position';
+import Position, { type PositionOffset, type PositionStickiness } from './position.js';
 
-import type { ModelApplyOperationEvent } from './model';
-import type DocumentFragment from './documentfragment';
-import type Item from './item';
-import type Operation from './operation/operation';
-import type RootElement from './rootelement';
+import type { ModelApplyOperationEvent } from './model.js';
+import type DocumentFragment from './documentfragment.js';
+import type Item from './item.js';
+import type Operation from './operation/operation.js';
+import type RootElement from './rootelement.js';
 
 import { CKEditorError, EmitterMixin } from '@ckeditor/ckeditor5-utils';
 
@@ -30,7 +30,7 @@ import { CKEditorError, EmitterMixin } from '@ckeditor/ckeditor5-utils';
  * have to be unbound.
  * Use {@link module:engine/model/liveposition~LivePosition#detach} whenever you don't need `LivePosition` anymore.
  */
-export default class LivePosition extends EmitterMixin( Position ) {
+export default class LivePosition extends /* #__PURE__ */ EmitterMixin( Position ) {
 	/**
 	 * Root of the position path.
 	 */

@@ -1,22 +1,22 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-import DowncastWriter from '../../../src/view/downcastwriter';
-import Document from '../../../src/view/document';
-import EditableElement from '../../../src/view/editableelement';
-import ViewPosition from '../../../src/view/position';
-import ViewRange from '../../../src/view/range';
-import createViewRoot from '../_utils/createroot';
-import ViewElement from '../../../src/view/element';
-import ViewSelection from '../../../src/view/selection';
-import { StylesProcessor } from '../../../src/view/stylesmap';
-import DocumentFragment from '../../../src/view/documentfragment';
-import HtmlDataProcessor from '../../../src/dataprocessor/htmldataprocessor';
+import DowncastWriter from '../../../src/view/downcastwriter.js';
+import Document from '../../../src/view/document.js';
+import EditableElement from '../../../src/view/editableelement.js';
+import ViewPosition from '../../../src/view/position.js';
+import ViewRange from '../../../src/view/range.js';
+import createViewRoot from '../_utils/createroot.js';
+import ViewElement from '../../../src/view/element.js';
+import ViewSelection from '../../../src/view/selection.js';
+import { StylesProcessor } from '../../../src/view/stylesmap.js';
+import DocumentFragment from '../../../src/view/documentfragment.js';
+import HtmlDataProcessor from '../../../src/dataprocessor/htmldataprocessor.js';
 
-import CKEditorError from '@ckeditor/ckeditor5-utils/src/ckeditorerror';
-import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils';
+import CKEditorError from '@ckeditor/ckeditor5-utils/src/ckeditorerror.js';
+import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils.js';
 
 describe( 'DowncastWriter', () => {
 	let writer, attributes, root, doc;
@@ -325,6 +325,37 @@ describe( 'DowncastWriter', () => {
 
 			expect( element.getAttribute( 'foo' ) ).to.equal( 'bar' );
 		} );
+
+		it( 'should add class token if reset is not set', () => {
+			const element = writer.createAttributeElement( 'span' );
+
+			writer.setAttribute( 'class', 'foo', false, element );
+			writer.setAttribute( 'class', 'bar', false, element );
+
+			expect( element.getAttribute( 'class' ) ).to.equal( 'foo bar' );
+			expect( element.hasClass( 'foo' ) ).to.be.true;
+			expect( element.hasClass( 'bar' ) ).to.be.true;
+		} );
+
+		it( 'should add style token if reset is not set', () => {
+			const element = writer.createAttributeElement( 'span' );
+
+			writer.setAttribute( 'style', [ 'font-size', '20px' ], false, element );
+			writer.setAttribute( 'style', [ 'color', 'red' ], false, element );
+
+			expect( element.getAttribute( 'style' ) ).to.equal( 'color:red;font-size:20px;' );
+			expect( element.getStyle( 'font-size' ) ).to.equal( '20px' );
+			expect( element.getStyle( 'color' ) ).to.equal( 'red' );
+		} );
+
+		it( 'should add rel attribute token if reset is not set', () => {
+			const element = writer.createAttributeElement( 'a' );
+
+			writer.setAttribute( 'rel', 'foo', false, element );
+			writer.setAttribute( 'rel', 'bar', false, element );
+
+			expect( element.getAttribute( 'rel' ) ).to.equal( 'foo bar' );
+		} );
 	} );
 
 	describe( 'removeAttribute()', () => {
@@ -334,6 +365,38 @@ describe( 'DowncastWriter', () => {
 			writer.removeAttribute( 'foo', element );
 
 			expect( element.getAttribute( 'foo' ) ).to.be.undefined;
+		} );
+
+		it( 'should remove class token if remove value is set', () => {
+			const element = writer.createAttributeElement( 'span', { class: 'foo bar' } );
+
+			writer.removeAttribute( 'class', 'foo', element );
+			expect( element.getAttribute( 'class' ) ).to.equal( 'bar' );
+
+			writer.removeAttribute( 'class', 'bar', element );
+			expect( element.getAttribute( 'class' ) ).to.be.undefined;
+		} );
+
+		it( 'should remove style token if remove value is set', () => {
+			const element = writer.createAttributeElement( 'span', { style: 'font-size: 20px; color: red' } );
+
+			writer.removeAttribute( 'style', 'font-size', element );
+			expect( element.getAttribute( 'style' ) ).to.equal( 'color:red;' );
+
+			writer.removeAttribute( 'style', 'color', element );
+			expect( element.getAttribute( 'style' ) ).to.be.undefined;
+		} );
+
+		it( 'should remove rel attribute token if remove value is set', () => {
+			const element = writer.createAttributeElement( 'a', { rel: 'foo bar' } );
+
+			expect( element.getAttribute( 'rel' ) ).to.equal( 'foo bar' );
+
+			writer.removeAttribute( 'rel', 'foo', element );
+			expect( element.getAttribute( 'rel' ) ).to.equal( 'bar' );
+
+			writer.removeAttribute( 'rel', 'bar', element );
+			expect( element.getAttribute( 'rel' ) ).to.be.undefined;
 		} );
 	} );
 

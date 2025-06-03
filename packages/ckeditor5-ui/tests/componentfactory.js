@@ -1,12 +1,12 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-import Editor from '@ckeditor/ckeditor5-core/src/editor/editor';
-import ComponentFactory from '../src/componentfactory';
+import Editor from '@ckeditor/ckeditor5-core/src/editor/editor.js';
+import ComponentFactory from '../src/componentfactory.js';
 
-import { expectToThrowCKEditorError } from '@ckeditor/ckeditor5-utils/tests/_utils/utils';
+import { expectToThrowCKEditorError } from '@ckeditor/ckeditor5-utils/tests/_utils/utils.js';
 
 describe( 'ComponentFactory', () => {
 	let editor, factory;
@@ -14,6 +14,11 @@ describe( 'ComponentFactory', () => {
 	beforeEach( () => {
 		editor = new Editor();
 		factory = new ComponentFactory( editor );
+		editor.state = 'ready';
+	} );
+
+	afterEach( async () => {
+		await editor.destroy();
 	} );
 
 	describe( 'constructor()', () => {

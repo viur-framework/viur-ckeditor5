@@ -1,13 +1,16 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* globals ClassicEditor, console, window, document */
+import {
+	CS_CONFIG,
+	TOKEN_URL,
+	getViewportTopOffsetConfig
+} from '@snippets/index.js';
+import { ImageEditor } from './build-image-source.js';
 
-import { CS_CONFIG } from '@ckeditor/ckeditor5-cloud-services/tests/_utils/cloud-services-config.js';
-
-ClassicEditor
+ImageEditor
 	.create( document.querySelector( '#snippet-image-link' ), {
 		removePlugins: [ 'AutoImage' ],
 		toolbar: {
@@ -15,14 +18,19 @@ ClassicEditor
 				'undo', 'redo',
 				'|', 'heading',
 				'|', 'bold', 'italic',
-				'|', 'link', 'uploadImage', 'insertTable', 'mediaEmbed',
+				'|', 'link', 'insertImage', 'insertTable', 'mediaEmbed',
 				'|', 'bulletedList', 'numberedList', 'outdent', 'indent'
 			]
 		},
 		ui: {
 			viewportOffset: {
-				top: window.getViewportTopOffsetConfig()
+				top: getViewportTopOffsetConfig()
 			}
+		},
+		ckbox: {
+			tokenUrl: TOKEN_URL,
+			allowExternalImagesEditing: [ /^data:/, 'origin', /ckbox/ ],
+			forceDemoLabel: true
 		},
 		image: {
 			toolbar: [
@@ -30,7 +38,9 @@ ClassicEditor
 				'|',
 				'imageStyle:inline',
 				'imageStyle:block',
-				'imageStyle:side'
+				'imageStyle:wrapText',
+				'|',
+				'ckboxImageEdit'
 			]
 		},
 		cloudServices: CS_CONFIG

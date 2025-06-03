@@ -1,6 +1,6 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
@@ -9,22 +9,23 @@
 
 import {
 	ButtonView,
-	Model,
+	ViewModel,
 	type ColorOption,
 	type LabeledFieldView,
 	type ListDropdownItemDefinition,
 	type NormalizedColorOption,
 	type ToolbarView,
-	type View
-} from 'ckeditor5/src/ui';
+	type View,
+	type ColorPickerConfig
+} from 'ckeditor5/src/ui.js';
 
-import { Collection, type LocaleTranslate } from 'ckeditor5/src/utils';
-import { isColor, isLength, isPercentage } from 'ckeditor5/src/engine';
+import { Collection, type LocaleTranslate } from 'ckeditor5/src/utils.js';
+import { isColor, isLength, isPercentage } from 'ckeditor5/src/engine.js';
 
-import type TableCellPropertiesView from '../../tablecellproperties/ui/tablecellpropertiesview';
-import type TablePropertiesView from '../../tableproperties/ui/tablepropertiesview';
+import type TableCellPropertiesView from '../../tablecellproperties/ui/tablecellpropertiesview.js';
+import type TablePropertiesView from '../../tableproperties/ui/tablepropertiesview.js';
 
-import ColorInputView from '../../ui/colorinputview';
+import ColorInputView from '../../ui/colorinputview.js';
 
 const isEmpty = ( val: string ) => val === '';
 
@@ -76,7 +77,7 @@ export function getLocalizedLengthErrorText( t: LocaleTranslate ): string {
  * See {@link module:engine/view/styles/utils~isColor}.
  */
 export function colorFieldValidator( value: string ): boolean {
-	value = value.trim();
+	value = value.trim().toLowerCase();
 
 	return isEmpty( value ) || isColor( value );
 }
@@ -121,7 +122,7 @@ export function getBorderStyleDefinitions(
 	for ( const style in styleLabels ) {
 		const definition: ListDropdownItemDefinition = {
 			type: 'button',
-			model: new Model( {
+			model: new ViewModel( {
 				_borderStyleValue: style,
 				label: styleLabels[ style ],
 				role: 'menuitemradio',
@@ -156,7 +157,14 @@ export function getBorderStyleDefinitions(
  * * have some icons,
  * * set a certain UI view property value upon execution.
  *
- * @param nameToValue A function that maps a button name to a value. By default names are the same as values.
+ * @param options Configuration options
+ * @param options.view The view that has the observable property.
+ * @param options.icons Object with button icons.
+ * @param options.toolbar The toolbar to fill with buttons.
+ * @param options.labels Object with button labels.
+ * @param options.propertyName The name of the observable property in the view.
+ * @param options.nameToValue A function that maps a button name to a value. By default names are the same as values.
+ * @param options.defaultValue Default value for the property.
  */
 export function fillToolbar<TView extends View, TPropertyName extends keyof TView>(
 	options: {
@@ -174,6 +182,8 @@ export function fillToolbar<TView extends View, TPropertyName extends keyof TVie
 		const button = new ButtonView( view.locale );
 
 		button.set( {
+			role: 'radio',
+			isToggleable: true,
 			label: labels[ name ],
 			icon: icons[ name ],
 			tooltip: labels[ name ]
@@ -195,7 +205,12 @@ export function fillToolbar<TView extends View, TPropertyName extends keyof TVie
 		} );
 
 		button.on( 'execute', () => {
-			view[ propertyName ] = buttonValue as any;
+			// Allow toggling alignment if there is no default value specified (especially for layout tables).
+			if ( !defaultValue && buttonValue && view[ propertyName ] === buttonValue ) {
+				view[ propertyName ] = undefined as any;
+			} else {
+				view[ propertyName ] = buttonValue as any;
+			}
 		} );
 
 		toolbar.items.add( button );
@@ -372,19 +387,22 @@ export const defaultColors: Array<ColorOption> = [
  * @param options.columns The configuration of the number of columns the color palette consists of in the input's dropdown.
  * @param options.defaultColorValue If specified, the color input view will replace the "Remove color" button with
  * the "Restore default" button. Instead of clearing the input field, the default color value will be set.
+ * @param options.colorPickerConfig The configuration of the color picker. You could disable it or define your output format.
  */
 export function getLabeledColorInputCreator(
 	options: {
 		colorConfig: Array<NormalizedColorOption>;
 		columns: number;
 		defaultColorValue?: string;
+		colorPickerConfig: false | ColorPickerConfig;
 	}
 ) {
 	return ( labeledFieldView: LabeledFieldView, viewUid: string, statusUid: string ): ColorInputView => {
 		const colorInputView = new ColorInputView( labeledFieldView.locale!, {
 			colorDefinitions: colorConfigToColorGridDefinitions( options.colorConfig ),
 			columns: options.columns,
-			defaultColorValue: options.defaultColorValue
+			defaultColorValue: options.defaultColorValue,
+			colorPickerConfig: options.colorPickerConfig
 		} );
 
 		colorInputView.inputView.set( {

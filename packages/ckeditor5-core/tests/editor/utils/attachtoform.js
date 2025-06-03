@@ -1,14 +1,12 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-import attachToForm from '../../../src/editor/utils/attachtoform';
-import ElementApiMixin from '../../../src/editor/utils/elementapimixin';
-import Editor from '../../../src/editor/editor';
-import { expectToThrowCKEditorError } from '@ckeditor/ckeditor5-utils/tests/_utils/utils';
-
-/* global document, Event */
+import attachToForm from '../../../src/editor/utils/attachtoform.js';
+import ElementApiMixin from '../../../src/editor/utils/elementapimixin.js';
+import Editor from '../../../src/editor/editor.js';
+import { expectToThrowCKEditorError } from '@ckeditor/ckeditor5-utils/tests/_utils/utils.js';
 
 describe( 'attachToForm()', () => {
 	let editor, form, textarea, submitStub;
@@ -25,7 +23,6 @@ describe( 'attachToForm()', () => {
 			evt.preventDefault();
 		} );
 
-		// eslint-disable-next-line new-cap
 		class CustomEditor extends ElementApiMixin( Editor ) {}
 
 		editor = new CustomEditor();
@@ -45,12 +42,15 @@ describe( 'attachToForm()', () => {
 		}
 	} );
 
-	it( 'should throw an error when is used with editor without `ElementApiMixin`', () => {
+	it( 'should throw an error when is used with editor without `ElementApiMixin`', async () => {
 		const editor = new Editor();
 
 		expectToThrowCKEditorError( () => {
 			attachToForm( editor );
 		}, /^attachtoform-missing-elementapi-interface/, editor );
+
+		editor.fire( 'ready' );
+		await editor.destroy();
 	} );
 
 	it( 'should update editor#element after the "submit" event', () => {

@@ -1,6 +1,6 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
@@ -83,7 +83,7 @@ const utils = {
 	},
 
 	/**
-	 * Checks if given mixin i mixed to given class using {@link module:utils/mix mix} util.
+	 * Checks if given mixin is mixed to given class.
 	 *
 	 * @param {Function} targetClass Class to check.
 	 * @param {Object} mixin Mixin to check.

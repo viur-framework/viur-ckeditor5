@@ -1,19 +1,19 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module media-embed/mediaregistry
  */
 
-import type { DowncastWriter, ViewElement } from 'ckeditor5/src/engine';
-import { IconView, Template } from 'ckeditor5/src/ui';
-import { type Locale, logWarning, toArray } from 'ckeditor5/src/utils';
+import { IconView, Template } from 'ckeditor5/src/ui.js';
+import { IconMediaPlaceholder } from 'ckeditor5/src/icons.js';
+import { logWarning, toArray, type Locale } from 'ckeditor5/src/utils.js';
 
-import mediaPlaceholderIcon from '../theme/icons/media-placeholder.svg';
-import type { MediaEmbedConfig, MediaEmbedProvider } from './mediaembedconfig';
-import type { MediaOptions } from './utils';
+import type { DowncastWriter, ViewElement } from 'ckeditor5/src/engine.js';
+import type { MediaEmbedConfig, MediaEmbedProvider } from './mediaembedconfig.js';
+import type { MediaOptions } from './utils.js';
 
 const mediaPlaceholderIconViewBox = '0 0 64 42';
 
@@ -258,7 +258,7 @@ class Media {
 		const icon = new IconView();
 		const t = this._locale.t;
 
-		icon.content = mediaPlaceholderIcon;
+		icon.content = IconMediaPlaceholder;
 		icon.viewBox = mediaPlaceholderIconViewBox;
 
 		const placeholder = new Template( {

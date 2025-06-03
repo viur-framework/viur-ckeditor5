@@ -1,6 +1,6 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
@@ -8,12 +8,12 @@
  */
 import type { HeadingCommand } from '@ckeditor/ckeditor5-heading';
 
-import { Plugin, type Editor } from 'ckeditor5/src/core';
-import type { Range, Writer } from 'ckeditor5/src/engine';
-import { Delete } from 'ckeditor5/src/typing';
+import { Plugin, type Editor } from 'ckeditor5/src/core.js';
+import type { Range, Writer } from 'ckeditor5/src/engine.js';
+import { Delete } from 'ckeditor5/src/typing.js';
 
-import blockAutoformatEditing from './blockautoformatediting';
-import inlineAutoformatEditing from './inlineautoformatediting';
+import blockAutoformatEditing from './blockautoformatediting.js';
+import inlineAutoformatEditing from './inlineautoformatediting.js';
 
 /**
  * Enables a set of predefined autoformatting actions.
@@ -32,20 +32,40 @@ export default class Autoformat extends Plugin {
 	/**
 	 * @inheritDoc
 	 */
-	public static get pluginName(): 'Autoformat' {
-		return 'Autoformat';
+	public static get pluginName() {
+		return 'Autoformat' as const;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public static override get isOfficialPlugin(): true {
+		return true;
 	}
 
 	/**
 	 * @inheritDoc
 	 */
 	public afterInit(): void {
+		const editor = this.editor;
+		const t = this.editor.t;
+
 		this._addListAutoformats();
 		this._addBasicStylesAutoformats();
 		this._addHeadingAutoformats();
 		this._addBlockQuoteAutoformats();
 		this._addCodeBlockAutoformats();
 		this._addHorizontalLineAutoformats();
+
+		// Add the information about the keystroke to the accessibility database.
+		editor.accessibility.addKeystrokeInfos( {
+			keystrokes: [
+				{
+					label: t( 'Revert autoformatting action' ),
+					keystroke: 'Backspace'
+				}
+			]
+		} );
 	}
 
 	/**

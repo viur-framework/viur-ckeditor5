@@ -1,32 +1,18 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module watchdog/contextwatchdog
  */
 
-/* globals console */
-
-// eslint-disable-next-line ckeditor5-rules/no-cross-package-imports
-import type {
-	Context,
-	Editor,
-	EditorConfig,
-	ContextConfig
-} from 'ckeditor5/src/core';
-
-// eslint-disable-next-line ckeditor5-rules/no-cross-package-imports
-import type {
-	ArrayOrItem,
-	CKEditorError
-} from 'ckeditor5/src/utils';
-
-import Watchdog, { type WatchdogConfig, type WatchdogState } from './watchdog';
-import EditorWatchdog, { type EditorCreatorFunction } from './editorwatchdog';
-import areConnectedThroughProperties from './utils/areconnectedthroughproperties';
-import getSubNodes from './utils/getsubnodes';
+import Watchdog, { type WatchdogConfig, type WatchdogState } from './watchdog.js';
+import EditorWatchdog, { type EditorCreatorFunction } from './editorwatchdog.js';
+import areConnectedThroughProperties from './utils/areconnectedthroughproperties.js';
+import getSubNodes from './utils/getsubnodes.js';
+import type { ArrayOrItem, CKEditorError } from '@ckeditor/ckeditor5-utils';
+import type { Context, Editor, EditorConfig, ContextConfig } from '@ckeditor/ckeditor5-core';
 
 const mainQueueId = Symbol( 'MainQueueId' );
 

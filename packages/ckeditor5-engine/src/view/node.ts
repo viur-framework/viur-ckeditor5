@@ -1,13 +1,13 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module engine/view/node
  */
 
-import TypeCheckable from './typecheckable';
+import TypeCheckable from './typecheckable.js';
 
 import {
 	CKEditorError,
@@ -15,14 +15,11 @@ import {
 	compareArrays
 } from '@ckeditor/ckeditor5-utils';
 
-import { clone } from 'lodash-es';
+import { clone } from 'es-toolkit/compat';
 
-// To check if component is loaded more than once.
-import '@ckeditor/ckeditor5-utils/src/version';
-
-import type { default as Document, ChangeType } from './document';
-import type DocumentFragment from './documentfragment';
-import type Element from './element';
+import type { default as Document, ChangeType } from './document.js';
+import type DocumentFragment from './documentfragment.js';
+import type Element from './element.js';
 
 /**
  * Abstract view node class.
@@ -31,7 +28,7 @@ import type Element from './element';
  * Use the {@link module:engine/view/downcastwriter~DowncastWriter} or {@link module:engine/view/upcastwriter~UpcastWriter}
  * to create new instances of view nodes.
  */
-export default abstract class Node extends EmitterMixin( TypeCheckable ) {
+export default abstract class Node extends /* #__PURE__ */ EmitterMixin( TypeCheckable ) {
 	/**
 	 * The document instance to which this node belongs.
 	 */
@@ -260,13 +257,14 @@ export default abstract class Node extends EmitterMixin( TypeCheckable ) {
 	 * @internal
 	 * @param type Type of the change.
 	 * @param node Changed node.
+	 * @param data Additional data.
 	 * @fires change
 	 */
-	public _fireChange( type: ChangeType, node: Node ): void {
-		this.fire<ViewNodeChangeEvent>( `change:${ type }`, node );
+	public _fireChange( type: ChangeType, node: Node, data?: { index: number } ): void {
+		this.fire( `change:${ type }`, node, data );
 
 		if ( this.parent ) {
-			this.parent._fireChange( type, node );
+			this.parent._fireChange( type, node, data );
 		}
 	}
 
@@ -307,9 +305,13 @@ Node.prototype.is = function( type: string ): boolean {
 };
 
 /**
- * Fired when list of {@link module:engine/view/element~Element elements} children, attributes or data changes.
+ * Fired when list of {@link module:engine/view/element~Element elements} children, attributes or text changes.
  *
  * Change event is bubbled – it is fired on all ancestors.
+ *
+ * All change events as the first parameter receive the node that has changed (the node for which children, attributes or text changed).
+ *
+ * If `change:children` event is fired, there is an additional second parameter, which is an object with additional data related to change.
  *
  * @eventName ~Node#change
  * @eventName ~Node#change:children
@@ -318,5 +320,5 @@ Node.prototype.is = function( type: string ): boolean {
  */
 export type ViewNodeChangeEvent = {
 	name: 'change' | `change:${ ChangeType }`;
-	args: [ changedNode: Node ];
+	args: [ changedNode: Node, data?: { index: number } ];
 };

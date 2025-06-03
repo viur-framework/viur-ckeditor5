@@ -1,16 +1,14 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* globals document, Event */
+import MultiRootEditor from '../src/multirooteditor.js';
+import EditorUI from '@ckeditor/ckeditor5-ui/src/editorui/editorui.js';
+import Paragraph from '@ckeditor/ckeditor5-paragraph/src/paragraph.js';
+import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils.js';
 
-import MultiRootEditor from '../src/multirooteditor';
-import EditorUI from '@ckeditor/ckeditor5-ui/src/editorui/editorui';
-import Paragraph from '@ckeditor/ckeditor5-paragraph/src/paragraph';
-import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils';
-
-import View from '@ckeditor/ckeditor5-ui/src/view';
+import View from '@ckeditor/ckeditor5-ui/src/view.js';
 
 describe( 'MultiRootEditorUI', () => {
 	let editor, view, ui;
@@ -31,8 +29,8 @@ describe( 'MultiRootEditorUI', () => {
 			} );
 	} );
 
-	afterEach( () => {
-		editor.destroy();
+	afterEach( async () => {
+		await editor.destroy();
 	} );
 
 	describe( 'constructor()', () => {
@@ -422,6 +420,30 @@ describe( 'MultiRootEditorUI', () => {
 			await newEditor.destroy();
 
 			sinon.assert.callOrder( parentDestroySpy, viewDestroySpy );
+		} );
+
+		// Some of integrations might detach the DOM editing view *before* destroying the editor.
+		// It happens quite often in the strict mode of the React integration. In such case, the editor
+		// component is being unmounted after editable component is detached from the DOM. In such scenario,
+		// the root doesn't contain the DOM editable anymore. This test ensures that the editor does not throw.
+		// Issue: https://github.com/ckeditor/ckeditor5/issues/16561
+		it( 'should not throw when trying to detach a DOM root that was not attached to editing view', async () => {
+			const newEditor = await MultiRootEditor.create( { foo: '', bar: '' } );
+			const editingView = newEditor.editing.view;
+
+			// Simulate unmounting the editable child component before the editor component.
+			editingView.detachDomRoot( 'foo' );
+
+			// This should not throw
+			await newEditor.destroy();
+		} );
+
+		// Issue: https://github.com/ckeditor/ckeditor5/issues/16561
+		it( 'should not throw error when it was called twice', async () => {
+			const newEditor = await MultiRootEditor.create( { foo: '', bar: '' } );
+
+			await newEditor.destroy();
+			await newEditor.destroy(); // This should not throw
 		} );
 	} );
 } );

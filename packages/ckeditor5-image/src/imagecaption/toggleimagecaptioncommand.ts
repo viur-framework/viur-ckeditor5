@@ -1,19 +1,19 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module image/imagecaption/toggleimagecaptioncommand
  */
 
-import type { Element, Writer } from 'ckeditor5/src/engine';
-import { Command } from 'ckeditor5/src/core';
+import type { Element, Writer } from 'ckeditor5/src/engine.js';
+import { Command } from 'ckeditor5/src/core.js';
 
-import ImageBlockEditing from '../image/imageblockediting';
-import type ImageCaptionUtils from './imagecaptionutils';
-import type ImageUtils from '../imageutils';
-import type ImageCaptionEditing from './imagecaptionediting';
+import ImageBlockEditing from '../image/imageblockediting.js';
+import type ImageCaptionUtils from './imagecaptionutils.js';
+import type ImageUtils from '../imageutils.js';
+import type ImageCaptionEditing from './imagecaptionediting.js';
 
 /**
  * The toggle image caption command.

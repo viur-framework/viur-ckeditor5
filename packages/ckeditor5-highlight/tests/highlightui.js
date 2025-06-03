@@ -1,20 +1,17 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* global document */
+import { IconMarker, IconPen, IconEraser } from 'ckeditor5/src/icons.js';
 
-import HighlightEditing from '../src/highlightediting';
-import HighlightUI from '../src/highlightui';
+import HighlightEditing from '../src/highlightediting.js';
+import HighlightUI from '../src/highlightui.js';
 
-import markerIcon from '../theme/icons/marker.svg';
-import penIcon from '../theme/icons/pen.svg';
-import eraserIcon from '@ckeditor/ckeditor5-core/theme/icons/eraser.svg';
-
-import ClassicTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/classictesteditor';
-import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils';
-import { _clear as clearTranslations, add as addTranslations } from '@ckeditor/ckeditor5-utils/src/translation-service';
+import ClassicTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/classictesteditor.js';
+import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils.js';
+import { _clear as clearTranslations, add as addTranslations } from '@ckeditor/ckeditor5-utils/src/translation-service.js';
+import { ListSeparatorView, MenuBarMenuListItemView, MenuBarMenuView } from '@ckeditor/ckeditor5-ui';
 
 describe( 'HighlightUI', () => {
 	let editor, command, element;
@@ -68,7 +65,15 @@ describe( 'HighlightUI', () => {
 		return editor.destroy();
 	} );
 
-	describe( 'highlight dropdown', () => {
+	it( 'should have `isOfficialPlugin` static flag set to `true`', () => {
+		expect( HighlightUI.isOfficialPlugin ).to.be.true;
+	} );
+
+	it( 'should have `isPremiumPlugin` static flag set to `false`', () => {
+		expect( HighlightUI.isPremiumPlugin ).to.be.false;
+	} );
+
+	describe( 'highlight toolbar dropdown', () => {
 		let dropdown;
 
 		beforeEach( () => {
@@ -80,7 +85,7 @@ describe( 'HighlightUI', () => {
 
 			expect( button ).to.have.property( 'label', 'Highlight' );
 			expect( button ).to.have.property( 'tooltip', true );
-			expect( button ).to.have.property( 'icon', markerIcon );
+			expect( button ).to.have.property( 'icon', IconMarker );
 			expect( button ).to.have.property( 'isToggleable', true );
 		} );
 
@@ -109,7 +114,7 @@ describe( 'HighlightUI', () => {
 			command.value = undefined;
 
 			expect( toolbar.items.map( item => item.icon ) )
-				.to.deep.equal( [ markerIcon, markerIcon, markerIcon, markerIcon, penIcon, penIcon, undefined, eraserIcon ] );
+				.to.deep.equal( [ IconMarker, IconMarker, IconMarker, IconMarker, IconPen, IconPen, undefined, IconEraser ] );
 		} );
 
 		it( 'should have proper colors in dropdown', () => {
@@ -327,7 +332,148 @@ describe( 'HighlightUI', () => {
 		} );
 	} );
 
-	describe( 'highlight remove', () => {
+	describe( 'hightlight menu bar menu', () => {
+		let menuView;
+
+		beforeEach( () => {
+			menuView = editor.ui.componentFactory.create( 'menuBar:highlight' );
+		} );
+
+		it( 'should be created', () => {
+			expect( menuView ).to.be.instanceof( MenuBarMenuView );
+		} );
+
+		it( 'should have correct attribute values', () => {
+			expect( menuView.buttonView.label ).to.equal( 'Highlight' );
+			expect( menuView.buttonView.icon ).to.equal( IconMarker );
+			expect( menuView.buttonView.iconView.fillColor ).to.equal( 'transparent' );
+		} );
+
+		it( 'has isEnabled bound to command\'s isEnabled', () => {
+			command.isEnabled = true;
+			expect( menuView ).to.have.property( 'isEnabled', true );
+
+			command.isEnabled = false;
+			expect( menuView ).to.have.property( 'isEnabled', false );
+		} );
+
+		describe( 'list of options', () => {
+			it( 'should use correct components to create options', () => {
+				expect(
+					Array.from( menuView.panelView.children.first.items )
+						.every( item => item instanceof MenuBarMenuListItemView || item instanceof ListSeparatorView )
+				).to.be.true;
+			} );
+
+			it( 'should set #label and #icon of an option', () => {
+				expect( dumpItems( 'icon' ) ).to.have.deep.ordered.members( [
+					[ 'Yellow marker', IconMarker ],
+					[ 'Green marker', IconMarker ],
+					[ 'Pink marker', IconMarker ],
+					[ 'Blue marker', IconMarker ],
+					[ 'Red pen', IconPen ],
+					[ 'Green pen', IconPen ],
+					[ 'Remove highlight', IconEraser ]
+				] );
+			} );
+
+			it( 'should bind #isOn to the command', () => {
+				command.value = 'pinkMarker';
+
+				expect( dumpItems( 'isOn' ) ).to.have.deep.ordered.members( [
+					[ 'Yellow marker', false ],
+					[ 'Green marker', false ],
+					[ 'Pink marker', true ],
+					[ 'Blue marker', false ],
+					[ 'Red pen', false ],
+					[ 'Green pen', false ],
+					[ 'Remove highlight', false ]
+				] );
+
+				command.value = 'redPen';
+
+				expect( dumpItems( 'isOn' ) ).to.have.deep.ordered.members( [
+					[ 'Yellow marker', false ],
+					[ 'Green marker', false ],
+					[ 'Pink marker', false ],
+					[ 'Blue marker', false ],
+					[ 'Red pen', true ],
+					[ 'Green pen', false ],
+					[ 'Remove highlight', false ]
+				] );
+			} );
+
+			it( 'should bind `aria-checked` attribute to the command', () => {
+				command.value = 'pinkMarker';
+
+				expect( dumpItems( item => item.element.getAttribute( 'aria-checked' ) ) ).to.have.deep.ordered.members( [
+					[ 'Yellow marker', 'false' ],
+					[ 'Green marker', 'false' ],
+					[ 'Pink marker', 'true' ],
+					[ 'Blue marker', 'false' ],
+					[ 'Red pen', 'false' ],
+					[ 'Green pen', 'false' ],
+					[ 'Remove highlight', null ]
+				] );
+
+				command.value = 'redPen';
+
+				expect( dumpItems( item => item.element.getAttribute( 'aria-checked' ) ) ).to.have.deep.ordered.members( [
+					[ 'Yellow marker', 'false' ],
+					[ 'Green marker', 'false' ],
+					[ 'Pink marker', 'false' ],
+					[ 'Blue marker', 'false' ],
+					[ 'Red pen', 'true' ],
+					[ 'Green pen', 'false' ],
+					[ 'Remove highlight', null ]
+				] );
+			} );
+
+			it( 'should delegate #execute from an item to the menu', () => {
+				const spy = sinon.spy();
+
+				menuView.on( 'execute', spy );
+
+				menuView.panelView.children.first.items.last.children.first.fire( 'execute' );
+
+				sinon.assert.calledOnce( spy );
+			} );
+
+			it( 'should execute the command upon #execute and focus the editing view', () => {
+				const execSpy = sinon.spy( editor, 'execute' );
+				const focusSpy = sinon.spy( editor.editing.view, 'focus' );
+
+				// Add highlight.
+				menuView.panelView.children.first.items.first.children.first.fire( 'execute' );
+
+				sinon.assert.calledOnceWithExactly( execSpy, 'highlight', { value: 'yellowMarker' } );
+				sinon.assert.calledOnce( focusSpy );
+				sinon.assert.callOrder( execSpy, focusSpy );
+
+				// Remove highlight.
+				menuView.panelView.children.first.items.last.children.first.fire( 'execute' );
+
+				sinon.assert.calledWithExactly( execSpy.secondCall, 'highlight', { value: null } );
+				sinon.assert.calledTwice( focusSpy );
+			} );
+		} );
+
+		it( 'should diplay the remove highlight button at the end', () => {
+			expect( menuView.panelView.children.first.items.get( 6 ) ).to.be.instanceOf( ListSeparatorView );
+			expect( menuView.panelView.children.first.items.last.children.first.icon ).to.equal( IconEraser );
+		} );
+
+		function dumpItems( propertyName ) {
+			return Array.from( menuView.panelView.children.first.items )
+				.filter( item => item instanceof MenuBarMenuListItemView )
+				.map( item => [
+					item.children.first.label,
+					typeof propertyName == 'function' ? propertyName( item.children.first ) : item.children.first[ propertyName ]
+				] );
+		}
+	} );
+
+	describe( 'highlight remove button', () => {
 		let removeHighlightButton;
 
 		beforeEach( () => {
@@ -338,7 +484,7 @@ describe( 'HighlightUI', () => {
 			expect( editor.ui.componentFactory.has( 'removeHighlight' ) ).to.be.true;
 			expect( removeHighlightButton ).to.have.property( 'tooltip', true );
 			expect( removeHighlightButton ).to.have.property( 'label', 'Remove highlight' );
-			expect( removeHighlightButton ).to.have.property( 'icon', eraserIcon );
+			expect( removeHighlightButton ).to.have.property( 'icon', IconEraser );
 		} );
 
 		it( 'should execute the command only once', () => {

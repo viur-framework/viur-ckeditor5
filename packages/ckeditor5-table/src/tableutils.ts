@@ -1,14 +1,14 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module table/tableutils
  */
 
-import { CKEditorError } from 'ckeditor5/src/utils';
-import { Plugin } from 'ckeditor5/src/core';
+import { CKEditorError } from 'ckeditor5/src/utils.js';
+import { Plugin } from 'ckeditor5/src/core.js';
 import type {
 	DocumentSelection,
 	Element,
@@ -17,11 +17,12 @@ import type {
 	Range,
 	Selection,
 	Writer
-} from 'ckeditor5/src/engine';
+} from 'ckeditor5/src/engine.js';
 
-import TableWalker, { type TableWalkerOptions } from './tablewalker';
-import { createEmptyTableCell, updateNumericAttribute } from './utils/common';
-import { removeEmptyColumns, removeEmptyRows } from './utils/structure';
+import TableWalker, { type TableWalkerOptions } from './tablewalker.js';
+import { createEmptyTableCell, updateNumericAttribute } from './utils/common.js';
+import { removeEmptyColumns, removeEmptyRows } from './utils/structure.js';
+import { getTableColumnElements } from './tablecolumnresize/utils.js';
 
 type Cell = { cell: Element; rowspan: number };
 type CellsToMove = Map<number, Cell>;
@@ -36,8 +37,15 @@ export default class TableUtils extends Plugin {
 	/**
 	 * @inheritDoc
 	 */
-	public static get pluginName(): 'TableUtils' {
-		return 'TableUtils';
+	public static get pluginName() {
+		return 'TableUtils' as const;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public static override get isOfficialPlugin(): true {
+		return true;
 	}
 
 	/**
@@ -471,6 +479,7 @@ export default class TableUtils extends Plugin {
 
 		model.change( writer => {
 			adjustHeadingColumns( table, { first, last }, writer );
+			const tableColumns = getTableColumnElements( table );
 
 			for ( let removedColumnIndex = last; removedColumnIndex >= first; removedColumnIndex-- ) {
 				for ( const { cell, column, cellWidth } of [ ...new TableWalker( table ) ] ) {
@@ -481,6 +490,22 @@ export default class TableUtils extends Plugin {
 						// The cell in removed column has colspan of 1.
 						writer.remove( cell );
 					}
+				}
+
+				// If table has `tableColumn` elements, we need to update it manually.
+				// See https://github.com/ckeditor/ckeditor5/issues/14521#issuecomment-1662102889 for details.
+				if ( tableColumns[ removedColumnIndex ] ) {
+					// If the removed column is the first one then we need to add its width to the next column.
+					// Otherwise we add it to the previous column.
+					const adjacentColumn = removedColumnIndex === 0 ? tableColumns[ 1 ] : tableColumns[ removedColumnIndex - 1 ];
+
+					const removedColumnWidth = parseFloat( tableColumns[ removedColumnIndex ].getAttribute( 'columnWidth' ) as string );
+					const adjacentColumnWidth = parseFloat( adjacentColumn.getAttribute( 'columnWidth' ) as string );
+
+					writer.remove( tableColumns[ removedColumnIndex ] );
+
+					// Add the removed column width (in %) to the adjacent column.
+					writer.setAttribute( 'columnWidth', removedColumnWidth + adjacentColumnWidth + '%', adjacentColumn );
 				}
 			}
 
@@ -707,6 +732,12 @@ export default class TableUtils extends Plugin {
 					newCellsAttributes.colspan = colspan;
 				}
 
+				// Accumulator that stores distance from the last inserted cell span.
+				// It helps with evenly splitting larger cell spans (for example 10 cells collapsing into 3 cells).
+				// We split these cells into 3, 3, 4 cells and we have to call `createCells` only when distance between
+				// these cells is equal or greater than the new cells span size.
+				let distanceFromLastCellSpan = 0;
+
 				for ( const tableSlot of tableMap ) {
 					const { column, row } = tableSlot;
 
@@ -715,13 +746,23 @@ export default class TableUtils extends Plugin {
 					//
 					// 1. It's a row after split cell + it's height.
 					const isAfterSplitCell = row >= splitCellRow + updatedSpan;
+
 					// 2. Is on the same column.
 					const isOnSameColumn = column === cellColumn;
-					// 3. And it's row index is after previous cell height.
-					const isInEvenlySplitRow = ( row + splitCellRow + updatedSpan ) % newCellsSpan === 0;
 
-					if ( isAfterSplitCell && isOnSameColumn && isInEvenlySplitRow ) {
-						createCells( 1, writer, tableSlot.getPositionBefore(), newCellsAttributes );
+					// Reset distance from the last cell span if we are on the same column and we exceeded the new cells span size.
+					if ( distanceFromLastCellSpan >= newCellsSpan && isOnSameColumn ) {
+						distanceFromLastCellSpan = 0;
+					}
+
+					if ( isAfterSplitCell && isOnSameColumn ) {
+						// Create new cells only if the distance from the last cell span is equal or greater than the new cells span.
+						if ( !distanceFromLastCellSpan ) {
+							createCells( 1, writer, tableSlot.getPositionBefore(), newCellsAttributes );
+						}
+
+						// Increase the distance from the last cell span.
+						distanceFromLastCellSpan++;
 					}
 				}
 			}
@@ -781,11 +822,14 @@ export default class TableUtils extends Plugin {
 		// that table will have only tableRow model elements at the beginning.
 		const row = table.getChild( 0 ) as Element;
 
-		return [ ...row.getChildren() ].reduce( ( columns, row ) => {
-			const columnWidth = parseInt( row.getAttribute( 'colspan' ) as string || '1' );
+		return [ ...row.getChildren() ]
+			// $marker elements can also be children of a row too (when TrackChanges is on). Don't include them in the count.
+			.filter( node => node.is( 'element', 'tableCell' ) )
+			.reduce( ( columns, row ) => {
+				const columnWidth = parseInt( row.getAttribute( 'colspan' ) as string || '1' );
 
-			return columns + columnWidth;
-		}, 0 );
+				return columns + columnWidth;
+			}, 0 );
 	}
 
 	/**

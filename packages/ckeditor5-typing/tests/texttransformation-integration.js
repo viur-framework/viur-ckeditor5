@@ -1,18 +1,16 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* global document */
+import Paragraph from '@ckeditor/ckeditor5-paragraph/src/paragraph.js';
+import UndoEditing from '@ckeditor/ckeditor5-undo/src/undoediting.js';
+import ClassicTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/classictesteditor.js';
 
-import Paragraph from '@ckeditor/ckeditor5-paragraph/src/paragraph';
-import UndoEditing from '@ckeditor/ckeditor5-undo/src/undoediting';
-import ClassicTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/classictesteditor';
+import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils.js';
 
-import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils';
-
-import TextTransformation from '../src/texttransformation';
-import Typing from '../src/typing';
+import TextTransformation from '../src/texttransformation.js';
+import Typing from '../src/typing.js';
 
 describe( 'Text transformation feature - integration', () => {
 	let editorElement, editor, model, doc;

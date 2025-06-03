@@ -1,30 +1,50 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* globals ClassicEditor, CKEditorPlugins, console, window, document */
+import {
+	TableColumnResize,
+	TableProperties,
+	TableCaption,
+	Superscript
+} from 'ckeditor5';
+import {
+	TOKEN_URL,
+	getViewportTopOffsetConfig
+} from '@snippets/index.js';
+import { TableEditor } from './build-table-source.js';
 
-ClassicEditor
+TableEditor
 	.create( document.querySelector( '#snippet-table-column-resize' ), {
 		extraPlugins: [
-			CKEditorPlugins.TableColumnResize, CKEditorPlugins.TableProperties, CKEditorPlugins.TableCaption, CKEditorPlugins.Superscript
+			TableColumnResize,
+			TableProperties,
+			TableCaption,
+			Superscript
 		],
 		table: {
-			contentToolbar: [ 'toggleTableCaption', 'tableColumn', 'tableRow', 'mergeTableCells', 'tableProperties' ]
+			contentToolbar: [ 'toggleTableCaption', 'tableRow', 'mergeTableCells', 'tableProperties' ]
 		},
 		image: {
 			toolbar: [
 				'imageStyle:block',
-				'imageStyle:side',
+				'imageStyle:wrapText',
 				'|',
-				'imageTextAlternative'
+				'imageTextAlternative',
+				'|',
+				'ckboxImageEdit'
 			]
 		},
 		ui: {
 			viewportOffset: {
-				top: window.getViewportTopOffsetConfig()
+				top: getViewportTopOffsetConfig()
 			}
+		},
+		ckbox: {
+			tokenUrl: TOKEN_URL,
+			allowExternalImagesEditing: [ /^data:/, 'origin', /ckbox/ ],
+			forceDemoLabel: true
 		}
 	} )
 	.then( editor => {

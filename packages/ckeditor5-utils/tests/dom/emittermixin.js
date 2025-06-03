@@ -1,15 +1,11 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* eslint-disable new-cap */
-
-/* globals document, window, Event, MouseEvent */
-
-import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils';
-import DomEmitterMixin from '../../src/dom/emittermixin';
-import EmitterMixin from '../../src/emittermixin';
+import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils.js';
+import DomEmitterMixin from '../../src/dom/emittermixin.js';
+import EmitterMixin from '../../src/emittermixin.js';
 
 describe( 'DomEmitterMixin', () => {
 	const Emitter = EmitterMixin();
@@ -102,6 +98,16 @@ describe( 'DomEmitterMixin', () => {
 			domEmitter.listenTo( document, 'test', spy );
 
 			document.dispatchEvent( new Event( 'test' ) );
+
+			sinon.assert.calledOnce( spy );
+		} );
+
+		it( 'should listen to native DOM events - VisualViewport (EventTarget) as source', () => {
+			const spy = testUtils.sinon.spy();
+
+			domEmitter.listenTo( window.visualViewport, 'test', spy );
+
+			window.visualViewport.dispatchEvent( new Event( 'test' ) );
 
 			sinon.assert.calledOnce( spy );
 		} );
@@ -375,6 +381,20 @@ describe( 'DomEmitterMixin', () => {
 
 			sinon.assert.calledOnce( spy1 );
 			sinon.assert.calledTwice( spy2 );
+		} );
+
+		it( 'should stop listening to all events from a VisualViewport (EventTarget)', () => {
+			const spy = testUtils.sinon.spy();
+
+			domEmitter.listenTo( window.visualViewport, 'event', spy );
+
+			window.visualViewport.dispatchEvent( new Event( 'event' ) );
+
+			domEmitter.stopListening( window.visualViewport );
+
+			window.visualViewport.dispatchEvent( new Event( 'event' ) );
+
+			sinon.assert.calledOnce( spy );
 		} );
 
 		it( 'should stop listening to everything', () => {

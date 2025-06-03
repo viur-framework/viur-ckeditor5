@@ -1,18 +1,18 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module engine/view/attributeelement
  */
 
-import Element, { type ElementAttributes } from './element';
+import Element, { type ElementAttributes } from './element.js';
 import { CKEditorError } from '@ckeditor/ckeditor5-utils';
 
-import type DocumentFragment from './documentfragment';
-import type Document from './document';
-import type Node from './node';
+import type DocumentFragment from './documentfragment.js';
+import type Document from './document.js';
+import type Node from './node.js';
 
 // Default attribute priority.
 const DEFAULT_PRIORITY = 10;
@@ -166,6 +166,36 @@ export default class AttributeElement extends Element {
 		cloned._id = this._id;
 
 		return cloned;
+	}
+
+	/**
+	 * Used by {@link module:engine/view/element~Element#_mergeAttributesFrom} to verify if the given element can be merged without
+	 * conflicts into this element.
+	 *
+	 * @internal
+	 */
+	public override _canMergeAttributesFrom( otherElement: AttributeElement ): boolean {
+		// Can't merge if any of elements have an id or a difference of priority.
+		if ( this.id !== null || otherElement.id !== null || this.priority !== otherElement.priority ) {
+			return false;
+		}
+
+		return super._canMergeAttributesFrom( otherElement );
+	}
+
+	/**
+	 * Used by {@link module:engine/view/element~Element#_subtractAttributesOf} to verify if the given element attributes
+	 * can be fully subtracted from this element.
+	 *
+	 * @internal
+	 */
+	public override _canSubtractAttributesOf( otherElement: AttributeElement ): boolean {
+		// Can't subtract if any of elements have an id or a difference of priority.
+		if ( this.id !== null || otherElement.id !== null || this.priority !== otherElement.priority ) {
+			return false;
+		}
+
+		return super._canSubtractAttributesOf( otherElement );
 	}
 }
 

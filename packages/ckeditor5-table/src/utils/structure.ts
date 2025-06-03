@@ -1,17 +1,17 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module table/utils/structure
  */
 
-import type { Element, Node, Writer } from 'ckeditor5/src/engine';
+import type { Element, Node, Writer } from 'ckeditor5/src/engine.js';
 
-import { default as TableWalker, type TableSlot } from '../tablewalker';
-import { createEmptyTableCell, updateNumericAttribute } from './common';
-import type TableUtils from '../tableutils';
+import { default as TableWalker, type TableSlot } from '../tablewalker.js';
+import { createEmptyTableCell, updateNumericAttribute } from './common.js';
+import type TableUtils from '../tableutils.js';
 
 type CellAttributes = {
 	rowspan?: number;
@@ -59,8 +59,17 @@ export function cropTableToDimensions(
 ): Element {
 	const { startRow, startColumn, endRow, endColumn } = cropDimensions;
 
-	// Create empty table with empty rows equal to crop height.
+	// Initialize the cropped table element.
 	const croppedTable = writer.createElement( 'table' );
+
+	// Copy table type attribute if present.
+	const sourceTableType = sourceTable.getAttribute( 'tableType' );
+
+	if ( sourceTableType ) {
+		writer.setAttribute( 'tableType', sourceTableType, croppedTable );
+	}
+
+	// Create empty table with empty rows equal to crop height.
 	const cropHeight = endRow - startRow + 1;
 
 	for ( let i = 0; i < cropHeight; i++ ) {

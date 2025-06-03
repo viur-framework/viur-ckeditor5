@@ -1,16 +1,16 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-import DowncastWriter from '../../../src/view/downcastwriter';
-import { stringify, parse } from '../../../src/dev-utils/view';
+import DowncastWriter from '../../../src/view/downcastwriter.js';
+import { stringify, parse } from '../../../src/dev-utils/view.js';
 
-import ContainerElement from '../../../src/view/containerelement';
-import Position from '../../../src/view/position';
-import Document from '../../../src/view/document';
-import { expectToThrowCKEditorError } from '@ckeditor/ckeditor5-utils/tests/_utils/utils';
-import { StylesProcessor } from '../../../src/view/stylesmap';
+import ContainerElement from '../../../src/view/containerelement.js';
+import Position from '../../../src/view/position.js';
+import Document from '../../../src/view/document.js';
+import { expectToThrowCKEditorError } from '@ckeditor/ckeditor5-utils/tests/_utils/utils.js';
+import { StylesProcessor } from '../../../src/view/stylesmap.js';
 
 describe( 'DowncastWriter', () => {
 	describe( 'breakContainer()', () => {
@@ -63,6 +63,25 @@ describe( 'DowncastWriter', () => {
 			testBreakContainer(
 				'<container:div><container:p>foobar[]</container:p></container:div>',
 				'<container:div><container:p>foobar</container:p>[]</container:div>'
+			);
+		} );
+
+		it( 'break inside element with attributes, styles, and classes - should break container element at given position', () => {
+			testBreakContainer(
+				'<container:div>' +
+					'<container:p class="abc" foo="bar" style="color:red">' +
+						'<attribute:b>foo</attribute:b>[]<attribute:u>bar</attribute:u>' +
+					'</container:p>' +
+				'</container:div>',
+
+				'<container:div>' +
+					'<container:p class="abc" foo="bar" style="color:red">' +
+						'<attribute:b>foo</attribute:b>' +
+					'</container:p>' +
+					'[]<container:p class="abc" foo="bar" style="color:red">' +
+						'<attribute:u>bar</attribute:u>' +
+					'</container:p>' +
+				'</container:div>'
 			);
 		} );
 

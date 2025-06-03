@@ -1,32 +1,31 @@
-# Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+# Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
 #
-#                                     !!! IMPORTANT !!!
+# Want to contribute to this file? Submit your changes via a GitHub Pull Request.
 #
-#         Before you edit this file, please keep in mind that contributing to the project
-#                translations is possible ONLY via the Transifex online service.
-#
-#         To submit your translations, visit https://www.transifex.com/ckeditor/ckeditor5.
-#
-#                   To learn more, check out the official contributor's guide:
-#     https://ckeditor.com/docs/ckeditor5/latest/framework/guides/contributing/contributing.html
+# Check out the official contributor's guide:
+# https://ckeditor.com/docs/ckeditor5/latest/framework/guides/contributing/contributing.html
 #
 msgid ""
 msgstr ""
-"Language-Team: Hindi (https://app.transifex.com/ckeditor/teams/11143/hi/)\n"
 "Language: hi\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 
 msgctxt "Title of the CKEditor5 editor."
 msgid "Rich Text Editor"
 msgstr "Rich Text Editor"
 
-msgctxt "Accessible label of the specific editing area belonging to a container with an ARIA application role."
-msgid "Editor editing area: %0"
-msgstr "संपादक संपादन क्षेत्र: %0"
-
 msgctxt "Label of the block toolbar icon (a block toolbar is displayed next to each paragraph, heading, list item, etc. and contains e.g. block formatting options)"
 msgid "Edit block"
 msgstr "Edit block"
+
+msgctxt "First part of the label of the block toolbar icon when functionality of drag and drop is available (a block toolbar is displayed next to each paragraph, heading, list item, etc. and contains e.g. block formatting options)"
+msgid "Click to edit block"
+msgstr "ब्लॉक एडिट करने के लिए क्लिक करें"
+
+msgctxt "Second part of the label of the block toolbar icon when functionality of drag and drop is available (a block toolbar is displayed next to each paragraph, heading, list item, etc. and contains e.g. block formatting options)"
+msgid "Drag to move"
+msgstr "मूव करने के लिए ड्रैग करें"
 
 msgctxt "Label for a button showing the next thing (tab, page, etc.)."
 msgid "Next"
@@ -43,6 +42,10 @@ msgstr "Editor toolbar"
 msgctxt "Label used by assistive technologies describing a toolbar displayed inside a dropdown."
 msgid "Dropdown toolbar"
 msgstr "Dropdown toolbar"
+
+msgctxt "Label used by assistive technologies describing a menu displayed inside a dropdown."
+msgid "Dropdown menu"
+msgstr "ड्रापडाउन मेन्यू"
 
 msgctxt "Label of a button that applies a black color in color pickers."
 msgid "Black"
@@ -114,4 +117,92 @@ msgstr "एडीटर कॉन्टेक्स्टूअल टूलब�
 
 msgctxt "Label of an input field for typing colors in the HEX color format."
 msgid "HEX"
-msgstr ""
+msgstr "HEX"
+
+msgctxt "The main text of the message shown to the user when given query does not match any results."
+msgid "No results found"
+msgstr "कोई रिजल्ट नहीं"
+
+msgctxt "The main text of the message shown to the user when no results are available."
+msgid "No searchable items"
+msgstr "कोई खोजने लायक आइटम नहीं"
+
+msgctxt "A default label of a dialog window displayed on top the editor."
+msgid "Editor dialog"
+msgstr "एडिटर डायलॉग"
+
+msgctxt "The label and the tooltip for the close button in the dialog header."
+msgid "Close"
+msgstr "बंद करें"
+
+msgctxt "Accessibility help dialog assistive technologies label telling users how to exit the dialog."
+msgid "Help Contents. To close this dialog press ESC."
+msgstr "हेल्प कॉन्टेंट्स. इस डायलॉग को बंद करने के लिए ESC दबाएँ."
+
+msgctxt "Accessibility help dialog text explaining what can be found in that dialog."
+msgid "Below, you can find a list of keyboard shortcuts that can be used in the editor."
+msgstr "नीचे, आप उन कीबोर्ड शॉर्टकट्स की एक लिस्ट देख सकते हैं जिनका इस्तेमाल एडिटर में किया जा सकता है."
+
+msgctxt "Accessibility help dialog text displayed next to keystrokes that may require the Fn key on Mac."
+msgid "(may require <kbd>Fn</kbd>)"
+msgstr "(इसके लिए <kbd>Fn</kbd> की ज़रूरत हो सकती है)"
+
+msgctxt "The label for the button that opens the Accessibility help dialog from the application menu bar."
+msgid "Accessibility"
+msgstr "पहुँच"
+
+msgctxt "Accessibility help dialog title."
+msgid "Accessibility help"
+msgstr "एक्सेसिबिलिटी हेल्प"
+
+msgctxt "Assistive technologies label added to each editor editing area informing users about the possibility of opening the accessibility help dialog."
+msgid "Press %0 for help."
+msgstr "हेल्प के लिए %0 दबाएँ."
+
+msgctxt "Keystroke description for assistive technologies: keystroke for moving focus out of an active dialog window."
+msgid "Move focus in and out of an active dialog window"
+msgstr "एक एक्टिव डायलॉग विंडो में फ़ोकस को अंदर और बाहर मूव करें"
+
+msgctxt "The label of the top-level application menu bar menu containing buttons and features related to the whole document (e.g. export to PDF, import from Word, etc.)."
+msgid "MENU_BAR_MENU_FILE"
+msgstr "फाइल"
+
+msgctxt "The label of the top-level application menu bar menu containing buttons and features related to general editing (e.g. undo, redo, select all, etc.)."
+msgid "MENU_BAR_MENU_EDIT"
+msgstr "Edit"
+
+msgctxt "The label of the top-level application menu bar menu containing buttons and features related to the view of the editor (e.g. show source)."
+msgid "MENU_BAR_MENU_VIEW"
+msgstr "दृश्य"
+
+msgctxt "The label of the top-level application menu bar menu containing buttons and features that insert content (e.g. insert table, insert image, etc.)."
+msgid "MENU_BAR_MENU_INSERT"
+msgstr "Insert"
+
+msgctxt "The label of the top-level application menu bar menu containing buttons and features related to content formatting (e.g. bold, font color, heading, etc.)."
+msgid "MENU_BAR_MENU_FORMAT"
+msgstr "फॉर्मेट"
+
+msgctxt "The label of the top-level application menu bar menu containing various editor tools (e.g. AI assistant, track changes, etc.)."
+msgid "MENU_BAR_MENU_TOOLS"
+msgstr "टूल्स"
+
+msgctxt "The label of the top-level application menu bar menu containing buttons and features helping users to learn about the editor (e.g. accessibility help)."
+msgid "MENU_BAR_MENU_HELP"
+msgstr "हेल्प"
+
+msgctxt "The label of the application menu bar menu containing buttons and features that apply formatting to a text (e.g. bold, italic, etc.)."
+msgid "MENU_BAR_MENU_TEXT"
+msgstr "टेक्स्ट"
+
+msgctxt "The label of the application menu bar menu containing buttons and features that control the font of the edited content (e.g. font size, font color, etc.)."
+msgid "MENU_BAR_MENU_FONT"
+msgstr "फ़ॉन्ट"
+
+msgctxt "The accessible label of the editor menu bar used by assistive technologies."
+msgid "Editor menu bar"
+msgstr "एडिटर मेनू बार"
+
+msgctxt "An error text displayed when user attempted to enter an color that is not in HEX format."
+msgid "Please enter a valid color (e.g. \"ff0000\")."
+msgstr "कृपया एक वैध रंग दर्ज करें (उदाहरण के लिए \"ff0000\")."

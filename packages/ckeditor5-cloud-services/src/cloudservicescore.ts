@@ -1,16 +1,16 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module cloud-services/cloudservicescore
  */
 
-import { ContextPlugin } from 'ckeditor5/src/core';
-import type { TokenUrl } from './cloudservicesconfig';
-import Token, { type InitializedToken, type TokenOptions } from './token/token';
-import UploadGateway from './uploadgateway/uploadgateway';
+import { ContextPlugin } from 'ckeditor5/src/core.js';
+import type { TokenUrl } from './cloudservicesconfig.js';
+import Token, { type InitializedToken, type TokenOptions } from './token/token.js';
+import UploadGateway from './uploadgateway/uploadgateway.js';
 
 /**
  * The `CloudServicesCore` plugin exposes the base API for communication with CKEditor Cloud Services.
@@ -19,8 +19,15 @@ export default class CloudServicesCore extends ContextPlugin {
 	/**
 	 * @inheritDoc
 	 */
-	public static get pluginName(): 'CloudServicesCore' {
-		return 'CloudServicesCore';
+	public static get pluginName() {
+		return 'CloudServicesCore' as const;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public static override get isOfficialPlugin(): true {
+		return true;
 	}
 
 	/**

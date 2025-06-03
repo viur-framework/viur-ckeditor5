@@ -1,41 +1,53 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module ui/colorpicker/colorpickerview
  */
 
-import { convertColor, convertToHex, type ColorPickerConfig, type ColorPickerOutputFormat } from './utils';
+import { convertColor, convertToHex, registerCustomElement, type ColorPickerViewConfig } from './utils.js';
 
+import type { HexColor } from '@ckeditor/ckeditor5-core';
 import { type Locale, global, env } from '@ckeditor/ckeditor5-utils';
-import { debounce, type DebouncedFunc } from 'lodash-es';
-import View from '../view';
-import type InputTextView from '../inputtext/inputtextview';
-import type ViewCollection from '../viewcollection';
-import LabeledFieldView from '../labeledfield/labeledfieldview';
-import { createLabeledInputText } from '../labeledfield/utils';
+import { debounce, type DebouncedFunction } from 'es-toolkit/compat';
+import View from '../view.js';
+import type InputTextView from '../inputtext/inputtextview.js';
+import type ViewCollection from '../viewcollection.js';
+import LabeledFieldView from '../labeledfield/labeledfieldview.js';
+import { createLabeledInputText } from '../labeledfield/utils.js';
 
-import 'vanilla-colorful/hex-color-picker.js';
+// Custom export due to https://github.com/ckeditor/ckeditor5/issues/15698.
+import { HexBase } from 'vanilla-colorful/lib/entrypoints/hex';
 import '../../theme/components/colorpicker/colorpicker.css';
+
+declare global {
+	interface HTMLElementTagNameMap {
+		'hex-color-picker': HexBase;
+	}
+}
 
 const waitingTime = 150;
 
+/**
+ * A class which represents a color picker with an input field for defining custom colors.
+ */
 export default class ColorPickerView extends View {
 	/**
 	 * Element with saturation and hue sliders.
 	 */
-	declare public picker: HTMLElement;
+	declare public picker: HexBase;
 
 	/**
 	 * Container for a `#` sign prefix and an input for displaying and defining custom colors
 	 * in HEX format.
 	 */
-	declare public hexInputRow: ColorPickerInputRowView;
+	public hexInputRow: ColorPickerInputRowView;
 
 	/**
-	 * Current color state in color picker.
+	 * Current color selected in the color picker. It can be set by the component itself
+	 * (through the palette or input) or from the outside (e.g. to reflect the current selection color).
 	 */
 	declare public color: string;
 
@@ -58,15 +70,20 @@ export default class ColorPickerView extends View {
 	declare public _hexColor: string;
 
 	/**
-	* Debounced event method. The `colorPickerEvent()` method is called the specified `waitingTime` after
-	* `debouncedPickerEvent()` is called, unless a new action happens in the meantime.
-	*/
-	declare private _debounceColorPickerEvent: DebouncedFunc<( arg: string ) => void>;
+	 * Debounced function updating the `color` property in the component
+	 * and firing the `ColorPickerColorSelectedEvent`. Executed whenever color in component
+	 * is changed by the user interaction (through the palette or input).
+	 *
+	 * @private
+	 */
+	private _debounceColorPickerEvent: DebouncedFunction<( arg: string ) => void>;
 
 	/**
-	 * The output format (the one in which colors are applied in the model) of color picker.
+	 * A reference to the configuration of the color picker specified in the constructor.
+	 *
+	 * @private
 	 */
-	declare private _format: ColorPickerOutputFormat;
+	private _config: ColorPickerViewConfig;
 
 	/**
 	 * Creates a view of color picker.
@@ -74,19 +91,20 @@ export default class ColorPickerView extends View {
 	 * @param locale
 	 * @param config
 	 */
-	constructor( locale: Locale | undefined, config: ColorPickerConfig ) {
+	constructor( locale: Locale | undefined, config: ColorPickerViewConfig = {} ) {
 		super( locale );
 
-		this.set( 'color', '' );
-
-		this.set( '_hexColor', '' );
-
-		this._format = config.format || 'hsl';
+		this.set( {
+			color: '',
+			_hexColor: ''
+		} );
 
 		this.hexInputRow = this._createInputRow();
-
 		const children = this.createCollection();
-		children.add( this.hexInputRow );
+
+		if ( !config.hideInput ) {
+			children.add( this.hexInputRow );
+		}
 
 		this.setTemplate( {
 			tag: 'div',
@@ -97,24 +115,35 @@ export default class ColorPickerView extends View {
 			children
 		} );
 
+		this._config = config;
+
 		this._debounceColorPickerEvent = debounce( ( color: string ) => {
+			// At first, set the color internally in the component. It's converted to the configured output format.
 			this.set( 'color', color );
+
+			// Then let the outside world know that the user changed the color.
+			this.fire<ColorPickerColorSelectedEvent>( 'colorSelected', { color: this.color } );
 		}, waitingTime, {
 			leading: true
 		} );
 
-		// Sets color in the picker if color was updated.
+		// The `color` property holds the color in the configured output format.
+		// Ensure it before actually setting the value.
 		this.on( 'set:color', ( evt, propertyName, newValue ) => {
-			// The color needs always to be kept in the output format.
-			evt.return = convertColor( newValue, this._format );
+			evt.return = convertColor( newValue, this._config.format || 'hsl' );
 		} );
 
+		// The `_hexColor` property is bound to the `color` one, but requires conversion.
 		this.on( 'change:color', () => {
 			this._hexColor = convertColorToCommonHexFormat( this.color );
 		} );
 
 		this.on( 'change:_hexColor', () => {
-			this.picker.setAttribute( 'color', this._hexColor );
+			// Update the selected color in the color picker palette when it's not focused.
+			// It means the user typed the color in the input.
+			if ( document.activeElement !== this.picker ) {
+				this.picker.setAttribute( 'color', this._hexColor );
+			}
 
 			// There has to be two way binding between properties.
 			// Extra precaution has to be taken to trigger change back only when the color really changes.
@@ -130,6 +159,9 @@ export default class ColorPickerView extends View {
 	public override render(): void {
 		super.render();
 
+		// Extracted to the helper to make it testable.
+		registerCustomElement( 'hex-color-picker', HexBase );
+
 		this.picker = global.document.createElement( 'hex-color-picker' );
 		this.picker.setAttribute( 'class', 'hex-color-picker' );
 		this.picker.setAttribute( 'tabindex', '-1' );
@@ -137,22 +169,25 @@ export default class ColorPickerView extends View {
 		this._createSlidersView();
 
 		if ( this.element ) {
-			this.element.insertBefore( this.picker, this.hexInputRow.element );
+			if ( this.hexInputRow.element ) {
+				this.element.insertBefore( this.picker, this.hexInputRow.element );
+			} else {
+				this.element.appendChild( this.picker );
+			}
 
 			// Create custom stylesheet with a look of focused pointer in color picker and append it into the color picker shadowDom
 			const styleSheetForFocusedColorPicker = document.createElement( 'style' );
 
 			styleSheetForFocusedColorPicker.textContent = '[role="slider"]:focus [part$="pointer"] {' +
-					'border: 1px solid #fff;' +
-					'outline: 1px solid var(--ck-color-focus-border);' +
-					'box-shadow: 0 0 0 2px #fff;' +
+				'border: 1px solid #fff;' +
+				'outline: 1px solid var(--ck-color-focus-border);' +
+				'box-shadow: 0 0 0 2px #fff;' +
 				'}';
 			this.picker.shadowRoot!.appendChild( styleSheetForFocusedColorPicker );
 		}
 
 		this.picker.addEventListener( 'color-changed', event => {
-			const customEvent = event as CustomEvent;
-			const color = customEvent.detail.value;
+			const color = event.detail.value;
 			this._debounceColorPickerEvent( color );
 		} );
 	}
@@ -164,13 +199,15 @@ export default class ColorPickerView extends View {
 	public focus(): void {
 		// In some browsers we need to move the focus to the input first.
 		// Otherwise, the color picker doesn't behave as expected.
+		// In Chrome, after selecting the color via slider the first time,
+		// the editor collapses the selection and doesn't apply the color change.
 		// In FF, after selecting the color via slider, it instantly moves back to the previous color.
 		// In all iOS browsers and desktop Safari, once the saturation slider is moved for the first time,
 		// editor collapses the selection and doesn't apply the color change.
 		// See: https://github.com/cksource/ckeditor5-internal/issues/3245, https://github.com/ckeditor/ckeditor5/issues/14119,
 		// https://github.com/cksource/ckeditor5-internal/issues/3268.
 		/* istanbul ignore next -- @preserve */
-		if ( env.isGecko || env.isiOS || env.isSafari ) {
+		if ( !this._config.hideInput && ( env.isGecko || env.isiOS || env.isSafari || env.isBlink ) ) {
 			const input: LabeledFieldView<InputTextView> = this.hexInputRow!.children.get( 1 )! as LabeledFieldView<InputTextView>;
 
 			input.focus();
@@ -209,10 +246,9 @@ export default class ColorPickerView extends View {
 	 * @private
 	 */
 	private _createInputRow(): ColorPickerInputRowView {
-		const hashView = new HashView();
 		const colorInput = this._createColorInput();
 
-		return new ColorPickerInputRowView( this.locale!, [ hashView, colorInput ] );
+		return new ColorPickerInputRowView( this.locale!, colorInput );
 	}
 
 	/**
@@ -244,25 +280,52 @@ export default class ColorPickerView extends View {
 			const inputValue = labeledInput.fieldView.element!.value;
 
 			if ( inputValue ) {
-				// Trim the whitespace.
-				const trimmedValue = inputValue.trim();
+				const maybeHexColor = tryParseHexColor( inputValue );
 
-				// Drop the `#` from the beginning if present.
-				const hashlessInput = trimmedValue.startsWith( '#' ) ? trimmedValue.substring( 1 ) : trimmedValue;
-
-				// Check if it's a hex color (3,4,6 or 8 chars long and with proper characters).
-				const isValidHexColor = [ 3, 4, 6, 8 ].includes( hashlessInput.length ) &&
-					/(([0-9a-fA-F]{2}){3,4}|([0-9a-fA-F]){3,4})/.test( hashlessInput );
-
-				if ( isValidHexColor ) {
+				if ( maybeHexColor ) {
 					// If so, set the color.
 					// Otherwise, do nothing.
-					this._debounceColorPickerEvent( '#' + hashlessInput );
+					this._debounceColorPickerEvent( maybeHexColor );
 				}
 			}
 		} );
 
 		return labeledInput;
+	}
+
+	/**
+	 * Validates the view and returns `false` when some fields are invalid.
+	 */
+	public isValid(): boolean {
+		const { t } = this.locale!;
+
+		// If the input is hidden, it's always valid, because there is no way to select
+		// invalid color value using diagram color picker.
+		if ( this._config.hideInput ) {
+			return true;
+		}
+
+		this.resetValidationStatus();
+
+		// One error per field is enough.
+		if ( !this.hexInputRow.getParsedColor() ) {
+			// Apply updated error.
+			this.hexInputRow.inputView.errorText = t( 'Please enter a valid color (e.g. "ff0000").' );
+
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Cleans up the supplementary error and information text of input inside the {@link #hexInputRow}
+	 * bringing them back to the state when the form has been displayed for the first time.
+	 *
+	 * See {@link #isValid}.
+	 */
+	public resetValidationStatus(): void {
+		this.hexInputRow.inputView.errorText = null;
 	}
 }
 
@@ -288,7 +351,7 @@ function convertColorToCommonHexFormat( inputColor: string ): string {
 // View abstraction over pointer in color picker.
 class SliderView extends View {
 	/**
-	 * @param element HTML elemnt of slider in color picker.
+	 * @param element HTML element of slider in color picker.
 	 */
 	constructor( element: HTMLElement ) {
 		super();
@@ -303,7 +366,7 @@ class SliderView extends View {
 	}
 }
 
-// View abstaction over the `#` character before color input.
+// View abstraction over the `#` character before color input.
 class HashView extends View {
 	constructor( locale?: Locale ) {
 		super( locale );
@@ -333,14 +396,24 @@ class ColorPickerInputRowView extends View {
 	public readonly children: ViewCollection;
 
 	/**
+	 * Hex input view element.
+	 */
+	public readonly inputView: LabeledFieldView<InputTextView>;
+
+	/**
 	 * Creates an instance of the form row class.
 	 *
 	 * @param locale The locale instance.
+	 * @param inputView Hex color input element.
 	 */
-	constructor( locale: Locale, children?: Array<View> ) {
+	constructor( locale: Locale, inputView: LabeledFieldView<InputTextView> ) {
 		super( locale );
 
-		this.children = this.createCollection( children );
+		this.inputView = inputView;
+		this.children = this.createCollection( [
+			new HashView(),
+			this.inputView
+		] );
 
 		this.setTemplate( {
 			tag: 'div',
@@ -353,4 +426,55 @@ class ColorPickerInputRowView extends View {
 			children: this.children
 		} );
 	}
+
+	/**
+	 * Returns false if color input value is not in hex format.
+	 */
+	public getParsedColor(): HexColor | null {
+		return tryParseHexColor( this.inputView.fieldView.element!.value );
+	}
+}
+
+/**
+ * An event fired whenever the color was selected through the color picker palette
+ * or the color picker input.
+ *
+ * This even fires only when the user changes the color. It does not fire when the color
+ * is changed programmatically, e.g. via
+ * {@link module:ui/colorpicker/colorpickerview~ColorPickerView#color}.
+ *
+ * @eventName ~ColorPickerView#colorSelected
+ */
+export type ColorPickerColorSelectedEvent = {
+	name: 'colorSelected';
+	args: [ {
+		color: string;
+	} ];
+};
+
+/**
+ * Trim spaces from provided color and check if hex is valid.
+ *
+ * @param color Unsafe color string.
+ * @returns Null if provided color is not hex value.
+ * @export
+ */
+export function tryParseHexColor<S extends string>( color: S | null | undefined ): HexColor<S> | null {
+	if ( !color ) {
+		return null;
+	}
+
+	const hashLessColor = color.trim().replace( /^#/, '' );
+
+	// Incorrect length.
+	if ( ![ 3, 4, 6, 8 ].includes( hashLessColor.length ) ) {
+		return null;
+	}
+
+	// Incorrect characters.
+	if ( !/^(([0-9a-fA-F]{2}){3,4}|([0-9a-fA-F]){3,4})$/.test( hashLessColor ) ) {
+		return null;
+	}
+
+	return `#${ hashLessColor }` as `#${ S }`;
 }

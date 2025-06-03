@@ -1,24 +1,24 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-import Document from '../../src/view/document';
-import DocumentFragment from '../../src/view/documentfragment';
-import AttributeElement from '../../src/view/attributeelement';
-import ContainerElement from '../../src/view/containerelement';
-import Text from '../../src/view/text';
-import TreeWalker from '../../src/view/treewalker';
-import Position from '../../src/view/position';
-import Range from '../../src/view/range';
-import createViewRoot from './_utils/createroot';
-import { expectToThrowCKEditorError } from '@ckeditor/ckeditor5-utils/tests/_utils/utils';
-import { StylesProcessor } from '../../src/view/stylesmap';
+import Document from '../../src/view/document.js';
+import DocumentFragment from '../../src/view/documentfragment.js';
+import AttributeElement from '../../src/view/attributeelement.js';
+import ContainerElement from '../../src/view/containerelement.js';
+import Text from '../../src/view/text.js';
+import TreeWalker from '../../src/view/treewalker.js';
+import Position from '../../src/view/position.js';
+import Range from '../../src/view/range.js';
+import createViewRoot from './_utils/createroot.js';
+import { expectToThrowCKEditorError } from '@ckeditor/ckeditor5-utils/tests/_utils/utils.js';
+import { StylesProcessor } from '../../src/view/stylesmap.js';
 
 describe( 'TreeWalker', () => {
 	let doc, root, img1, paragraph, bold, textAbcd, charY, img2, charX, rootBeginning, rootEnding;
 
-	before( () => {
+	beforeEach( () => {
 		doc = new Document( new StylesProcessor() );
 		root = createViewRoot( doc );
 
@@ -47,6 +47,10 @@ describe( 'TreeWalker', () => {
 
 		rootBeginning = new Position( root, 0 );
 		rootEnding = new Position( root, 2 );
+	} );
+
+	afterEach( () => {
+		doc.destroy();
 	} );
 
 	describe( 'constructor()', () => {
@@ -220,7 +224,7 @@ describe( 'TreeWalker', () => {
 		describe( 'range starts between elements', () => {
 			let expected, range;
 
-			before( () => {
+			beforeEach( () => {
 				expected = [
 					{
 						type: 'elementStart',
@@ -295,7 +299,7 @@ describe( 'TreeWalker', () => {
 		describe( 'range starts inside the text', () => {
 			let expected, range;
 
-			before( () => {
+			beforeEach( () => {
 				expected = [
 					{
 						type: 'text',
@@ -362,7 +366,7 @@ describe( 'TreeWalker', () => {
 		describe( 'range ends inside the text', () => {
 			let expected, range;
 
-			before( () => {
+			beforeEach( () => {
 				expected = [
 					{
 						type: 'elementStart',
@@ -430,7 +434,7 @@ describe( 'TreeWalker', () => {
 		describe( 'range starts and ends inside the same text', () => {
 			let expected, range;
 
-			before( () => {
+			beforeEach( () => {
 				expected = [
 					{
 						type: 'text',
@@ -553,7 +557,7 @@ describe( 'TreeWalker', () => {
 		describe( 'whole root', () => {
 			let expected;
 
-			before( () => {
+			beforeEach( () => {
 				expected = [
 					{
 						type: 'elementStart',
@@ -672,7 +676,7 @@ describe( 'TreeWalker', () => {
 		describe( 'range', () => {
 			let range, expected;
 
-			before( () => {
+			beforeEach( () => {
 				expected = [
 					{
 						type: 'text',
@@ -749,10 +753,87 @@ describe( 'TreeWalker', () => {
 		} );
 	} );
 
+	describe( '`shallow` iterates only through elements in the range', () => {
+		it( '`shallow` only iterates elements in the range (forward)', () => {
+			const walker = new TreeWalker( {
+				boundaries: new Range(
+					new Position( root, 0 ),
+					new Position( img1, 0 )
+				),
+				shallow: true
+			} );
+
+			const items = Array.from( walker );
+
+			expect( items.length ).to.equal( 1 );
+			expect( items[ 0 ].type ).to.equal( 'elementStart' );
+			expect( items[ 0 ].item ).to.equal( img1 );
+		} );
+
+		it( '`shallow` only iterates elements in the range that ends inside some element (forward)', () => {
+			const p2 = new ContainerElement( doc, 'p', null, [ new Text( doc, 'abc' ) ] );
+			const p3 = new ContainerElement( doc, 'p', null, [ new Text( doc, 'abc' ) ] );
+
+			root._insertChild( 2, [ p2, p3 ] );
+
+			const walker = new TreeWalker( {
+				boundaries: new Range(
+					new Position( root, 1 ),
+					new Position( paragraph, 3 )
+				),
+				shallow: true
+			} );
+
+			const items = Array.from( walker );
+
+			expect( items.length ).to.equal( 1 );
+			expect( items[ 0 ].type ).to.equal( 'elementStart' );
+			expect( items[ 0 ].item ).to.equal( paragraph );
+		} );
+
+		it( '`shallow` only iterates elements in the range ends deep inside some element (forward)', () => {
+			const p2 = new ContainerElement( doc, 'p', null, [ new Text( doc, 'abc' ) ] );
+			const p3 = new ContainerElement( doc, 'p', null, [ new Text( doc, 'abc' ) ] );
+
+			root._insertChild( 2, [ p2, p3 ] );
+
+			const walker = new TreeWalker( {
+				boundaries: new Range(
+					new Position( root, 1 ),
+					new Position( img2, 0 )
+				),
+				shallow: true
+			} );
+
+			const items = Array.from( walker );
+
+			expect( items.length ).to.equal( 1 );
+			expect( items[ 0 ].type ).to.equal( 'elementStart' );
+			expect( items[ 0 ].item ).to.equal( paragraph );
+		} );
+
+		it( '`shallow` only iterates elements in the range (backwards)', () => {
+			const walker = new TreeWalker( {
+				boundaries: new Range(
+					new Position( root, 0 ),
+					new Position( img1, 0 )
+				),
+				shallow: true,
+				direction: 'backward'
+			} );
+
+			const items = Array.from( walker );
+
+			expect( items.length ).to.equal( 1 );
+			expect( items[ 0 ].type ).to.equal( 'elementStart' );
+			expect( items[ 0 ].item ).to.equal( img1 );
+		} );
+	} );
+
 	describe( 'iterate omitting child nodes and elementEnd `shallow`', () => {
 		let expected;
 
-		before( () => {
+		beforeEach( () => {
 			expected = [
 				{
 					type: 'elementStart',
@@ -796,7 +877,7 @@ describe( 'TreeWalker', () => {
 		describe( 'merged text', () => {
 			let expected;
 
-			before( () => {
+			beforeEach( () => {
 				expected = [
 					{
 						type: 'elementStart',
@@ -873,7 +954,7 @@ describe( 'TreeWalker', () => {
 		describe( 'single character', () => {
 			let expected;
 
-			before( () => {
+			beforeEach( () => {
 				expected = [
 					{
 						type: 'elementStart',
@@ -1133,6 +1214,70 @@ describe( 'TreeWalker', () => {
 				expect( walker.position.parent ).to.equal( rootBeginning.parent );
 				expect( walker.position.offset ).to.equal( rootBeginning.offset );
 			} );
+		} );
+	} );
+
+	describe( 'jumpTo', () => {
+		it( 'should jump to the given position', () => {
+			const walker = new TreeWalker( {
+				startPosition: Position._createAt( paragraph, 0 )
+			} );
+
+			walker.jumpTo( new Position( paragraph, 2 ) );
+
+			expect( walker.position.parent ).to.equal( paragraph );
+			expect( walker.position.offset ).to.equal( 2 );
+
+			walker.next();
+
+			expect( walker.position.parent ).to.equal( img2 );
+			expect( walker.position.offset ).to.equal( 0 );
+		} );
+
+		it( 'cannot move position before the #_boundaryStartParent', () => {
+			const range = new Range(
+				new Position( paragraph, 2 ),
+				new Position( paragraph, 4 )
+			);
+			const walker = new TreeWalker( {
+				boundaries: range
+			} );
+
+			const positionBeforeAllowedRange = new Position( paragraph, 0 );
+
+			walker.jumpTo( positionBeforeAllowedRange );
+
+			// `jumpTo()` autocorrected the position to the first allowed position.
+			expect( walker.position.parent ).to.equal( paragraph );
+			expect( walker.position.offset ).to.equal( 2 );
+
+			walker.next();
+
+			expect( walker.position.parent ).to.equal( img2 );
+			expect( walker.position.offset ).to.equal( 0 );
+		} );
+
+		it( 'cannot move position after the #_boundaryEndParent', () => {
+			const range = new Range(
+				new Position( paragraph, 0 ),
+				new Position( paragraph, 2 )
+			);
+			const walker = new TreeWalker( {
+				boundaries: range
+			} );
+
+			const positionAfterAllowedRange = new Position( paragraph, 4 );
+
+			// `jumpTo()` autocorrected the position to the last allowed position.
+			walker.jumpTo( positionAfterAllowedRange );
+
+			expect( walker.position.parent ).to.equal( paragraph );
+			expect( walker.position.offset ).to.equal( 2 );
+
+			walker.next();
+
+			expect( walker.position.parent ).to.equal( paragraph );
+			expect( walker.position.offset ).to.equal( 2 );
 		} );
 	} );
 } );

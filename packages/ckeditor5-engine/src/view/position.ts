@@ -1,26 +1,23 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module engine/view/position
  */
 
-import TypeCheckable from './typecheckable';
+import TypeCheckable from './typecheckable.js';
 
 import { CKEditorError, compareArrays } from '@ckeditor/ckeditor5-utils';
 
-import EditableElement from './editableelement';
+import EditableElement from './editableelement.js';
 
-// To check if component is loaded more than once.
-import '@ckeditor/ckeditor5-utils/src/version';
-
-import type DocumentFragment from './documentfragment';
-import type Element from './element';
-import type Item from './item';
-import type Node from './node';
-import { default as TreeWalker, type TreeWalkerValue, type TreeWalkerOptions } from './treewalker';
+import type DocumentFragment from './documentfragment.js';
+import type Element from './element.js';
+import type Item from './item.js';
+import type Node from './node.js';
+import { default as TreeWalker, type TreeWalkerValue, type TreeWalkerOptions } from './treewalker.js';
 
 /**
  * Position in the view tree. Position is represented by its parent node and an offset in this parent.
@@ -342,10 +339,10 @@ export default class Position extends TypeCheckable {
 
 		if ( !item.parent ) {
 			/**
-			 * You can not make a position after a root.
+			 * You cannot make a position after a root.
 			 *
 			 * @error view-position-after-root
-			 * @param {module:engine/view/node~Node} root
+			 * @param {module:engine/view/node~Node} root A root item.
 			 */
 			throw new CKEditorError( 'view-position-after-root', item, { root: item } );
 		}
@@ -370,7 +367,7 @@ export default class Position extends TypeCheckable {
 			 * You cannot make a position before a root.
 			 *
 			 * @error view-position-before-root
-			 * @param {module:engine/view/node~Node} root
+			 * @param {module:engine/view/node~Node} root A root item.
 			 */
 			throw new CKEditorError( 'view-position-before-root', item, { root: item } );
 		}

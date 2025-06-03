@@ -1,19 +1,17 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* globals document */
+import ClassicTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/classictesteditor.js';
+import Clipboard from '../src/clipboard.js';
+import Paragraph from '@ckeditor/ckeditor5-paragraph/src/paragraph.js';
+import BlockQuote from '@ckeditor/ckeditor5-block-quote/src/blockquote.js';
+import Bold from '@ckeditor/ckeditor5-basic-styles/src/bold.js';
+import Italic from '@ckeditor/ckeditor5-basic-styles/src/italic.js';
+import Link from '@ckeditor/ckeditor5-link/src/link.js';
 
-import ClassicTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/classictesteditor';
-import Clipboard from '../src/clipboard';
-import Paragraph from '@ckeditor/ckeditor5-paragraph/src/paragraph';
-import BlockQuote from '@ckeditor/ckeditor5-block-quote/src/blockquote';
-import Bold from '@ckeditor/ckeditor5-basic-styles/src/bold';
-import Italic from '@ckeditor/ckeditor5-basic-styles/src/italic';
-import Link from '@ckeditor/ckeditor5-link/src/link';
-
-import { setData, getData } from '@ckeditor/ckeditor5-engine/src/dev-utils/model';
+import { setData, getData } from '@ckeditor/ckeditor5-engine/src/dev-utils/model.js';
 
 describe( 'Pasting – integration', () => {
 	let element;
@@ -145,7 +143,7 @@ describe( 'Pasting – integration', () => {
 				.then( editor => {
 					setData( editor.model, '<paragraph>x[]y</paragraph>' );
 
-					/* eslint-disable max-len */
+					/* eslint-disable @stylistic/max-len */
 					pasteHtml( editor,
 						'<span style="color: rgb(0, 0, 0); font-family: -webkit-standard;">This is the<span class="Apple-converted-space">\u00a0</span></span>' +
 						'<a href="url" style="font-family: -webkit-standard; font-style: normal;">third developer preview</a>' +
@@ -153,7 +151,7 @@ describe( 'Pasting – integration', () => {
 						'<strong style="color: rgb(0, 0, 0); font-family: -webkit-standard;">CKEditor\u00a05</strong>' +
 						'<span style="color: rgb(0, 0, 0); font-family: -webkit-standard;">.</span>'
 					);
-					/* eslint-enable max-len */
+					/* eslint-enable @stylistic/max-len */
 
 					expect( getData( editor.model ) ).to.equal(
 						'<paragraph>' +
@@ -191,11 +189,38 @@ describe( 'Pasting – integration', () => {
 				} );
 		} );
 	} );
+
+	describe( 'links', () => {
+		// See https://github.com/ckeditor/ckeditor5/issues/15036.
+		it( 'should not convert parts of the link address which look like HTML entities', () => {
+			return ClassicTestEditor
+				.create( element, { plugins: [ Clipboard, Paragraph, Bold, Italic, Link ] } )
+				.then( editor => {
+					setData( editor.model, '<paragraph>[]</paragraph>' );
+
+					pasteText( editor, 'https://example.com?x=1&quot=2&timestamp=t' );
+
+					expect( getData( editor.model ) ).to.equal(
+						'<paragraph>https://example.com?x=1&quot=2&timestamp=t[]</paragraph>' // keeps "&quot" and "&times" unchanged
+					);
+
+					return editor.destroy();
+				} );
+		} );
+	} );
 } );
 
 function pasteHtml( editor, html ) {
 	editor.editing.view.document.fire( 'paste', {
 		dataTransfer: createDataTransfer( { 'text/html': html } ),
+		stopPropagation() {},
+		preventDefault() {}
+	} );
+}
+
+function pasteText( editor, text ) {
+	editor.editing.view.document.fire( 'paste', {
+		dataTransfer: createDataTransfer( { 'text/plain': text } ),
 		stopPropagation() {},
 		preventDefault() {}
 	} );

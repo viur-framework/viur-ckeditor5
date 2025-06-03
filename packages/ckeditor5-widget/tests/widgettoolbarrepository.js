@@ -1,27 +1,25 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* global document, console */
+import ClassicTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/classictesteditor.js';
+import BalloonEditor from '@ckeditor/ckeditor5-editor-balloon/src/ballooneditor.js';
+import BalloonPanelView from '@ckeditor/ckeditor5-ui/src/panel/balloon/balloonpanelview.js';
+import Plugin from '@ckeditor/ckeditor5-core/src/plugin.js';
+import Paragraph from '@ckeditor/ckeditor5-paragraph/src/paragraph.js';
+import Bold from '@ckeditor/ckeditor5-basic-styles/src/bold.js';
+import BlockQuote from '@ckeditor/ckeditor5-block-quote/src/blockquote.js';
+import Widget from '../src/widget.js';
+import WidgetToolbarRepository from '../src/widgettoolbarrepository.js';
+import { isWidget, toWidget } from '../src/utils.js';
+import ButtonView from '@ckeditor/ckeditor5-ui/src/button/buttonview.js';
+import View from '@ckeditor/ckeditor5-ui/src/view.js';
+import EditorUI from '@ckeditor/ckeditor5-ui/src/editorui/editorui.js';
 
-import ClassicTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/classictesteditor';
-import BalloonEditor from '@ckeditor/ckeditor5-editor-balloon/src/ballooneditor';
-import BalloonPanelView from '@ckeditor/ckeditor5-ui/src/panel/balloon/balloonpanelview';
-import Plugin from '@ckeditor/ckeditor5-core/src/plugin';
-import Paragraph from '@ckeditor/ckeditor5-paragraph/src/paragraph';
-import Bold from '@ckeditor/ckeditor5-basic-styles/src/bold';
-import BlockQuote from '@ckeditor/ckeditor5-block-quote/src/blockquote';
-import Widget from '../src/widget';
-import WidgetToolbarRepository from '../src/widgettoolbarrepository';
-import { isWidget, toWidget } from '../src/utils';
-import ButtonView from '@ckeditor/ckeditor5-ui/src/button/buttonview';
-import View from '@ckeditor/ckeditor5-ui/src/view';
-import EditorUI from '@ckeditor/ckeditor5-ui/src/editorui/editorui';
-
-import { setData } from '@ckeditor/ckeditor5-engine/src/dev-utils/model';
-import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils';
-import { expectToThrowCKEditorError } from '@ckeditor/ckeditor5-utils/tests/_utils/utils';
+import { setData } from '@ckeditor/ckeditor5-engine/src/dev-utils/model.js';
+import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils.js';
+import { expectToThrowCKEditorError } from '@ckeditor/ckeditor5-utils/tests/_utils/utils.js';
 
 describe( 'WidgetToolbarRepository', () => {
 	let editor, model, balloon, widgetToolbarRepository, editorElement, addToolbarSpy;
@@ -53,6 +51,14 @@ describe( 'WidgetToolbarRepository', () => {
 		editorElement.remove();
 
 		return editor.destroy();
+	} );
+
+	it( 'should have `isOfficialPlugin` static flag set to `true`', () => {
+		expect( WidgetToolbarRepository.isOfficialPlugin ).to.be.true;
+	} );
+
+	it( 'should have `isPremiumPlugin` static flag set to `false`', () => {
+		expect( WidgetToolbarRepository.isPremiumPlugin ).to.be.false;
 	} );
 
 	it( 'should be loaded', () => {
@@ -630,6 +636,113 @@ describe( 'WidgetToolbarRepository', () => {
 				},
 				balloonClassName: 'ck-toolbar-container'
 			} );
+		} );
+
+		it( 'should use a custom positions if provided', () => {
+			const editingView = editor.editing.view;
+			const balloonAddSpy = sinon.spy( balloon, 'add' );
+			const balloonUpdatePositionSpy = sinon.spy( balloon, 'updatePosition' );
+			const defaultPositions = BalloonPanelView.defaultPositions;
+
+			widgetToolbarRepository.register( 'fake', {
+				items: editor.config.get( 'fake.toolbar' ),
+				getRelatedElement: getSelectedFakeWidget,
+				positions: [
+					defaultPositions.southArrowNorth,
+					defaultPositions.northArrowSouth
+				]
+			} );
+
+			setData( model, '<paragraph>foo</paragraph>[<fake-widget></fake-widget>]' );
+
+			const fakeWidgetToolbarView = widgetToolbarRepository._toolbarDefinitions.get( 'fake' ).view;
+			const widgetViewElement = editingView.document.getRoot().getChild( 1 );
+
+			sinon.assert.calledOnce( balloonAddSpy );
+			sinon.assert.calledWithExactly( balloonAddSpy, {
+				view: fakeWidgetToolbarView,
+				position: {
+					target: editingView.domConverter.mapViewToDom( widgetViewElement ),
+					positions: [
+						defaultPositions.southArrowNorth,
+						defaultPositions.northArrowSouth
+					]
+				},
+				balloonClassName: 'ck-toolbar-container'
+			} );
+
+			// Reposition check.
+			sinon.assert.notCalled( balloonUpdatePositionSpy );
+
+			editor.ui.update();
+
+			sinon.assert.calledOnce( balloonUpdatePositionSpy );
+			sinon.assert.calledWithExactly( balloonUpdatePositionSpy, {
+				target: editingView.domConverter.mapViewToDom( widgetViewElement ),
+				positions: [
+					defaultPositions.southArrowNorth,
+					defaultPositions.northArrowSouth
+				]
+			} );
+		} );
+
+		it( 'should update balloon custom position when stack with toolbar is switched in rotator to visible', () => {
+			const view = editor.editing.view;
+			const customView = new View();
+			const defaultPositions = BalloonPanelView.defaultPositions;
+
+			sinon.spy( balloon.view, 'pin' );
+
+			widgetToolbarRepository.register( 'fake', {
+				items: editor.config.get( 'fake.toolbar' ),
+				getRelatedElement: getSelectedFakeWidget,
+				positions: [
+					defaultPositions.southArrowNorth,
+					defaultPositions.northArrowSouth
+				]
+			} );
+
+			setData( model,
+				'<paragraph>foo</paragraph>' +
+				'[<fake-widget></fake-widget>]'
+			);
+
+			const fakeViewElement = view.document.getRoot().getChild( 1 );
+			const fakeDomElement = editor.editing.view.domConverter.mapViewToDom( fakeViewElement );
+			const fakeWidgetToolbarView = widgetToolbarRepository._toolbarDefinitions.get( 'fake' ).view;
+
+			expect( balloon.view.pin.lastCall.args[ 0 ].target ).to.equal( fakeDomElement );
+
+			balloon.add( {
+				stackId: 'custom',
+				view: customView,
+				position: { target: {} }
+			} );
+
+			balloon.showStack( 'custom' );
+
+			expect( balloon.visibleView ).to.equal( customView );
+			expect( balloon.hasView( fakeWidgetToolbarView ) ).to.equal( true );
+
+			editor.execute( 'blockQuote' );
+			balloon.showStack( 'main' );
+
+			expect( balloon.visibleView ).to.equal( fakeWidgetToolbarView );
+			expect( balloon.hasView( customView ) ).to.equal( true );
+			expect( balloon.view.pin.lastCall.args[ 0 ].target ).to.not.equal( fakeDomElement );
+			expect( balloon.view.pin.lastCall.args[ 0 ].positions ).to.deep.equal( [
+				defaultPositions.southArrowNorth,
+				defaultPositions.northArrowSouth
+			] );
+
+			const newFakeViewElement = view.document.getRoot().getChild( 1 ).getChild( 0 );
+			const newFakeDomElement = editor.editing.view.domConverter.mapViewToDom( newFakeViewElement );
+
+			expect( balloon.view.pin.lastCall.args[ 0 ].target ).to.equal( newFakeDomElement );
+			expect( balloon.view.pin.lastCall.args[ 0 ].positions ).to.deep.equal( [
+				defaultPositions.southArrowNorth,
+				defaultPositions.northArrowSouth
+			] );
 		} );
 	} );
 } );

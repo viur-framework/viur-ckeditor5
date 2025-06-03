@@ -1,6 +1,6 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
@@ -11,9 +11,9 @@ import Resizer, {
 	type ResizerBeginEvent,
 	type ResizerCancelEvent,
 	type ResizerCommitEvent
-} from './widgetresize/resizer';
+} from './widgetresize/resizer.js';
 
-import type WidgetToolbarRepository from './widgettoolbarrepository';
+import type WidgetToolbarRepository from './widgettoolbarrepository.js';
 
 import {
 	Plugin,
@@ -39,7 +39,7 @@ import {
 	type EventInfo
 } from '@ckeditor/ckeditor5-utils';
 
-import { throttle, type DebouncedFunc } from 'lodash-es';
+import { throttle, type DebouncedFunction } from 'es-toolkit/compat';
 
 import '../theme/widgetresize.css';
 
@@ -73,13 +73,20 @@ export default class WidgetResize extends Plugin {
 
 	private _observer!: DomEmitter;
 
-	private _redrawSelectedResizerThrottled!: DebouncedFunc<() => void>;
+	private _redrawSelectedResizerThrottled!: DebouncedFunction<() => void>;
 
 	/**
 	 * @inheritDoc
 	 */
-	public static get pluginName(): 'WidgetResize' {
-		return 'WidgetResize';
+	public static get pluginName() {
+		return 'WidgetResize' as const;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public static override get isOfficialPlugin(): true {
+		return true;
 	}
 
 	/**

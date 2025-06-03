@@ -1,12 +1,10 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* globals console:false, document */
-
-import BalloonEditor from '../../src/ballooneditor';
-import ArticlePluginSet from '@ckeditor/ckeditor5-core/tests/_utils/articlepluginset';
+import BalloonEditor from '../../src/ballooneditor.js';
+import ArticlePluginSet from '@ckeditor/ckeditor5-core/tests/_utils/articlepluginset.js';
 
 /*
  * Memory-leak safe version of balloon editor manual test does not:
@@ -46,7 +44,7 @@ function initEditors() {
 					toolbar: [
 						'imageStyle:inline',
 						'imageStyle:block',
-						'imageStyle:side',
+						'imageStyle:wrapText',
 						'|',
 						'imageTextAlternative'
 					]

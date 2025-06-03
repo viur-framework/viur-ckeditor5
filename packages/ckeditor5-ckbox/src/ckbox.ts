@@ -1,16 +1,16 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module ckbox/ckbox
  */
 
-import { Plugin } from 'ckeditor5/src/core';
+import { Plugin } from 'ckeditor5/src/core.js';
 
-import CKBoxUI from './ckboxui';
-import CKBoxEditing from './ckboxediting';
+import CKBoxUI from './ckboxui.js';
+import CKBoxEditing from './ckboxediting.js';
 
 /**
  * The CKBox feature, a bridge between the CKEditor 5 WYSIWYG editor and the CKBox file manager and uploader.
@@ -29,8 +29,15 @@ export default class CKBox extends Plugin {
 	/**
 	 * @inheritDoc
 	 */
-	public static get pluginName(): 'CKBox' {
-		return 'CKBox';
+	public static get pluginName() {
+		return 'CKBox' as const;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public static override get isOfficialPlugin(): true {
+		return true;
 	}
 
 	/**

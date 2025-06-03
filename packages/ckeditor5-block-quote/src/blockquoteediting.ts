@@ -1,17 +1,17 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module block-quote/blockquoteediting
  */
 
-import { Plugin } from 'ckeditor5/src/core';
-import { Enter, type ViewDocumentEnterEvent } from 'ckeditor5/src/enter';
-import { Delete, type ViewDocumentDeleteEvent } from 'ckeditor5/src/typing';
+import { Plugin } from 'ckeditor5/src/core.js';
+import { Enter, type ViewDocumentEnterEvent } from 'ckeditor5/src/enter.js';
+import { Delete, type ViewDocumentDeleteEvent } from 'ckeditor5/src/typing.js';
 
-import BlockQuoteCommand from './blockquotecommand';
+import BlockQuoteCommand from './blockquotecommand.js';
 
 /**
  * The block quote editing.
@@ -24,8 +24,15 @@ export default class BlockQuoteEditing extends Plugin {
 	/**
 	 * @inheritDoc
 	 */
-	public static get pluginName(): 'BlockQuoteEditing' {
-		return 'BlockQuoteEditing';
+	public static get pluginName() {
+		return 'BlockQuoteEditing' as const;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public static override get isOfficialPlugin(): true {
+		return true;
 	}
 
 	/**

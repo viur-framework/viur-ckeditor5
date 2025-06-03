@@ -1,17 +1,17 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module code-block/codeblockcommand
  */
 
-import type { Element, Writer } from 'ckeditor5/src/engine';
-import { Command, type Editor } from 'ckeditor5/src/core';
-import { first } from 'ckeditor5/src/utils';
+import type { Element, Writer } from 'ckeditor5/src/engine.js';
+import { Command, type Editor } from 'ckeditor5/src/core.js';
+import { first } from 'ckeditor5/src/utils.js';
 
-import { getNormalizedAndLocalizedLanguageDefinitions, canBeCodeBlock } from './utils';
+import { getNormalizedAndLocalizedLanguageDefinitions, canBeCodeBlock } from './utils.js';
 
 /**
  * The code block command plugin.
@@ -91,7 +91,7 @@ export default class CodeBlockCommand extends Command {
 	private _getValue(): string | false {
 		const selection = this.editor.model.document.selection;
 		const firstBlock = first( selection.getSelectedBlocks() );
-		const isCodeBlock = !!( firstBlock && firstBlock.is( 'element', 'codeBlock' ) );
+		const isCodeBlock = !!firstBlock?.is( 'element', 'codeBlock' );
 
 		return isCodeBlock ? firstBlock.getAttribute( 'language' ) as string : false;
 	}

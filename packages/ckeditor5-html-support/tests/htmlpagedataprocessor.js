@@ -1,12 +1,12 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-import HtmlPageDataProcessor from '../src/htmlpagedataprocessor';
-import HtmlDataProcessor from '@ckeditor/ckeditor5-engine/src/dataprocessor/htmldataprocessor';
+import HtmlPageDataProcessor from '../src/htmlpagedataprocessor.js';
+import HtmlDataProcessor from '@ckeditor/ckeditor5-engine/src/dataprocessor/htmldataprocessor.js';
 import { StylesProcessor, ViewDocument, ViewDocumentFragment } from '@ckeditor/ckeditor5-engine';
-import { stringify, parse } from '@ckeditor/ckeditor5-engine/src/dev-utils/view';
+import { stringify, parse } from '@ckeditor/ckeditor5-engine/src/dev-utils/view.js';
 
 describe( 'HtmlPageDataProcessor', () => {
 	let dataProcessor, viewDocument;

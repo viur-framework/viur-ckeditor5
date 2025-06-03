@@ -1,12 +1,12 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 import { keyCodes, isText, type KeystrokeInfo } from '@ckeditor/ckeditor5-utils';
-import type View from './view';
-import type DomEventData from './observer/domeventdata';
-import type { ViewDocumentArrowKeyEvent } from './observer/arrowkeysobserver';
+import type View from './view.js';
+import type DomEventData from './observer/domeventdata.js';
+import type { ViewDocumentArrowKeyEvent } from './observer/arrowkeysobserver.js';
 
 /**
  * Set of utilities related to handling block and inline fillers.
@@ -18,7 +18,7 @@ import type { ViewDocumentArrowKeyEvent } from './observer/arrowkeysobserver';
  * * Block filler is an element which fill block elements, like `<p>`. CKEditor uses `<br>` as a block filler during the editing,
  * as browsers do natively. So instead of an empty `<p>` there will be `<p><br></p>`. The advantage of block filler is that
  * it is transparent for the selection, so when the caret is before the `<br>` and user presses right arrow he will be
- * moved to the next paragraph, not after the `<br>`. The disadvantage is that it breaks a block, so it can not be used
+ * moved to the next paragraph, not after the `<br>`. The disadvantage is that it breaks a block, so it cannot be used
  * in the middle of a line of text. The {@link module:engine/view/filler~BR_FILLER `<br>` filler} can be replaced with any other
  * character in the data output, for instance {@link module:engine/view/filler~NBSP_FILLER non-breaking space} or
  * {@link module:engine/view/filler~MARKED_NBSP_FILLER marked non-breaking space}.
@@ -98,7 +98,11 @@ export const INLINE_FILLER = '\u2060'.repeat( INLINE_FILLER_LENGTH );
  * @param domNode DOM node.
  * @returns True if the text node starts with the {@link module:engine/view/filler~INLINE_FILLER inline filler}.
  */
-export function startsWithFiller( domNode: Node ): boolean {
+export function startsWithFiller( domNode: Node | string ): boolean {
+	if ( typeof domNode == 'string' ) {
+		return domNode.substr( 0, INLINE_FILLER_LENGTH ) === INLINE_FILLER;
+	}
+
 	return isText( domNode ) && ( domNode.data.substr( 0, INLINE_FILLER_LENGTH ) === INLINE_FILLER );
 }
 
@@ -129,12 +133,14 @@ export function isInlineFiller( domText: Text ): boolean {
  * @param domText DOM text node, possible with inline filler.
  * @returns Data without filler.
  */
-export function getDataWithoutFiller( domText: Text ): string {
+export function getDataWithoutFiller( domText: Text | string ): string {
+	const data = typeof domText == 'string' ? domText : domText.data;
+
 	if ( startsWithFiller( domText ) ) {
-		return domText.data.slice( INLINE_FILLER_LENGTH );
-	} else {
-		return domText.data;
+		return data.slice( INLINE_FILLER_LENGTH );
 	}
+
+	return data;
 }
 
 /**

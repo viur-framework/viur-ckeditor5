@@ -1,17 +1,17 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module table/tablecellproperties/commands/tablecellpaddingcommand
  */
 
-import type { Editor } from 'ckeditor5/src/core';
-import type { Element } from 'ckeditor5/src/engine';
+import type { Editor } from 'ckeditor5/src/core.js';
+import type { Element } from 'ckeditor5/src/engine.js';
 
-import TableCellPropertyCommand from './tablecellpropertycommand';
-import { addDefaultUnitToNumericValue, getSingleValue } from '../../utils/table-properties';
+import TableCellPropertyCommand from './tablecellpropertycommand.js';
+import { addDefaultUnitToNumericValue, getSingleValue } from '../../utils/table-properties.js';
 
 /**
  * The table cell padding command.

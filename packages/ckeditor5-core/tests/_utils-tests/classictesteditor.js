@@ -1,27 +1,25 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* globals document */
+import Editor from '../../src/editor/editor.js';
+import ClassicTestEditor from '../../tests/_utils/classictesteditor.js';
 
-import Editor from '../../src/editor/editor';
-import ClassicTestEditor from '../../tests/_utils/classictesteditor';
+import Plugin from '../../src/plugin.js';
+import HtmlDataProcessor from '@ckeditor/ckeditor5-engine/src/dataprocessor/htmldataprocessor.js';
+import Paragraph from '@ckeditor/ckeditor5-paragraph/src/paragraph.js';
 
-import Plugin from '../../src/plugin';
-import HtmlDataProcessor from '@ckeditor/ckeditor5-engine/src/dataprocessor/htmldataprocessor';
-import Paragraph from '@ckeditor/ckeditor5-paragraph/src/paragraph';
+import EditorUI from '@ckeditor/ckeditor5-ui/src/editorui/editorui.js';
+import BoxedEditorUIView from '@ckeditor/ckeditor5-ui/src/editorui/boxed/boxededitoruiview.js';
+import InlineEditableUIView from '@ckeditor/ckeditor5-ui/src/editableui/inline/inlineeditableuiview.js';
 
-import EditorUI from '@ckeditor/ckeditor5-ui/src/editorui/editorui';
-import BoxedEditorUIView from '@ckeditor/ckeditor5-ui/src/editorui/boxed/boxededitoruiview';
-import InlineEditableUIView from '@ckeditor/ckeditor5-ui/src/editableui/inline/inlineeditableuiview';
+import RootElement from '@ckeditor/ckeditor5-engine/src/model/rootelement.js';
 
-import RootElement from '@ckeditor/ckeditor5-engine/src/model/rootelement';
-
-import { getData } from '@ckeditor/ckeditor5-engine/src/dev-utils/model';
-import testUtils from '../../tests/_utils/utils';
-import { assertCKEditorError } from '@ckeditor/ckeditor5-utils/tests/_utils/utils';
-import { removeEditorBodyOrphans } from '../_utils/cleanup';
+import { getData } from '@ckeditor/ckeditor5-engine/src/dev-utils/model.js';
+import testUtils from '../../tests/_utils/utils.js';
+import { assertCKEditorError } from '@ckeditor/ckeditor5-utils/tests/_utils/utils.js';
+import { removeEditorBodyOrphans } from '../_utils/cleanup.js';
 
 describe( 'ClassicTestEditor', () => {
 	let editorElement;
@@ -38,7 +36,7 @@ describe( 'ClassicTestEditor', () => {
 	} );
 
 	describe( 'constructor()', () => {
-		it( 'creates an instance of editor', () => {
+		it( 'creates an instance of editor', async () => {
 			const editor = new ClassicTestEditor( editorElement, { foo: 1 } );
 
 			expect( editor ).to.be.instanceof( Editor );
@@ -47,33 +45,40 @@ describe( 'ClassicTestEditor', () => {
 			expect( editor.ui ).to.be.instanceOf( EditorUI );
 			expect( editor.ui.view ).to.be.instanceOf( BoxedEditorUIView );
 			expect( editor.data.processor ).to.be.instanceof( HtmlDataProcessor );
+
+			editor.fire( 'ready' );
+			await editor.destroy();
 		} );
 
-		it( 'creates the instance of the editable (without rendering)', () => {
+		it( 'creates the instance of the editable (without rendering)', async () => {
 			const editor = new ClassicTestEditor( editorElement );
 
 			expect( editor.ui.view.editable ).to.be.instanceOf( InlineEditableUIView );
 			expect( editor.ui.view.editable.isRendered ).to.be.false;
+
+			editor.fire( 'ready' );
+			await editor.destroy();
 		} );
 
-		it( 'creates the #ui and ui#view (without rendering)', () => {
+		it( 'creates the #ui and ui#view (without rendering)', async () => {
 			const editor = new ClassicTestEditor( editorElement );
 
 			expect( editor.ui ).to.be.instanceOf( EditorUI );
 			expect( editor.ui.view ).to.be.instanceOf( BoxedEditorUIView );
 			expect( editor.ui.view.isRendered ).to.be.false;
 			expect( editor.ui.getEditableElement() ).to.be.undefined;
+
+			editor.fire( 'ready' );
+			await editor.destroy();
 		} );
 
-		it( 'creates main root element', () => {
+		it( 'creates main root element', async () => {
 			const editor = new ClassicTestEditor( editorElement );
 
 			expect( editor.model.document.getRoot( 'main' ) ).to.instanceof( RootElement );
-		} );
 
-		it( 'mixes DataApiMixin', () => {
-			expect( ClassicTestEditor.prototype ).have.property( 'setData' ).to.be.a( 'function' );
-			expect( ClassicTestEditor.prototype ).have.property( 'getData' ).to.be.a( 'function' );
+			editor.fire( 'ready' );
+			await editor.destroy();
 		} );
 
 		it( 'mixes ElementApiMixin', () => {
@@ -157,15 +162,18 @@ describe( 'ClassicTestEditor', () => {
 		} );
 
 		it( 'sets proper states', () => {
-			const editor = new ClassicTestEditor();
+			const baseEditor = new ClassicTestEditor();
 
-			expect( editor.state ).to.equal( 'initializing' );
+			expect( baseEditor.state ).to.equal( 'initializing' );
 
 			return ClassicTestEditor.create( editorElement ).then( editor => {
 				expect( editor.state ).to.equal( 'ready' );
 
 				return editor.destroy().then( () => {
 					expect( editor.state ).to.equal( 'destroyed' );
+
+					baseEditor.fire( 'ready' );
+					return baseEditor.destroy();
 				} );
 			} );
 		} );

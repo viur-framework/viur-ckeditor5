@@ -1,13 +1,11 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* eslint-env commonjs, browser */
-
-import FileUploader from '../../src/uploadgateway/fileuploader';
-import Token from '../../src/token/token';
-import CKEditorError from '@ckeditor/ckeditor5-utils/src/ckeditorerror';
+import FileUploader from '../../src/uploadgateway/fileuploader.js';
+import Token from '../../src/token/token.js';
+import CKEditorError from '@ckeditor/ckeditor5-utils/src/ckeditorerror.js';
 
 const API_ADDRESS = 'https://example.dev';
 const BASE_64_FILE = 'data:image/gif;base64,R0lGODlhCQAJAPIAAGFhYZXK/1FRUf///' +
@@ -15,12 +13,15 @@ const BASE_64_FILE = 'data:image/gif;base64,R0lGODlhCQAJAPIAAGFhYZXK/1FRUf///' +
 
 describe( 'FileUploader', () => {
 	const tokenInitValue = `header.${ btoa( JSON.stringify( { exp: Date.now() + 3600000 } ) ) }.signature`;
-	const token = new Token( 'url', { initValue: tokenInitValue, autoRefresh: false } );
-
-	let fileUploader;
+	let fileUploader, token;
 
 	beforeEach( () => {
+		token = new Token( 'url', { initValue: tokenInitValue, autoRefresh: false } );
 		fileUploader = new FileUploader( BASE_64_FILE, token, API_ADDRESS );
+	} );
+
+	afterEach( () => {
+		token.destroy();
 	} );
 
 	describe( 'constructor()', () => {

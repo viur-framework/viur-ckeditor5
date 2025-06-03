@@ -1,32 +1,31 @@
-# Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+# Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
 #
-#                                     !!! IMPORTANT !!!
+# Want to contribute to this file? Submit your changes via a GitHub Pull Request.
 #
-#         Before you edit this file, please keep in mind that contributing to the project
-#                translations is possible ONLY via the Transifex online service.
-#
-#         To submit your translations, visit https://www.transifex.com/ckeditor/ckeditor5.
-#
-#                   To learn more, check out the official contributor's guide:
-#     https://ckeditor.com/docs/ckeditor5/latest/framework/guides/contributing/contributing.html
+# Check out the official contributor's guide:
+# https://ckeditor.com/docs/ckeditor5/latest/framework/guides/contributing/contributing.html
 #
 msgid ""
 msgstr ""
-"Language-Team: Bulgarian (https://app.transifex.com/ckeditor/teams/11143/bg/)\n"
 "Language: bg\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 
 msgctxt "Title of the CKEditor5 editor."
 msgid "Rich Text Editor"
 msgstr "Богат текстов редактор"
 
-msgctxt "Accessible label of the specific editing area belonging to a container with an ARIA application role."
-msgid "Editor editing area: %0"
-msgstr "Зона за редактиране на редактора: %0"
-
 msgctxt "Label of the block toolbar icon (a block toolbar is displayed next to each paragraph, heading, list item, etc. and contains e.g. block formatting options)"
 msgid "Edit block"
 msgstr "Редактирай блок"
+
+msgctxt "First part of the label of the block toolbar icon when functionality of drag and drop is available (a block toolbar is displayed next to each paragraph, heading, list item, etc. and contains e.g. block formatting options)"
+msgid "Click to edit block"
+msgstr "Кликнете, за да редактирате блок"
+
+msgctxt "Second part of the label of the block toolbar icon when functionality of drag and drop is available (a block toolbar is displayed next to each paragraph, heading, list item, etc. and contains e.g. block formatting options)"
+msgid "Drag to move"
+msgstr "Плъзнете за преместване"
 
 msgctxt "Label for a button showing the next thing (tab, page, etc.)."
 msgid "Next"
@@ -43,6 +42,10 @@ msgstr "Лента за редакция"
 msgctxt "Label used by assistive technologies describing a toolbar displayed inside a dropdown."
 msgid "Dropdown toolbar"
 msgstr "Лента с падащо меню"
+
+msgctxt "Label used by assistive technologies describing a menu displayed inside a dropdown."
+msgid "Dropdown menu"
+msgstr "Падащо меню"
 
 msgctxt "Label of a button that applies a black color in color pickers."
 msgid "Black"
@@ -114,4 +117,92 @@ msgstr "Контекстна лента с инструменти на реда�
 
 msgctxt "Label of an input field for typing colors in the HEX color format."
 msgid "HEX"
-msgstr ""
+msgstr "НЕХ"
+
+msgctxt "The main text of the message shown to the user when given query does not match any results."
+msgid "No results found"
+msgstr "Няма намерени резултати"
+
+msgctxt "The main text of the message shown to the user when no results are available."
+msgid "No searchable items"
+msgstr "Няма елементи за търсене"
+
+msgctxt "A default label of a dialog window displayed on top the editor."
+msgid "Editor dialog"
+msgstr "Диалогов прозорец на редактора"
+
+msgctxt "The label and the tooltip for the close button in the dialog header."
+msgid "Close"
+msgstr "Затвори"
+
+msgctxt "Accessibility help dialog assistive technologies label telling users how to exit the dialog."
+msgid "Help Contents. To close this dialog press ESC."
+msgstr "Помощно съдържание. За да затворите този прозорец, натиснете ESC."
+
+msgctxt "Accessibility help dialog text explaining what can be found in that dialog."
+msgid "Below, you can find a list of keyboard shortcuts that can be used in the editor."
+msgstr "Долу можете да намерите списък от клавишни комбинации, които могат да се използват в редактора."
+
+msgctxt "Accessibility help dialog text displayed next to keystrokes that may require the Fn key on Mac."
+msgid "(may require <kbd>Fn</kbd>)"
+msgstr "(може да изисква <kbd>Fn</kbd>)"
+
+msgctxt "The label for the button that opens the Accessibility help dialog from the application menu bar."
+msgid "Accessibility"
+msgstr "Достъпност"
+
+msgctxt "Accessibility help dialog title."
+msgid "Accessibility help"
+msgstr "Помощ за достъпност"
+
+msgctxt "Assistive technologies label added to each editor editing area informing users about the possibility of opening the accessibility help dialog."
+msgid "Press %0 for help."
+msgstr "Натиснете %0 за помощ."
+
+msgctxt "Keystroke description for assistive technologies: keystroke for moving focus out of an active dialog window."
+msgid "Move focus in and out of an active dialog window"
+msgstr "Приближаване и отдалечаване на фокуса в активен диалогов прозорец"
+
+msgctxt "The label of the top-level application menu bar menu containing buttons and features related to the whole document (e.g. export to PDF, import from Word, etc.)."
+msgid "MENU_BAR_MENU_FILE"
+msgstr "Файл"
+
+msgctxt "The label of the top-level application menu bar menu containing buttons and features related to general editing (e.g. undo, redo, select all, etc.)."
+msgid "MENU_BAR_MENU_EDIT"
+msgstr "Редактирай"
+
+msgctxt "The label of the top-level application menu bar menu containing buttons and features related to the view of the editor (e.g. show source)."
+msgid "MENU_BAR_MENU_VIEW"
+msgstr "Преглед"
+
+msgctxt "The label of the top-level application menu bar menu containing buttons and features that insert content (e.g. insert table, insert image, etc.)."
+msgid "MENU_BAR_MENU_INSERT"
+msgstr "Вмъкни"
+
+msgctxt "The label of the top-level application menu bar menu containing buttons and features related to content formatting (e.g. bold, font color, heading, etc.)."
+msgid "MENU_BAR_MENU_FORMAT"
+msgstr "Формат"
+
+msgctxt "The label of the top-level application menu bar menu containing various editor tools (e.g. AI assistant, track changes, etc.)."
+msgid "MENU_BAR_MENU_TOOLS"
+msgstr "Инструменти"
+
+msgctxt "The label of the top-level application menu bar menu containing buttons and features helping users to learn about the editor (e.g. accessibility help)."
+msgid "MENU_BAR_MENU_HELP"
+msgstr "Помощ"
+
+msgctxt "The label of the application menu bar menu containing buttons and features that apply formatting to a text (e.g. bold, italic, etc.)."
+msgid "MENU_BAR_MENU_TEXT"
+msgstr "Текст"
+
+msgctxt "The label of the application menu bar menu containing buttons and features that control the font of the edited content (e.g. font size, font color, etc.)."
+msgid "MENU_BAR_MENU_FONT"
+msgstr "Шрифт"
+
+msgctxt "The accessible label of the editor menu bar used by assistive technologies."
+msgid "Editor menu bar"
+msgstr "Редактор на лентата с менюта"
+
+msgctxt "An error text displayed when user attempted to enter an color that is not in HEX format."
+msgid "Please enter a valid color (e.g. \"ff0000\")."
+msgstr "Моля, въведете валиден цвят (напр. \"ff0000\")."

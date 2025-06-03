@@ -1,14 +1,14 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-import ModelTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/modeltesteditor';
-import { setData } from '@ckeditor/ckeditor5-engine/src/dev-utils/model';
+import ModelTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/modeltesteditor.js';
+import { setData, getData } from '@ckeditor/ckeditor5-engine/src/dev-utils/model.js';
 
-import MentionCommand from '../src/mentioncommand';
+import MentionCommand from '../src/mentioncommand.js';
 
-import { expectToThrowCKEditorError } from '@ckeditor/ckeditor5-utils/tests/_utils/utils';
+import { expectToThrowCKEditorError } from '@ckeditor/ckeditor5-utils/tests/_utils/utils.js';
 
 describe( 'MentionCommand', () => {
 	let editor, command, model, doc, selection;
@@ -151,19 +151,6 @@ describe( 'MentionCommand', () => {
 			expect( textNode.hasAttribute( 'bold' ) ).to.be.true;
 		} );
 
-		it( 'should throw if marker is not one character', () => {
-			setData( model, '<paragraph>foo @Jo[]bar</paragraph>' );
-
-			const testCases = [
-				{ marker: '##', mention: '##foo' },
-				{ marker: '', mention: '@foo' }
-			];
-
-			for ( const options of testCases ) {
-				expectToThrowCKEditorError( () => command.execute( options ), /mentioncommand-incorrect-marker/, editor );
-			}
-		} );
-
 		it( 'should throw if marker does not match mention id', () => {
 			setData( model, '<paragraph>foo @Jo[]bar</paragraph>' );
 
@@ -176,6 +163,49 @@ describe( 'MentionCommand', () => {
 			for ( const options of testCases ) {
 				expectToThrowCKEditorError( () => command.execute( options ), /mentioncommand-incorrect-id/, editor );
 			}
+		} );
+
+		it( 'should not insert a white space if the mention was already followed by one', () => {
+			setData( model, '<paragraph>foo [] bar</paragraph>' );
+
+			command.execute( {
+				marker: '@',
+				mention: '@John'
+			} );
+
+			assertMention( doc.getRoot().getChild( 0 ).getChild( 1 ), '@John' );
+
+			expect( getData( model ) ).to.match(
+				/<paragraph>foo <\$text mention="{"uid":"[^"]+","_text":"@John","id":"@John"}">@John\[\]<\/\$text> bar<\/paragraph>/
+			);
+		} );
+
+		[ [ '(', ')' ], [ '[', ']' ], [ '{', '}' ] ].forEach( ( [ openingBracket, closingBracket ] ) => {
+			it( `should not insert a white space if the mention injected in "${ openingBracket }${ closingBracket }" brackets`, () => {
+				model.change( writer => {
+					const paragraph = writer.createElement( 'paragraph' );
+					const text = writer.createText( `${ openingBracket }${ closingBracket }` );
+
+					writer.append( text, paragraph );
+					writer.append( paragraph, model.document.getRoot() );
+
+					writer.setSelection( paragraph, 1 );
+				} );
+
+				command.execute( {
+					marker: '@',
+					mention: '@John'
+				} );
+
+				assertMention( doc.getRoot().getChild( 0 ).getChild( 1 ), '@John' );
+
+				expect( getData( model ) ).to.match(
+					new RegExp( '<paragraph>\\' + openingBracket +
+						'<\\$text mention="{"uid":"[^"]+","_text":"@John","id":"@John"}">@John\\[\\]</\\$text>\\' +
+						closingBracket + '</paragraph>'
+					)
+				);
+			} );
 		} );
 	} );
 

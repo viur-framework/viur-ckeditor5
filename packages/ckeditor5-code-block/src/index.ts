@@ -1,18 +1,18 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module code-block
  */
 
-export { default as CodeBlock } from './codeblock';
-export { default as CodeBlockEditing } from './codeblockediting';
-export { default as CodeBlockUI } from './codeblockui';
-export type { default as CodeBlockCommand } from './codeblockcommand';
-export type { default as IndentCodeBlockCommand } from './indentcodeblockcommand';
-export type { default as OutdentCodeBlockCommand } from './outdentcodeblockcommand';
-export type { CodeBlockConfig } from './codeblockconfig';
+export { default as CodeBlock } from './codeblock.js';
+export { default as CodeBlockEditing } from './codeblockediting.js';
+export { default as CodeBlockUI } from './codeblockui.js';
+export type { default as CodeBlockCommand } from './codeblockcommand.js';
+export type { default as IndentCodeBlockCommand } from './indentcodeblockcommand.js';
+export type { default as OutdentCodeBlockCommand } from './outdentcodeblockcommand.js';
+export type { CodeBlockConfig } from './codeblockconfig.js';
 
-import './augmentation';
+import './augmentation.js';

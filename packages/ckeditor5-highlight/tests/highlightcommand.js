@@ -1,13 +1,13 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-import HighlightCommand from './../src/highlightcommand';
+import HighlightCommand from './../src/highlightcommand.js';
 
-import Command from '@ckeditor/ckeditor5-core/src/command';
-import ModelTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/modeltesteditor';
-import { getData, setData } from '@ckeditor/ckeditor5-engine/src/dev-utils/model';
+import Command from '@ckeditor/ckeditor5-core/src/command.js';
+import ModelTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/modeltesteditor.js';
+import { getData, setData } from '@ckeditor/ckeditor5-engine/src/dev-utils/model.js';
 
 describe( 'HighlightCommand', () => {
 	let editor, model, doc, root, command;
@@ -33,8 +33,8 @@ describe( 'HighlightCommand', () => {
 			} );
 	} );
 
-	afterEach( () => {
-		editor.destroy();
+	afterEach( async () => {
+		await editor.destroy();
 	} );
 
 	it( 'is a command', () => {
@@ -67,7 +67,7 @@ describe( 'HighlightCommand', () => {
 			expect( command ).to.have.property( 'isEnabled', true );
 		} );
 
-		it( 'is false when selection is on text which can not have highlight added', () => {
+		it( 'is false when selection is on text which cannot have highlight added', () => {
 			setData( model, '<x>fo[]o</x>' );
 			expect( command.isEnabled ).to.be.false;
 		} );

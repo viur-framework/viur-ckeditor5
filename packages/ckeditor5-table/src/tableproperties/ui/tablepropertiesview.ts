@@ -1,6 +1,6 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
@@ -13,6 +13,7 @@ import {
 	createLabeledDropdown,
 	createLabeledInputText,
 	FocusCycler,
+	FormRowView,
 	FormHeaderView,
 	LabeledFieldView,
 	LabelView,
@@ -22,30 +23,34 @@ import {
 	ViewCollection,
 	type DropdownView,
 	type InputTextView,
-	type NormalizedColorOption
-} from 'ckeditor5/src/ui';
-import { FocusTracker, KeystrokeHandler, type ObservableChangeEvent, type Locale } from 'ckeditor5/src/utils';
-import { icons } from 'ckeditor5/src/core';
+	type NormalizedColorOption,
+	type ColorPickerConfig,
+	type FocusableView
+} from 'ckeditor5/src/ui.js';
+import { FocusTracker, KeystrokeHandler, type ObservableChangeEvent, type Locale } from 'ckeditor5/src/utils.js';
+import {
+	IconCancel,
+	IconCheck,
+	IconObjectCenter,
+	IconObjectInlineLeft,
+	IconObjectInlineRight
+} from 'ckeditor5/src/icons.js';
 
 import {
 	fillToolbar,
 	getBorderStyleDefinitions,
 	getBorderStyleLabels,
 	getLabeledColorInputCreator
-} from '../../utils/ui/table-properties';
-import FormRowView from '../../ui/formrowview';
+} from '../../utils/ui/table-properties.js';
 
-import '../../../theme/form.css';
+import type ColorInputView from '../../ui/colorinputview.js';
+import type { TablePropertiesOptions } from '../../tableconfig.js';
+
+// eslint-disable-next-line ckeditor5-rules/ckeditor-imports
+import '@ckeditor/ckeditor5-ui/theme/components/form/form.css';
+import '../../../theme/formrow.css';
 import '../../../theme/tableform.css';
 import '../../../theme/tableproperties.css';
-import type ColorInputView from '../../ui/colorinputview';
-import type { TablePropertiesOptions } from '../../tableconfig';
-
-const ALIGNMENT_ICONS = {
-	left: icons.objectLeft,
-	center: icons.objectCenter,
-	right: icons.objectRight
-};
 
 /**
  * Additional configuration of the view.
@@ -68,6 +73,11 @@ export interface TablePropertiesViewOptions {
 	 * The default table properties.
 	 */
 	defaultTableProperties: TablePropertiesOptions;
+
+	/**
+	 * The default color picker config.
+	 */
+	colorPickerConfig: false | ColorPickerConfig;
 }
 
 /**
@@ -199,7 +209,7 @@ export default class TablePropertiesView extends View {
 	/**
 	 * A collection of views that can be focused in the form.
 	 */
-	protected readonly _focusables: ViewCollection;
+	protected readonly _focusables: ViewCollection<FocusableView>;
 
 	/**
 	 * Helps cycling over {@link #_focusables} in the form.
@@ -352,13 +362,16 @@ export default class TablePropertiesView extends View {
 			view: this
 		} );
 
+		// Maintain continuous focus cycling over views that have focusable children and focus cyclers themselves.
+		[ this.borderColorInput, this.backgroundInput ].forEach( view => {
+			this._focusCycler.chain( view.fieldView.focusCycler );
+		} );
+
 		[
 			this.borderStyleDropdown,
 			this.borderColorInput,
-			this.borderColorInput!.fieldView.dropdownView.buttonView,
 			this.borderWidthInput,
 			this.backgroundInput,
-			this.backgroundInput!.fieldView.dropdownView.buttonView,
 			this.widthInput,
 			this.heightInput,
 			this.alignmentToolbar,
@@ -411,7 +424,8 @@ export default class TablePropertiesView extends View {
 		const colorInputCreator = getLabeledColorInputCreator( {
 			colorConfig: this.options.borderColors,
 			columns: 5,
-			defaultColorValue: defaultBorder.color
+			defaultColorValue: defaultBorder.color,
+			colorPickerConfig: this.options.colorPickerConfig
 		} );
 		const locale = this.locale;
 		const t = this.t!;
@@ -528,7 +542,8 @@ export default class TablePropertiesView extends View {
 		const backgroundInputCreator = getLabeledColorInputCreator( {
 			colorConfig: this.options.backgroundColors,
 			columns: 5,
-			defaultColorValue: this.options.defaultTableProperties.backgroundColor
+			defaultColorValue: this.options.defaultTableProperties.backgroundColor,
+			colorPickerConfig: this.options.colorPickerConfig
 		} );
 
 		const backgroundInput = new LabeledFieldView( locale, backgroundInputCreator );
@@ -633,13 +648,18 @@ export default class TablePropertiesView extends View {
 
 		const alignmentToolbar = new ToolbarView( locale! );
 		alignmentToolbar.set( {
+			role: 'radiogroup',
 			isCompact: true,
 			ariaLabel: t( 'Table alignment toolbar' )
 		} );
 
 		fillToolbar( {
 			view: this,
-			icons: ALIGNMENT_ICONS,
+			icons: {
+				left: IconObjectInlineLeft,
+				center: IconObjectCenter,
+				right: IconObjectInlineRight
+			},
 			toolbar: alignmentToolbar,
 			labels: this._alignmentLabels,
 			propertyName: 'alignment',
@@ -661,7 +681,7 @@ export default class TablePropertiesView extends View {
 	private _createActionButtons(): {
 		saveButtonView: ButtonView;
 		cancelButtonView: ButtonView;
-		} {
+	} {
 		const locale = this.locale;
 		const t = this.t!;
 
@@ -677,7 +697,7 @@ export default class TablePropertiesView extends View {
 
 		saveButtonView.set( {
 			label: t( 'Save' ),
-			icon: icons.check,
+			icon: IconCheck,
 			class: 'ck-button-save',
 			type: 'submit',
 			withText: true
@@ -689,7 +709,7 @@ export default class TablePropertiesView extends View {
 
 		cancelButtonView.set( {
 			label: t( 'Cancel' ),
-			icon: icons.cancel,
+			icon: IconCancel,
 			class: 'ck-button-cancel',
 			withText: true
 		} );

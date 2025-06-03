@@ -1,15 +1,15 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module ui/dropdown/dropdownpanelview
  */
 
-import View from '../view';
-import type ViewCollection from '../viewcollection';
-import type DropdownPanelFocusable from './dropdownpanelfocusable';
+import View from '../view.js';
+import type ViewCollection from '../viewcollection.js';
+import type DropdownPanelFocusable from './dropdownpanelfocusable.js';
 
 import { logWarning, type Locale } from '@ckeditor/ckeditor5-utils';
 
@@ -69,7 +69,8 @@ export default class DropdownPanelView extends View implements DropdownPanelFocu
 					'ck-dropdown__panel',
 					bind.to( 'position', value => `ck-dropdown__panel_${ value }` ),
 					bind.if( 'isVisible', 'ck-dropdown__panel-visible' )
-				]
+				],
+				tabindex: '-1'
 			},
 
 			children: this.children,
@@ -112,8 +113,8 @@ export default class DropdownPanelView extends View implements DropdownPanelFocu
 				 * provides the `focus()` method for the best user experience.
 				 *
 				 * @error ui-dropdown-panel-focus-child-missing-focus
-				 * @param childView
-				 * @param dropdownPanel
+				 * @param {module:ui/view~View} childView Child view.
+				 * @param {module:ui/dropdown/dropdownpanelview~DropdownPanelView} dropdownPanel A parent of a child.
 				 */
 				logWarning( 'ui-dropdown-panel-focus-child-missing-focus', { childView: this.children.first, dropdownPanel: this } );
 			}

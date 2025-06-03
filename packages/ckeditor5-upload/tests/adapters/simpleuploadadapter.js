@@ -1,15 +1,13 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* globals document, console */
-
-import ClassicTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/classictesteditor';
-import SimpleUploadAdapter from '../../src/adapters/simpleuploadadapter';
-import FileRepository from '../../src/filerepository';
-import { createNativeFileMock } from '../_utils/mocks';
-import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils';
+import ClassicTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/classictesteditor.js';
+import SimpleUploadAdapter from '../../src/adapters/simpleuploadadapter.js';
+import FileRepository from '../../src/filerepository.js';
+import { createNativeFileMock } from '../_utils/mocks.js';
+import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils.js';
 
 describe( 'SimpleUploadAdapter', () => {
 	let editor, editorElement, sinonXHR, consoleWarnStub, fileRepository;
@@ -50,6 +48,14 @@ describe( 'SimpleUploadAdapter', () => {
 
 	it( 'should be named', () => {
 		expect( SimpleUploadAdapter.pluginName ).to.equal( 'SimpleUploadAdapter' );
+	} );
+
+	it( 'should have `isOfficialPlugin` static flag set to `true`', () => {
+		expect( SimpleUploadAdapter.isOfficialPlugin ).to.be.true;
+	} );
+
+	it( 'should have `isPremiumPlugin` static flag set to `false`', () => {
+		expect( SimpleUploadAdapter.isPremiumPlugin ).to.be.false;
 	} );
 
 	describe( 'init()', () => {
@@ -200,6 +206,56 @@ describe( 'SimpleUploadAdapter', () => {
 									expect( requestHeaders ).to.be.a( 'object' );
 									expect( requestHeaders ).to.have.property( 'X-CSRF-TOKEN', 'foo' );
 									expect( requestHeaders ).to.have.property( 'Authorization', 'Bearer <token>' );
+
+									return uploadPromise;
+								} )
+								.then( uploadResponse => {
+									expect( uploadResponse ).to.deep.equal( {
+										url: 'http://example.com/images/image.jpeg',
+										urls: {
+											default: 'http://example.com/images/image.jpeg'
+										}
+									} );
+
+									editorElement.remove();
+								} )
+								.then( () => editor.destroy() );
+						} );
+				} );
+
+				it( 'should use config#headers in the request (when specified as a function)', () => {
+					const editorElement = document.createElement( 'div' );
+					document.body.appendChild( editorElement );
+
+					return ClassicTestEditor
+						.create( editorElement, {
+							plugins: [ SimpleUploadAdapter ],
+							simpleUpload: {
+								uploadUrl: 'http://example.com',
+								headers: file => ( {
+									'X-File-Name': file.name,
+									'X-File-Size': file.size.toString()
+								} )
+							}
+						} )
+						.then( editor => {
+							const adapter = editor.plugins.get( FileRepository ).createUploadAdapter( loader );
+							const validResponse = {
+								url: 'http://example.com/images/image.jpeg'
+							};
+
+							const uploadPromise = adapter.upload();
+
+							return loader.file
+								.then( () => {
+									const request = sinonXHR.requests[ 0 ];
+									request.respond( 200, { 'Content-Type': 'application/json' }, JSON.stringify( validResponse ) );
+
+									const requestHeaders = request.requestHeaders;
+
+									expect( requestHeaders ).to.be.a( 'object' );
+									expect( requestHeaders ).to.have.property( 'X-File-Name', 'image.jpeg' );
+									expect( requestHeaders ).to.have.property( 'X-File-Size', '1024' );
 
 									return uploadPromise;
 								} )

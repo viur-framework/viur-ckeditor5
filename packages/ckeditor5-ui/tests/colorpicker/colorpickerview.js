@@ -1,14 +1,12 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* globals CustomEvent, document */
+import ColorPickerView from './../../src/colorpicker/colorpickerview.js';
+import env from '@ckeditor/ckeditor5-utils/src/env.js';
 
-import ColorPickerView from './../../src/colorpicker/colorpickerview';
-import 'vanilla-colorful/hex-color-picker.js';
-
-import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils';
+import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils.js';
 import { Locale } from '@ckeditor/ckeditor5-utils';
 
 describe( 'ColorPickerView', () => {
@@ -38,9 +36,15 @@ describe( 'ColorPickerView', () => {
 			expect( [ ...input.classList ] ).to.include( 'color-picker-hex-input' );
 		} );
 
-		it( 'assigns a proper default format value', () => {
-			const pickerView = new ColorPickerView( locale, {} );
-			expect( pickerView._format ).to.equal( 'hsl' );
+		it( 'uses a default color format (HSL)', () => {
+			const view = new ColorPickerView( locale );
+			view.render();
+
+			view.color = 'red';
+
+			expect( view.color ).to.equal( 'hsl(0, 100%, 50%)' );
+
+			view.destroy();
 		} );
 	} );
 
@@ -176,6 +180,43 @@ describe( 'ColorPickerView', () => {
 					} );
 				} );
 			} );
+
+			it( 'should not set any color directly to color picker HTML when its focused', () => {
+				document.body.appendChild( view.picker );
+
+				const spy = sinon.spy( view.picker, 'setAttribute' );
+
+				view.focus();
+
+				const event = new CustomEvent( 'color-changed', {
+					detail: {
+						value: '#733232'
+					}
+				} );
+
+				view.picker.dispatchEvent( event );
+
+				clock.tick( 200 );
+
+				sinon.assert.notCalled( spy );
+
+				// Cleanup DOM
+				view.picker.remove();
+			} );
+
+			it( 'should set color in color picker HTML when change was caused by input', () => {
+				const spy = sinon.spy( view.picker, 'setAttribute' );
+
+				const fieldView = view.hexInputRow.children.get( 1 ).fieldView;
+
+				fieldView.isFocused = true;
+				fieldView.value = '#ffffff';
+				fieldView.fire( 'input' );
+
+				clock.tick( 200 );
+
+				sinon.assert.calledOnce( spy );
+			} );
 		} );
 
 		describe( 'should not update color property', () => {
@@ -234,15 +275,15 @@ describe( 'ColorPickerView', () => {
 				describe( 'wrong color format', () => {
 					testColorUpdateFromInput( {
 						name: 'rgb',
-						inputValue: 'rgb( 100, 100, 100 )',
-						expectedInput: 'rgb( 100, 100, 100 )',
+						inputValue: 'rgb(100, 100, 100)',
+						expectedInput: 'rgb(100, 100, 100)',
 						expectedColorProperty: '#000000'
 					} );
 
 					testColorUpdateFromInput( {
 						name: 'hsl',
-						inputValue: 'hsl( 30, 75%, 60 % )',
-						expectedInput: 'hsl( 30, 75%, 60 % )',
+						inputValue: 'hsl(30, 75%, 60 %)',
+						expectedInput: 'hsl(30, 75%, 60 %)',
 						expectedColorProperty: '#000000'
 					} );
 
@@ -258,6 +299,10 @@ describe( 'ColorPickerView', () => {
 	} );
 
 	describe( 'render()', () => {
+		it( 'should register the hex-color-picker custom element', () => {
+			expect( customElements.get( 'hex-color-picker' ) ).to.be.a( 'function' );
+		} );
+
 		it( 'should render color picker component', () => {
 			expect( view.picker.tagName ).to.equal( document.createElement( 'hex-color-picker' ).tagName );
 		} );
@@ -275,6 +320,14 @@ describe( 'ColorPickerView', () => {
 
 			expect( view.color ).to.equal( '#ff0000' );
 		} );
+
+		it( 'should render without input if "hideInput" is set on true', () => {
+			const view = new ColorPickerView( locale, { format: 'hex', hideInput: true } );
+
+			view.render();
+
+			expect( view.element.children.length ).to.equal( 1 );
+		} );
 	} );
 
 	describe( 'focus()', () => {
@@ -286,6 +339,94 @@ describe( 'ColorPickerView', () => {
 			view.focus();
 
 			sinon.assert.calledOnce( spy );
+		} );
+
+		it( 'should not throw on Firefox/Safari/iOS if the input was hidden via config', () => {
+			const view = new ColorPickerView( locale, { hideInput: true } );
+
+			view.render();
+			document.body.appendChild( view.element );
+
+			testUtils.sinon.stub( env, 'isGecko' ).value( true );
+			testUtils.sinon.stub( env, 'isiOS' ).value( false );
+			testUtils.sinon.stub( env, 'isSafari' ).value( false );
+
+			expect( () => view.focus() ).to.not.throw();
+
+			testUtils.sinon.stub( env, 'isGecko' ).value( false );
+			testUtils.sinon.stub( env, 'isiOS' ).value( true );
+			testUtils.sinon.stub( env, 'isSafari' ).value( false );
+
+			expect( () => view.focus() ).to.not.throw();
+
+			testUtils.sinon.stub( env, 'isGecko' ).value( false );
+			testUtils.sinon.stub( env, 'isiOS' ).value( false );
+			testUtils.sinon.stub( env, 'isSafari' ).value( true );
+
+			expect( () => view.focus() ).to.not.throw();
+
+			view.destroy();
+			view.element.remove();
+		} );
+
+		// See: https://github.com/ckeditor/ckeditor5/issues/17069
+		it( 'should focus input before color slider to avoid selection issues', () => {
+			const buggyBrowsers = [ 'isGecko', 'isiOS', 'isSafari', 'isBlink' ];
+
+			const inputField = view.hexInputRow.children.get( 1 );
+			const slider = view.slidersView.first;
+
+			const inputSpy = sinon.spy( inputField, 'focus' );
+			const sliderSpy = sinon.spy( slider.element, 'focus' );
+
+			buggyBrowsers.forEach( browser => {
+				inputSpy.resetHistory();
+				sliderSpy.resetHistory();
+
+				mockBrowser( browser );
+
+				view.focus();
+
+				sinon.assert.callOrder( inputSpy, sliderSpy );
+				sinon.assert.calledOnce( inputSpy );
+				sinon.assert.calledOnce( sliderSpy );
+			} );
+
+			function mockBrowser( mockFlag ) {
+				for ( const flag of buggyBrowsers ) {
+					testUtils.sinon.stub( env, flag ).get( () => flag === mockFlag );
+				}
+			}
+		} );
+	} );
+
+	describe( 'isValid()', () => {
+		let hexInputElement;
+
+		beforeEach( () => {
+			hexInputElement = view.hexInputRow.inputView.fieldView.element;
+		} );
+
+		it( 'should return true for a valid color', () => {
+			hexInputElement.value = '#000';
+
+			expect( view.isValid() ).to.be.true;
+		} );
+
+		it( 'should return false for an invalid color', () => {
+			hexInputElement.value = 'Foo Bar';
+
+			expect( view.isValid() ).to.be.false;
+		} );
+
+		it( 'should return true if the hex input is not shown', () => {
+			const view = new ColorPickerView( locale, { format: 'hex', hideInput: true } );
+
+			view.render();
+
+			expect( view.isValid() ).to.be.true;
+
+			view.destroy();
 		} );
 	} );
 
@@ -306,46 +447,38 @@ describe( 'ColorPickerView', () => {
 
 		describe( 'output format integration', () => {
 			it( 'respects rgb output format', () => {
-				view._format = 'rgb';
-				view.color = '#001000';
-
-				expect( view.color ).to.equal( 'rgb( 0, 16, 0 )' );
+				testOutputFormat( 'rgb', '#001000', 'rgb(0, 16, 0)' );
 			} );
 
 			it( 'respects hex output format', () => {
-				view._format = 'hex';
-				view.color = '#0000f1';
-
-				expect( view.color ).to.equal( '#0000f1' );
+				testOutputFormat( 'hex', '#0000f1', '#0000f1' );
 			} );
 
 			it( 'respects hsl output format', () => {
-				view._format = 'hsl';
-				view.color = '#3D9BFF';
-
-				expect( view.color ).to.equal( 'hsl( 211, 100%, 62% )' );
+				testOutputFormat( 'hsl', '#3D9BFF', 'hsl(211, 100%, 62%)' );
 			} );
 
 			it( 'respects hwb output format', () => {
-				view._format = 'hwb';
-				view.color = '#5cb291';
-
-				expect( view.color ).to.equal( 'hwb( 157, 36, 30 )' );
+				testOutputFormat( 'hwb', '#5cb291', 'hwb(157, 36, 30)' );
 			} );
 
 			it( 'respects lab output format', () => {
-				view._format = 'lab';
-				view.color = '#bfe972';
-
-				expect( view.color ).to.equal( 'lab( 87% -32 53 )' );
+				testOutputFormat( 'lab', '#bfe972', 'lab(87% -32 53)' );
 			} );
 
 			it( 'respects lch output format', () => {
-				view._format = 'lch';
-				view.color = '#be0909';
-
-				expect( view.color ).to.equal( 'lch( 40% 81 39 )' );
+				testOutputFormat( 'lch', '#be0909', 'lch(40% 81 39)' );
 			} );
+
+			function testOutputFormat( format, inputColor, outputColor ) {
+				const view = new ColorPickerView( locale, { format } );
+				view.render();
+
+				view.color = inputColor;
+				expect( view.color ).to.equal( outputColor );
+
+				view.destroy();
+			}
 		} );
 
 		it( 'normalizes format for subsequent changes to the same color but in different format', () => {

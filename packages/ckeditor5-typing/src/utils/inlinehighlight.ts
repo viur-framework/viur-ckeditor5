@@ -1,13 +1,13 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module typing/utils/inlinehighlight
  */
 
-import findAttributeRange from './findattributerange';
+import findAttributeRange from './findattributerange.js';
 import type { Editor } from '@ckeditor/ckeditor5-core';
 import type { ViewElement } from '@ckeditor/ckeditor5-engine';
 

@@ -1,6 +1,6 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
@@ -14,14 +14,15 @@ import EmitterMixin, {
 	type CallbackOptions,
 	type BaseEvent,
 	type GetCallback
-} from '../emittermixin';
-import uid from '../uid';
-import isNode from './isnode';
-import isWindow from './iswindow';
-import type EventInfo from '../eventinfo';
-import type { Constructor, Mixed } from '../mix';
+} from '../emittermixin.js';
+import uid from '../uid.js';
+import isNode from './isnode.js';
+import isWindow from './iswindow.js';
+import type EventInfo from '../eventinfo.js';
+import type { Constructor, Mixed } from '../mix.js';
+import global from './global.js';
 
-const defaultEmitterClass = DomEmitterMixin( EmitterMixin() );
+const defaultEmitterClass = /* #__PURE__ */ DomEmitterMixin( /* #__PURE__ */ EmitterMixin() );
 
 /**
  * Mixin that injects the DOM events API into its host. It provides the API
@@ -83,7 +84,7 @@ export default function DomEmitterMixin( base?: Constructor<Emitter> ): unknown 
 
 	abstract class Mixin extends base implements DomEmitter {
 		public override listenTo<K extends keyof HTMLElementEventMap>(
-			emitter: Node | Window,
+			emitter: Node | Window | EventTarget,
 			event: K,
 			callback: ( this: this, ev: EventInfo, event: HTMLElementEventMap[ K ] ) => void,
 			options?: CallbackOptions & { readonly useCapture?: boolean; readonly usePassive?: boolean }
@@ -95,13 +96,13 @@ export default function DomEmitterMixin( base?: Constructor<Emitter> ): unknown 
 			options?: CallbackOptions
 		): void;
 		public override listenTo(
-			emitter: Emitter | Node | Window,
+			emitter: Emitter | Node | Window | EventTarget,
 			event: string,
 			callback: ( ev: EventInfo, ...args: Array<any> ) => void,
 			options: CallbackOptions & { readonly useCapture?: boolean; readonly usePassive?: boolean } = {}
 		): void {
 			// Check if emitter is an instance of DOM Node. If so, use corresponding ProxyEmitter (or create one if not existing).
-			if ( isNode( emitter ) || isWindow( emitter ) ) {
+			if ( isNode( emitter ) || isWindow( emitter ) || emitter instanceof global.window.EventTarget ) {
 				const proxyOptions = {
 					capture: !!options.useCapture,
 					passive: !!options.usePassive
@@ -117,12 +118,12 @@ export default function DomEmitterMixin( base?: Constructor<Emitter> ): unknown 
 		}
 
 		public override stopListening(
-			emitter?: Emitter | Node | Window,
+			emitter?: Emitter | Node | Window | EventTarget,
 			event?: string,
 			callback?: Function
 		): void {
 			// Check if the emitter is an instance of DOM Node. If so, forward the call to the corresponding ProxyEmitters.
-			if ( isNode( emitter ) || isWindow( emitter ) ) {
+			if ( isNode( emitter ) || isWindow( emitter ) || emitter instanceof global.window.EventTarget ) {
 				const proxyEmitters = this._getAllProxyEmitters( emitter );
 
 				for ( const proxy of proxyEmitters ) {
@@ -146,7 +147,7 @@ export default function DomEmitterMixin( base?: Constructor<Emitter> ): unknown 
 		 * @returns ProxyEmitter instance bound to the DOM Node.
 		 */
 		private _getProxyEmitter(
-			node: Node | Window,
+			node: Node | Window | EventTarget,
 			options: { capture: boolean; passive: boolean }
 		): Emitter | null {
 			return _getEmitterListenedTo( this, getProxyEmitterId( node, options ) );
@@ -157,7 +158,7 @@ export default function DomEmitterMixin( base?: Constructor<Emitter> ): unknown 
 		 *
 		 * @param node DOM Node of the ProxyEmitter.
 		 */
-		private _getAllProxyEmitters( node: Node | Window ): Array<ProxyEmitter> {
+		private _getAllProxyEmitters( node: Node | Window | EventTarget ): Array<ProxyEmitter> {
 			return [
 				{ capture: false, passive: false },
 				{ capture: false, passive: true },
@@ -169,16 +170,6 @@ export default function DomEmitterMixin( base?: Constructor<Emitter> ): unknown 
 
 	return Mixin;
 }
-
-// Backward compatibility with `mix`
-( [
-	'_getProxyEmitter', '_getAllProxyEmitters',
-	'on', 'once', 'off', 'listenTo',
-	'stopListening', 'fire', 'delegate', 'stopDelegating',
-	'_addEventListener', '_removeEventListener'
-] ).forEach( key => {
-	( DomEmitterMixin as any )[ key ] = ( defaultEmitterClass.prototype as any )[ key ];
-} );
 
 /**
  * Creates a ProxyEmitter instance. Such an instance is a bridge between a DOM Node firing events
@@ -208,8 +199,8 @@ export default function DomEmitterMixin( base?: Constructor<Emitter> ): unknown 
  *                    +-----------------------------------------+
  *                                fire( click, DOM Event )
  */
-class ProxyEmitter extends EmitterMixin() {
-	private readonly _domNode: Node | Window;
+class ProxyEmitter extends /* #__PURE__ */ EmitterMixin() {
+	private readonly _domNode: Node | Window | EventTarget;
 	private readonly _options: { capture: boolean; passive: boolean };
 
 	/**
@@ -221,7 +212,7 @@ class ProxyEmitter extends EmitterMixin() {
 	 * and prevents blocking browser's main thread by this event handler.
 	 */
 	constructor(
-		node: Node | Window,
+		node: Node | Window | EventTarget,
 		options: { capture: boolean; passive: boolean }
 	) {
 		super();
@@ -364,7 +355,7 @@ function getNodeUID( node: any ): string {
 /**
  * Gets id of the ProxyEmitter for the given node.
  */
-function getProxyEmitterId( node: Node | Window, options: { [ option: string ]: any } ): string {
+function getProxyEmitterId( node: Node | Window | EventTarget, options: { [ option: string ]: any } ): string {
 	let id = getNodeUID( node );
 
 	for ( const option of Object.keys( options ).sort() ) {
@@ -407,7 +398,7 @@ export interface DomEmitter extends Emitter {
 	 * and prevents blocking browser's main thread by this event handler.
 	 */
 	listenTo<K extends keyof DomEventMap>(
-		emitter: Node | Window,
+		emitter: Node | Window | EventTarget,
 		event: K,
 		callback: ( this: this, ev: EventInfo, event: DomEventMap[ K ] ) => void,
 		options?: CallbackOptions & { readonly useCapture?: boolean; readonly usePassive?: boolean }
@@ -466,5 +457,5 @@ export interface DomEmitter extends Emitter {
 	 * @param callback (Requires the `event`) The function to be removed from the call list for the given
 	 * `event`.
 	 */
-	stopListening( emitter?: Emitter | Node | Window, event?: string, callback?: Function ): void;
+	stopListening( emitter?: Emitter | Node | Window | EventTarget, event?: string, callback?: Function ): void;
 }

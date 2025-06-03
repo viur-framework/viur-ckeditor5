@@ -1,16 +1,14 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* globals console, window, document, XMLHttpRequest */
+import ClassicEditor from '@ckeditor/ckeditor5-editor-classic/src/classiceditor.js';
+import ArticlePluginSet from '@ckeditor/ckeditor5-core/tests/_utils/articlepluginset.js';
+import CloudServices from '../../src/cloudservices.js';
 
-import ClassicEditor from '@ckeditor/ckeditor5-editor-classic/src/classiceditor';
-import ArticlePluginSet from '@ckeditor/ckeditor5-core/tests/_utils/articlepluginset';
-import CloudServices from '../../src/cloudservices';
-
-import { TOKEN_URL, UPLOAD_URL } from '../_utils/cloud-services-config';
-import CloudServicesCore from '../../src/cloudservicescore';
+import { TOKEN_URL, UPLOAD_URL } from '../_utils/cloud-services-config.js';
+import CloudServicesCore from '../../src/cloudservicescore.js';
 
 const output = document.getElementById( 'output' );
 const requestOutput = document.getElementById( 'request' );

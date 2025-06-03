@@ -1,20 +1,20 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module image/autoimage
  */
 
-import { Plugin, type Editor } from 'ckeditor5/src/core';
-import { Clipboard, type ClipboardPipeline } from 'ckeditor5/src/clipboard';
-import { LivePosition, LiveRange } from 'ckeditor5/src/engine';
-import { Undo } from 'ckeditor5/src/undo';
-import { Delete } from 'ckeditor5/src/typing';
-import { global } from 'ckeditor5/src/utils';
+import { Plugin, type Editor } from 'ckeditor5/src/core.js';
+import { Clipboard, type ClipboardPipeline } from 'ckeditor5/src/clipboard.js';
+import { LivePosition, LiveRange } from 'ckeditor5/src/engine.js';
+import { Undo } from 'ckeditor5/src/undo.js';
+import { Delete } from 'ckeditor5/src/typing.js';
+import { global } from 'ckeditor5/src/utils.js';
 
-import ImageUtils from './imageutils';
+import ImageUtils from './imageutils.js';
 
 // Implements the pattern: http(s)://(www.)example.com/path/to/resource.ext?query=params&maybe=too.
 const IMAGE_URL_REGEXP = new RegExp( String( /^(http(s)?:\/\/)?[\w-]+\.[\w.~:/[\]@!$&'()*+,;=%-]+/.source +
@@ -37,8 +37,15 @@ export default class AutoImage extends Plugin {
 	/**
 	 * @inheritDoc
 	 */
-	public static get pluginName(): 'AutoImage' {
-		return 'AutoImage';
+	public static get pluginName() {
+		return 'AutoImage' as const;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public static override get isOfficialPlugin(): true {
+		return true;
 	}
 
 	/**

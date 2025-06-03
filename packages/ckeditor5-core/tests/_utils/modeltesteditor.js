@@ -1,12 +1,9 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* eslint-disable new-cap */
-
-import Editor from '../../src/editor/editor';
-import DataApiMixin from '../../src/editor/utils/dataapimixin';
+import Editor from '../../src/editor/editor.js';
 
 /**
  * A simple editor implementation with a functional model part of the engine (the document).
@@ -16,7 +13,7 @@ import DataApiMixin from '../../src/editor/utils/dataapimixin';
  *
  * @memberOf tests.core._utils
  */
-export default class ModelTestEditor extends DataApiMixin( Editor ) {
+export default class ModelTestEditor extends Editor {
 	constructor( config ) {
 		super( config );
 

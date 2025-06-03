@@ -1,18 +1,16 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* globals console, window, document */
+import ClassicEditor from '@ckeditor/ckeditor5-editor-classic/src/classiceditor.js';
+import ArticlePluginSet from '@ckeditor/ckeditor5-core/tests/_utils/articlepluginset.js';
+import Alignment from '@ckeditor/ckeditor5-alignment/src/alignment.js';
+import IndentBlock from '@ckeditor/ckeditor5-indent/src/indentblock.js';
+import Indent from '@ckeditor/ckeditor5-indent/src/indent.js';
 
-import ClassicEditor from '@ckeditor/ckeditor5-editor-classic/src/classiceditor';
-import ArticlePluginSet from '@ckeditor/ckeditor5-core/tests/_utils/articlepluginset';
-import Alignment from '@ckeditor/ckeditor5-alignment/src/alignment';
-import IndentBlock from '@ckeditor/ckeditor5-indent/src/indentblock';
-import Indent from '@ckeditor/ckeditor5-indent/src/indent';
-
-import TableProperties from '../../src/tableproperties';
-import TableCellProperties from '../../src/tablecellproperties';
+import TableProperties from '../../src/tableproperties.js';
+import TableCellProperties from '../../src/tablecellproperties.js';
 
 const styleAsPlainText = document.querySelector( '#table-properties-styles' ).innerText
 	.trim()

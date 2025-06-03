@@ -1,6 +1,6 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
@@ -8,6 +8,7 @@
  */
 
 import {
+	ButtonView,
 	View,
 	ViewCollection,
 	FocusCycler,
@@ -15,20 +16,19 @@ import {
 	LabeledFieldView,
 	createLabeledInputNumber,
 	addKeyboardHandlingForGrid,
-	type ButtonView,
-	type InputNumberView
-} from 'ckeditor5/src/ui';
+	CollapsibleView,
+	type InputNumberView,
+	type FocusableView
+} from 'ckeditor5/src/ui.js';
 
 import {
 	FocusTracker,
 	KeystrokeHandler,
 	global,
 	type Locale
-} from 'ckeditor5/src/utils';
+} from 'ckeditor5/src/utils.js';
 
-import CollapsibleView from './collapsibleview';
-
-import type { ListPropertiesConfig } from '../../listconfig';
+import type { NormalizedListPropertiesConfig } from '../utils/config.js';
 
 import '../../../theme/listproperties.css';
 
@@ -99,7 +99,7 @@ export default class ListPropertiesView extends View {
 	/**
 	 * A collection of views that can be focused in the properties view.
 	 */
-	public readonly focusables: ViewCollection = new ViewCollection();
+	public readonly focusables = new ViewCollection<FocusableView>();
 
 	/**
 	 * Helps cycling over {@link #focusables} in the view.
@@ -120,7 +120,7 @@ export default class ListPropertiesView extends View {
 	constructor(
 		locale: Locale,
 		{ enabledProperties, styleButtonViews, styleGridAriaLabel }: {
-			enabledProperties: ListPropertiesConfig;
+			enabledProperties: NormalizedListPropertiesConfig;
 			styleButtonViews: Array<ButtonView> | null;
 			styleGridAriaLabel: string;
 		}
@@ -149,7 +149,7 @@ export default class ListPropertiesView extends View {
 
 		// The rendering of the styles grid is conditional. When there is no styles grid, the view will render without collapsible
 		// for numbered list properties, hence simplifying the layout.
-		if ( enabledProperties.styles ) {
+		if ( styleButtonViews && styleButtonViews.length ) {
 			this.stylesView = this._createStylesView( styleButtonViews!, styleGridAriaLabel );
 			this.children.add( this.stylesView );
 		} else {
@@ -283,6 +283,16 @@ export default class ListPropertiesView extends View {
 		stylesView.children.delegate( 'execute' ).to( this );
 
 		stylesView.focus = function( this: any ) {
+			// If there is a button that is already on, focus it.
+			// It's counterintuitive to focus the first button when there is already a button on.
+			for ( const child of this.children ) {
+				if ( child instanceof ButtonView && child.isOn ) {
+					child.focus();
+					return;
+				}
+			}
+
+			// ... otherwise focus the first button.
 			this.children.first.focus();
 		};
 
@@ -302,7 +312,7 @@ export default class ListPropertiesView extends View {
 	 * @param enabledProperties An object containing the configuration of enabled list property names
 	 * (see {@link #constructor}).
 	 */
-	private _addNumberedListPropertyViews( enabledProperties: ListPropertiesConfig ) {
+	private _addNumberedListPropertyViews( enabledProperties: NormalizedListPropertiesConfig ) {
 		const t = this.locale.t;
 		const numberedPropertyViews = [];
 
@@ -317,7 +327,7 @@ export default class ListPropertiesView extends View {
 		}
 
 		// When there are some style buttons, pack the numbered list properties into a collapsible to separate them.
-		if ( enabledProperties.styles ) {
+		if ( this.stylesView ) {
 			this.additionalPropertiesCollapsibleView = new CollapsibleView( this.locale, numberedPropertyViews );
 
 			this.additionalPropertiesCollapsibleView.set( {
@@ -366,6 +376,10 @@ export default class ListPropertiesView extends View {
 			const startIndex = inputElement.valueAsNumber;
 
 			if ( Number.isNaN( startIndex ) ) {
+				// Number inputs allow for the entry of characters that may result in NaN,
+				// such as 'e', '+', '123e', '2-'.
+				startIndexFieldView.errorText = t( 'Invalid start index value.' );
+
 				return;
 			}
 

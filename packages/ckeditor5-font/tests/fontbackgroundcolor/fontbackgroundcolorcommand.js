@@ -1,11 +1,11 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-import FontBackgroundColorCommand from '../../src/fontbackgroundcolor/fontbackgroundcolorcommand';
-import FontCommand from '../../src/fontcommand';
-import ModelTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/modeltesteditor';
+import FontBackgroundColorCommand from '../../src/fontbackgroundcolor/fontbackgroundcolorcommand.js';
+import FontCommand from '../../src/fontcommand.js';
+import ModelTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/modeltesteditor.js';
 
 describe( 'FontBackgroundColorCommand', () => {
 	let editor, command;
@@ -19,8 +19,8 @@ describe( 'FontBackgroundColorCommand', () => {
 			} );
 	} );
 
-	afterEach( () => {
-		editor.destroy();
+	afterEach( async () => {
+		await editor.destroy();
 	} );
 
 	it( 'is a FontCommand', () => {

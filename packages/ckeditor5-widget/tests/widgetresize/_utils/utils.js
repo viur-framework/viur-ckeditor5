@@ -1,13 +1,11 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* global setTimeout */
+import WidgetResize from '../../../src/widgetresize.js';
 
-import WidgetResize from '../../../src/widgetresize';
-
-import Rect from '@ckeditor/ckeditor5-utils/src/dom/rect';
+import Rect from '@ckeditor/ckeditor5-utils/src/dom/rect.js';
 
 export const resizerMouseSimulator = {
 	down( editor, domTarget, options = {} ) {

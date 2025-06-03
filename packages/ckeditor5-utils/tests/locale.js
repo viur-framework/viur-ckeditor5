@@ -1,16 +1,14 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* globals console */
-
-import Locale from '../src/locale';
+import Locale from '../src/locale.js';
 import {
 	add as addTranslations,
 	_clear as clearTranslations
-} from '../src/translation-service';
-import { expectToThrowCKEditorError } from './_utils/utils';
+} from '../src/translation-service.js';
+import { expectToThrowCKEditorError } from './_utils/utils.js';
 
 describe( 'Locale', () => {
 	afterEach( () => {
@@ -35,6 +33,41 @@ describe( 'Locale', () => {
 
 			expect( locale ).to.have.property( 'uiLanguage', 'pl' );
 			expect( locale ).to.have.property( 'contentLanguage', 'en' );
+		} );
+
+		it( 'sets the #translations', () => {
+			const translations = [ {
+				pl: {
+					dictionary: {
+						bold: 'Pogrubienie'
+					}
+				}
+			},
+			{
+				de: {
+					dictionary: {
+						bold: 'Fett'
+					}
+				}
+			}
+			];
+
+			const locale = new Locale( {
+				translations
+			} );
+
+			expect( locale ).to.have.deep.property( 'translations', {
+				pl: {
+					dictionary: {
+						bold: 'Pogrubienie'
+					}
+				},
+				de: {
+					dictionary: {
+						bold: 'Fett'
+					}
+				}
+			} );
 		} );
 
 		it( 'defaults #language to en', () => {
@@ -217,24 +250,6 @@ describe( 'Locale', () => {
 				t( { string: 'Add %0' }, [ 'space' ] );
 				t( { string: 'Add %0' }, 'space' );
 			} ).to.not.throw();
-		} );
-	} );
-
-	describe( 'language()', () => {
-		it( 'should return #uiLanguage', () => {
-			const stub = sinon.stub( console, 'warn' );
-			const locale = new Locale();
-
-			expect( locale.language ).to.equal( locale.uiLanguage );
-			sinon.assert.calledWithMatch( stub, 'locale-deprecated-language-property' );
-		} );
-
-		it( 'should warn about deprecation', () => {
-			const stub = sinon.stub( console, 'warn' );
-			const locale = new Locale();
-
-			expect( locale.language ).to.equal( 'en' );
-			sinon.assert.calledWithMatch( stub, 'locale-deprecated-language-property' );
 		} );
 	} );
 } );

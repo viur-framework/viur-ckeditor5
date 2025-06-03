@@ -1,5 +1,6 @@
 ---
 title: Autoformatting
+meta-title: Autoformatting | CKEditor 5 Documentation
 category: features
 ---
 
@@ -19,7 +20,7 @@ If needed, you can revert the automatic change by pressing <kbd>Backspace</kbd>.
 {@snippet features/autoformat}
 
 <info-box info>
-	This demo only presents a limited set of features. Visit the {@link examples/builds/full-featured-editor full-featured editor example} to see more in action.
+	This demo presents a limited set of features. Visit the {@link examples/builds/full-featured-editor feature-rich editor example} to see more in action.
 </info-box>
 
 ## Block formatting
@@ -46,35 +47,30 @@ The following {@link features/basic-styles basic styles} inline formatting optio
 ## Installation
 
 <info-box info>
-	This feature is enabled by default in all {@link installation/getting-started/predefined-builds predefined builds}. The installation instructions are for developers interested in building their own, custom editor.
+	⚠️ **New import paths**
+
+	Starting with {@link updating/update-to-42 version 42.0.0}, we changed the format of import paths. This guide uses the new, shorter format. Refer to the {@link getting-started/legacy-getting-started/legacy-imports Packages in the legacy setup} guide if you use an older version of CKEditor&nbsp;5.
 </info-box>
 
-To add this feature to your editor install the [`@ckeditor/ckeditor5-autoformat`](https://www.npmjs.com/package/@ckeditor/ckeditor5-autoformat) package:
+After {@link getting-started/integrations-cdn/quick-start installing the editor}, add the feature to your plugin list and toolbar configuration:
 
-```bash
-npm install --save @ckeditor/ckeditor5-autoformat
-```
-
-And add it to your plugin list:
-
+<code-switcher>
 ```js
-import { Autoformat } from '@ckeditor/ckeditor5-autoformat';
+import { ClassicEditor, Autoformat } from 'ckeditor5';
 
-ClassicEditor
-	.create( document.querySelector( '#editor' ), {
+ClassicEditor.
+	create( document.querySelector( '#editor' ), {
+		licenseKey: '<YOUR_LICENSE_KEY>', // Or 'GPL'.
 		plugins: [ Autoformat, /* ... */ ],
 		toolbar: [ /* ... */ ]
 	} )
 	.then( /* ... */ )
 	.catch( /* ... */ );
 ```
+</code-switcher>
 
 <info-box hint>
 	Remember to add proper features to the editor configuration. Autoformatting will be enabled only for the commands that are included in the actual configuration. For example, `bold` autoformatting will not work if there is no `bold` command registered in the editor.
-</info-box>
-
-<info-box info>
-	Read more about {@link installation/plugins/installing-plugins installing plugins}.
 </info-box>
 
 ## Creating custom autoformatters
@@ -97,10 +93,10 @@ In addition to enabling automatic text formatting, you may want to check the fol
 * {@link features/link#autolink-feature Autolink} &ndash; Turns the links and email addresses typed or pasted into the editor into active URLs.
 * {@link features/mentions Mentions} &ndash; Brings support for smart autocompletion.
 * {@link features/slash-commands Slash commands} &ndash; Allows to execute a predefined command by writing its name or alias directly in the editor.
-* {@link features/markdown Markdown output} &ndash; Lets the user output the content as Markdown instead of HTML and [use CKEditor 5 as a WYSIWYG Markdown editor](https://ckeditor.com/blog/CKEditor-5-the-best-open-source-Markdown-editor/).
+* {@link features/markdown Markdown output} &ndash; Lets the user output the content as Markdown instead of HTML and [use CKEditor&nbsp;5 as a WYSIWYG Markdown editor](https://ckeditor.com/blog/CKEditor-5-the-best-open-source-Markdown-editor/).
 * {@link features/source-editing#markdown-source-view Source editing} &ndash; Allows for Markdown source edition if configured accordingly.
 
-Coupled with the {@link features/markdown Markdown output} feature, the autoformatting feature allows for the full-fledged Markdown WYSIWYG editing experience, as described in the ["CKEditor 5: the best open source Markdown editor"](https://ckeditor.com/blog/CKEditor-5-the-best-open-source-Markdown-editor/) blog post. Visit the [free online Markdown editor](https://onlinemarkdowneditor.dev/) to see this solution implemented.
+Coupled with the {@link features/markdown Markdown output} feature, the autoformatting feature allows for the full-fledged Markdown WYSIWYG editing experience, as described in the ["CKEditor&nbsp;5: the best open source Markdown editor"](https://ckeditor.com/blog/CKEditor-5-the-best-open-source-Markdown-editor/) blog post. Visit the [free online Markdown editor](https://onlinemarkdowneditor.dev/) to see this solution implemented.
 
 ## Contribute
 

@@ -1,16 +1,17 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module image/imageresize
  */
 
-import { Plugin } from 'ckeditor5/src/core';
-import ImageResizeButtons from './imageresize/imageresizebuttons';
-import ImageResizeEditing from './imageresize/imageresizeediting';
-import ImageResizeHandles from './imageresize/imageresizehandles';
+import { Plugin } from 'ckeditor5/src/core.js';
+import ImageResizeButtons from './imageresize/imageresizebuttons.js';
+import ImageResizeEditing from './imageresize/imageresizeediting.js';
+import ImageResizeHandles from './imageresize/imageresizehandles.js';
+import ImageCustomResizeUI from './imageresize/imagecustomresizeui.js';
 
 import '../theme/imageresize.css';
 
@@ -24,13 +25,20 @@ export default class ImageResize extends Plugin {
 	 * @inheritDoc
 	 */
 	public static get requires() {
-		return [ ImageResizeEditing, ImageResizeHandles, ImageResizeButtons ] as const;
+		return [ ImageResizeEditing, ImageResizeHandles, ImageCustomResizeUI, ImageResizeButtons ] as const;
 	}
 
 	/**
 	 * @inheritDoc
 	 */
-	public static get pluginName(): 'ImageResize' {
-		return 'ImageResize';
+	public static get pluginName() {
+		return 'ImageResize' as const;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public static override get isOfficialPlugin(): true {
+		return true;
 	}
 }

@@ -1,28 +1,26 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* global console */
+import Model from '../../src/model/model.js';
+import Writer from '../../src/model/writer.js';
+import Batch from '../../src/model/batch.js';
+import InsertOperation from '../../src/model/operation/insertoperation.js';
 
-import Model from '../../src/model/model';
-import Writer from '../../src/model/writer';
-import Batch from '../../src/model/batch';
-import InsertOperation from '../../src/model/operation/insertoperation';
+import DocumentFragment from '../../src/model/documentfragment.js';
+import Element from '../../src/model/element.js';
+import Text from '../../src/model/text.js';
+import Position from '../../src/model/position.js';
+import Range from '../../src/model/range.js';
 
-import DocumentFragment from '../../src/model/documentfragment';
-import Element from '../../src/model/element';
-import Text from '../../src/model/text';
-import Position from '../../src/model/position';
-import Range from '../../src/model/range';
+import count from '@ckeditor/ckeditor5-utils/src/count.js';
 
-import count from '@ckeditor/ckeditor5-utils/src/count';
+import { getNodesAndText } from '../../tests/model/_utils/utils.js';
+import DocumentSelection from '../../src/model/documentselection.js';
+import { expectToThrowCKEditorError } from '@ckeditor/ckeditor5-utils/tests/_utils/utils.js';
 
-import { getNodesAndText } from '../../tests/model/_utils/utils';
-import DocumentSelection from '../../src/model/documentselection';
-import { expectToThrowCKEditorError } from '@ckeditor/ckeditor5-utils/tests/_utils/utils';
-
-import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils';
+import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils.js';
 
 describe( 'Writer', () => {
 	let model, doc, batch;
@@ -206,8 +204,8 @@ describe( 'Writer', () => {
 			expect( parent.childCount ).to.equal( 0 );
 		} );
 
-		it( 'should create proper operation for inserting element', () => {
-			const parent = createDocumentFragment();
+		it( 'should create proper operation for inserting element #1 (document operation)', () => {
+			const parent = doc.createRoot();
 			const element = createElement( 'child' );
 
 			const spy = sinon.spy( model, 'applyOperation' );
@@ -222,8 +220,24 @@ describe( 'Writer', () => {
 			expect( spy.lastCall.args[ 0 ].batch ).to.equal( batch );
 		} );
 
-		it( 'should create proper operation for inserting text', () => {
+		it( 'should create proper operation for inserting element #2 (non-document operation)', () => {
 			const parent = createDocumentFragment();
+			const element = createElement( 'child' );
+
+			const spy = sinon.spy( model, 'applyOperation' );
+
+			insert( element, parent );
+
+			sinon.assert.calledOnce( spy );
+
+			expect( spy.lastCall.args[ 0 ].type ).to.equal( 'insert' );
+			expect( spy.lastCall.args[ 0 ] ).to.instanceof( InsertOperation );
+			expect( spy.lastCall.args[ 0 ].shouldReceiveAttributes ).to.be.false;
+			expect( spy.lastCall.args[ 0 ].batch ).to.be.null;
+		} );
+
+		it( 'should create proper operation for inserting text', () => {
+			const parent = doc.createRoot();
 			const text = createText( 'child' );
 
 			const spy = sinon.spy( model, 'applyOperation' );
@@ -303,7 +317,7 @@ describe( 'Writer', () => {
 			// Verify operations.
 			sinon.assert.calledOnce( spy );
 			expect( spy.firstCall.args[ 0 ].type ).to.equal( 'move' );
-			expect( spy.firstCall.args[ 0 ].batch ).to.equal( batch );
+			expect( spy.firstCall.args[ 0 ].batch ).to.be.null;
 		} );
 
 		it( 'should move element from one parent to the other within different document (docFragA -> docFragB)', () => {
@@ -324,9 +338,9 @@ describe( 'Writer', () => {
 			// Verify operations.
 			sinon.assert.calledTwice( spy );
 			expect( spy.firstCall.args[ 0 ].type ).to.equal( 'detach' );
-			expect( spy.firstCall.args[ 0 ].batch ).to.equal( batch );
+			expect( spy.firstCall.args[ 0 ].batch ).to.be.null;
 			expect( spy.secondCall.args[ 0 ].type ).to.equal( 'insert' );
-			expect( spy.secondCall.args[ 0 ].batch ).to.equal( batch );
+			expect( spy.secondCall.args[ 0 ].batch ).to.be.null;
 		} );
 
 		it( 'should throw when moving element from document to document fragment', () => {
@@ -515,7 +529,7 @@ describe( 'Writer', () => {
 		} );
 
 		it( 'should create proper operation', () => {
-			const parent = createDocumentFragment();
+			const parent = doc.createRoot();
 			const spy = sinon.spy( model, 'applyOperation' );
 
 			insertText( 'foo', parent );
@@ -637,7 +651,7 @@ describe( 'Writer', () => {
 		} );
 
 		it( 'should create proper operation', () => {
-			const parent = createDocumentFragment();
+			const parent = doc.createRoot();
 			const spy = sinon.spy( model, 'applyOperation' );
 
 			insertElement( 'foo', parent );
@@ -672,7 +686,7 @@ describe( 'Writer', () => {
 		} );
 
 		it( 'should create proper operation', () => {
-			const parent = createDocumentFragment();
+			const parent = doc.createRoot();
 			const text = createText( 'foo' );
 			const spy = sinon.spy( model, 'applyOperation' );
 
@@ -750,7 +764,7 @@ describe( 'Writer', () => {
 			// Verify operations.
 			sinon.assert.calledOnce( spy );
 			expect( spy.firstCall.args[ 0 ].type ).to.equal( 'move' );
-			expect( spy.firstCall.args[ 0 ].batch ).to.equal( batch );
+			expect( spy.firstCall.args[ 0 ].batch ).to.be.null;
 		} );
 
 		it( 'should move element from one parent to the other within different document fragments (docFragA -> docFragB)', () => {
@@ -771,9 +785,9 @@ describe( 'Writer', () => {
 			// Verify operations.
 			sinon.assert.calledTwice( spy );
 			expect( spy.firstCall.args[ 0 ].type ).to.equal( 'detach' );
-			expect( spy.firstCall.args[ 0 ].batch ).to.equal( batch );
+			expect( spy.firstCall.args[ 0 ].batch ).to.be.null;
 			expect( spy.secondCall.args[ 0 ].type ).to.equal( 'insert' );
-			expect( spy.secondCall.args[ 0 ].batch ).to.equal( batch );
+			expect( spy.secondCall.args[ 0 ].batch ).to.be.null;
 		} );
 
 		it( 'should throw when moving element from document to document fragment', () => {
@@ -823,7 +837,7 @@ describe( 'Writer', () => {
 		} );
 
 		it( 'should create proper operations', () => {
-			const parent = createDocumentFragment();
+			const parent = doc.createRoot();
 			const spy = sinon.spy( model, 'applyOperation' );
 
 			appendText( 'foo', parent );
@@ -877,7 +891,7 @@ describe( 'Writer', () => {
 		} );
 
 		it( 'should create proper operation', () => {
-			const parent = createDocumentFragment();
+			const parent = doc.createRoot();
 			const spy = sinon.spy( model, 'applyOperation' );
 
 			appendElement( 'foo', parent );
@@ -1840,14 +1854,14 @@ describe( 'Writer', () => {
 				batch = new Batch();
 				remove( range );
 
-				expect( batch.operations.length ).to.equal( 2 );
+				expect( batch.operations.length ).to.equal( 0 );
 			} );
 
 			it( 'should use DetachOperation', () => {
-				batch = new Batch();
+				sinon.spy( model, 'applyOperation' );
 				remove( div );
 
-				expect( batch.operations[ 0 ].type ).to.equal( 'detach' );
+				expect( model.applyOperation.firstCall.args[ 0 ].type ).to.equal( 'detach' );
 			} );
 
 			it( 'should throw when trying to use detached writer', () => {

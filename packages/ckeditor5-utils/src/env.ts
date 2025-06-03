@@ -1,28 +1,28 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
-
-/* globals navigator:false */
 
 /**
  * @module utils/env
  */
 
+import global from './dom/global.js';
+
 /**
  * Safely returns `userAgent` from browser's navigator API in a lower case.
  * If navigator API is not available it will return an empty string.
  */
-export function getUserAgent( ): string {
+export function getUserAgent(): string {
 	// In some environments navigator API might not be available.
 	try {
 		return navigator.userAgent.toLowerCase();
-	} catch ( e ) {
+	} catch {
 		return '';
 	}
 }
 
-const userAgent = getUserAgent();
+const userAgent = /* #__PURE__ */ getUserAgent();
 
 // This interface exists to make our API pages more readable.
 /**
@@ -51,7 +51,7 @@ export interface EnvType {
 	readonly isSafari: boolean;
 
 	/**
-	 * Indicates the the application is running in iOS.
+	 * Indicates that the application is running in iOS.
 	 */
 	readonly isiOS: boolean;
 
@@ -64,6 +64,22 @@ export interface EnvType {
 	 * Indicates that the application is running in a browser using the Blink engine.
 	 */
 	readonly isBlink: boolean;
+
+	/**
+	 * Indicates that the user agent has enabled a forced colors mode (e.g. Windows High Contrast mode).
+	 *
+	 * Note that the value of this property is evaluated each time it is accessed, and it may change over time, if the environment
+	 * settings have changed.
+	 */
+	readonly isMediaForcedColors: boolean;
+
+	/**
+	 * Indicates that "prefer reduced motion" browser setting is active.
+	 *
+	 * Note that the value of this property is evaluated each time it is accessed, and it may change over time, if the environment
+	 * settings have changed.
+	 */
+	readonly isMotionReduced: boolean;
 
 	/**
 	 * Environment features information.
@@ -85,22 +101,30 @@ export interface EnvFeaturesType {
  * A namespace containing environment and browser information.
  */
 const env: EnvType = {
-	isMac: isMac( userAgent ),
+	isMac: /* #__PURE__ */ isMac( userAgent ),
 
-	isWindows: isWindows( userAgent ),
+	isWindows: /* #__PURE__ */ isWindows( userAgent ),
 
-	isGecko: isGecko( userAgent ),
+	isGecko: /* #__PURE__ */ isGecko( userAgent ),
 
-	isSafari: isSafari( userAgent ),
+	isSafari: /* #__PURE__ */ isSafari( userAgent ),
 
-	isiOS: isiOS( userAgent ),
+	isiOS: /* #__PURE__ */ isiOS( userAgent ),
 
-	isAndroid: isAndroid( userAgent ),
+	isAndroid: /* #__PURE__ */ isAndroid( userAgent ),
 
-	isBlink: isBlink( userAgent ),
+	isBlink: /* #__PURE__ */ isBlink( userAgent ),
+
+	get isMediaForcedColors() {
+		return isMediaForcedColors();
+	},
+
+	get isMotionReduced() {
+		return isMotionReduced();
+	},
 
 	features: {
-		isRegExpUnicodePropertySupported: isRegExpUnicodePropertySupported()
+		isRegExpUnicodePropertySupported: /* #__PURE__ */ isRegExpUnicodePropertySupported()
 	}
 };
 
@@ -193,9 +217,27 @@ export function isRegExpUnicodePropertySupported(): boolean {
 	try {
 		// Usage of regular expression literal cause error during build (ckeditor/ckeditor5-dev#534).
 		isSupported = 'ć'.search( new RegExp( '[\\p{L}]', 'u' ) ) === 0;
-	} catch ( error ) {
+	} catch {
 		// Firefox throws a SyntaxError when the group is unsupported.
 	}
 
 	return isSupported;
+}
+
+/**
+ * Checks if the user agent has enabled a forced colors mode (e.g. Windows High Contrast mode).
+ *
+ * Returns `false` in environments where `window` global object is not available.
+ */
+export function isMediaForcedColors(): boolean {
+	return global.window.matchMedia ? global.window.matchMedia( '(forced-colors: active)' ).matches : false;
+}
+
+/**
+ * Checks if the user enabled "prefers reduced motion" setting in browser.
+ *
+ * Returns `false` in environments where `window` global object is not available.
+ */
+export function isMotionReduced(): boolean {
+	return global.window.matchMedia ? global.window.matchMedia( '(prefers-reduced-motion)' ).matches : false;
 }

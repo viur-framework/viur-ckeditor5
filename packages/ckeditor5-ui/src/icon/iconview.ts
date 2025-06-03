@@ -1,17 +1,15 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
-
-/* global DOMParser */
 
 /**
  * @module ui/icon/iconview
  */
 
-import View from '../view';
+import View from '../view.js';
 
-import type { ObservableChangeEvent } from '@ckeditor/ckeditor5-utils';
+import { CKEditorError, type ObservableChangeEvent } from '@ckeditor/ckeditor5-utils';
 
 import '../../theme/components/icon/icon.css';
 
@@ -21,6 +19,9 @@ import '../../theme/components/icon/icon.css';
 export default class IconView extends View {
 	/**
 	 * The SVG source of the icon.
+	 *
+	 * The user must provide the entire XML string, not just the path. See the
+	 * {@glink framework/architecture/ui-library#setting-label-icon-and-tooltip UI library} guide for details.
 	 *
 	 * @observable
 	 */
@@ -65,6 +66,14 @@ export default class IconView extends View {
 	declare public isColorInherited: boolean;
 
 	/**
+	 * Controls whether the icon is visible.
+	 *
+	 * @observable
+	 * @default true
+	 */
+	declare public isVisible: boolean;
+
+	/**
 	 * A list of presentational attributes that can be set on the `<svg>` element and should be preserved
 	 * when the icon {@link module:ui/icon/iconview~IconView#content content} is loaded.
 	 *
@@ -93,6 +102,7 @@ export default class IconView extends View {
 		this.set( 'viewBox', '0 0 20 20' );
 		this.set( 'fillColor', '' );
 		this.set( 'isColorInherited', true );
+		this.set( 'isVisible', true );
 
 		this.setTemplate( {
 			tag: 'svg',
@@ -101,6 +111,7 @@ export default class IconView extends View {
 				class: [
 					'ck',
 					'ck-icon',
+					bind.if( 'isVisible', 'ck-hidden', value => !value ),
 
 					// Exclude icon internals from the CSS reset to allow rich (non-monochromatic) icons
 					// (https://github.com/ckeditor/ckeditor5/issues/12599).
@@ -110,7 +121,8 @@ export default class IconView extends View {
 					// (https://github.com/ckeditor/ckeditor5/issues/12599).
 					bind.if( 'isColorInherited', 'ck-icon_inherit-color' )
 				],
-				viewBox: bind.to( 'viewBox' )
+				viewBox: bind.to( 'viewBox' ),
+				'aria-hidden': true
 			}
 		} );
 	}
@@ -142,7 +154,17 @@ export default class IconView extends View {
 	private _updateXMLContent() {
 		if ( this.content ) {
 			const parsed = new DOMParser().parseFromString( this.content.trim(), 'image/svg+xml' );
-			const svg = parsed.querySelector( 'svg' )!;
+			const svg = parsed.querySelector( 'svg' );
+
+			if ( !svg ) {
+				/**
+				 * The provided icon content is not a valid SVG.
+				 *
+				 * @error ui-iconview-invalid-svg
+				 */
+				throw new CKEditorError( 'ui-iconview-invalid-svg', this );
+			}
+
 			const viewBox = svg.getAttribute( 'viewBox' );
 
 			if ( viewBox ) {

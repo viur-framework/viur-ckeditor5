@@ -1,15 +1,28 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module table/utils/ui/widget
  */
 
-import type { ViewDocumentFragment, ViewDocumentSelection, ViewElement, ViewNode } from 'ckeditor5/src/engine';
+import type { ViewDocumentFragment, ViewDocumentSelection, ViewElement, ViewNode } from 'ckeditor5/src/engine.js';
 
-import { isWidget } from 'ckeditor5/src/widget';
+import { isWidget } from 'ckeditor5/src/widget.js';
+
+/**
+ * Depending on the position of the selection either return the selected table or the table higher in the hierarchy.
+ */
+export function getSelectionAffectedTableWidget( selection: ViewDocumentSelection ): ViewElement | null {
+	const selectedTable = getSelectedTableWidget( selection );
+
+	if ( selectedTable ) {
+		return selectedTable;
+	}
+
+	return getTableWidgetAncestor( selection );
+}
 
 /**
  * Returns a table widget editing view element if one is selected.

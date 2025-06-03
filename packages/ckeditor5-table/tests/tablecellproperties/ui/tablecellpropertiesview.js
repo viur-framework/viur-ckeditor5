@@ -1,22 +1,20 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* globals document, Event */
-
-import TableCellPropertiesView from '../../../src/tablecellproperties/ui/tablecellpropertiesview';
-import LabeledFieldView from '@ckeditor/ckeditor5-ui/src/labeledfield/labeledfieldview';
-import { keyCodes } from '@ckeditor/ckeditor5-utils/src/keyboard';
-import KeystrokeHandler from '@ckeditor/ckeditor5-utils/src/keystrokehandler';
-import FocusTracker from '@ckeditor/ckeditor5-utils/src/focustracker';
-import FocusCycler from '@ckeditor/ckeditor5-ui/src/focuscycler';
-import ViewCollection from '@ckeditor/ckeditor5-ui/src/viewcollection';
-import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils';
-import ToolbarView from '@ckeditor/ckeditor5-ui/src/toolbar/toolbarview';
-import ButtonView from '@ckeditor/ckeditor5-ui/src/button/buttonview';
-import InputTextView from '@ckeditor/ckeditor5-ui/src/inputtext/inputtextview';
-import ColorInputView from '../../../src/ui/colorinputview';
+import TableCellPropertiesView from '../../../src/tablecellproperties/ui/tablecellpropertiesview.js';
+import LabeledFieldView from '@ckeditor/ckeditor5-ui/src/labeledfield/labeledfieldview.js';
+import { keyCodes } from '@ckeditor/ckeditor5-utils/src/keyboard.js';
+import KeystrokeHandler from '@ckeditor/ckeditor5-utils/src/keystrokehandler.js';
+import FocusTracker from '@ckeditor/ckeditor5-utils/src/focustracker.js';
+import FocusCycler from '@ckeditor/ckeditor5-ui/src/focuscycler.js';
+import ViewCollection from '@ckeditor/ckeditor5-ui/src/viewcollection.js';
+import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils.js';
+import ToolbarView from '@ckeditor/ckeditor5-ui/src/toolbar/toolbarview.js';
+import ButtonView from '@ckeditor/ckeditor5-ui/src/button/buttonview.js';
+import InputTextView from '@ckeditor/ckeditor5-ui/src/inputtext/inputtextview.js';
+import ColorInputView from '../../../src/ui/colorinputview.js';
 
 const VIEW_OPTIONS = {
 	borderColors: [
@@ -560,6 +558,16 @@ describe( 'table cell properties', () => {
 							expect( toolbar.items.last.isOn ).to.be.false;
 							expect( toolbar.items.first.isOn ).to.be.true;
 						} );
+
+						it( 'should have proper ARIA properties', () => {
+							expect( toolbar.role ).to.equal( 'radiogroup' );
+							expect( toolbar.ariaLabel ).to.equal( 'Horizontal text alignment toolbar' );
+						} );
+
+						it( 'should have role=radio set on buttons', () => {
+							expect( [ ...toolbar.items ].some( ( { role, isToggleable } ) => role && isToggleable ) ).to.be.true;
+							expect( toolbar.items.length ).to.equal( 4 );
+						} );
 					} );
 
 					describe( 'vertical text alignment toolbar', () => {
@@ -598,6 +606,17 @@ describe( 'table cell properties', () => {
 							expect( view.verticalAlignment ).to.equal( 'top' );
 							expect( toolbar.items.last.isOn ).to.be.false;
 							expect( toolbar.items.first.isOn ).to.be.true;
+						} );
+
+						it( 'should have proper ARIA properties', () => {
+							expect( toolbar.role ).to.equal( 'radiogroup' );
+							expect( toolbar.isCompact ).to.be.true;
+							expect( toolbar.ariaLabel ).to.equal( 'Vertical text alignment toolbar' );
+						} );
+
+						it( 'should have role=radio set on buttons', () => {
+							expect( [ ...toolbar.items ].some( ( { role, isToggleable } ) => role && isToggleable ) ).to.be.true;
+							expect( toolbar.items.length ).to.equal( 3 );
 						} );
 					} );
 				} );
@@ -695,10 +714,8 @@ describe( 'table cell properties', () => {
 				expect( view._focusables.map( f => f ) ).to.have.members( [
 					view.borderStyleDropdown,
 					view.borderColorInput,
-					view.borderColorInput.fieldView.dropdownView.buttonView,
 					view.borderWidthInput,
 					view.backgroundInput,
-					view.backgroundInput.fieldView.dropdownView.buttonView,
 					view.widthInput,
 					view.heightInput,
 					view.paddingInput,
@@ -771,6 +788,49 @@ describe( 'table cell properties', () => {
 					const spy = sinon.spy( view.cancelButtonView, 'focus' );
 
 					view.keystrokes.press( keyEvtData );
+					sinon.assert.calledOnce( keyEvtData.preventDefault );
+					sinon.assert.calledOnce( keyEvtData.stopPropagation );
+					sinon.assert.calledOnce( spy );
+				} );
+
+				it( 'providing seamless forward navigation over child views with their own focusable children and focus cyclers', () => {
+					const keyEvtData = {
+						keyCode: keyCodes.tab,
+						preventDefault: sinon.spy(),
+						stopPropagation: sinon.spy()
+					};
+
+					// Mock the border color dropdown button button is focused.
+					view.focusTracker.isFocused = view.borderColorInput.fieldView.focusTracker.isFocused = true;
+					view.focusTracker.focusedElement = view.borderColorInput.element;
+					view.borderColorInput.fieldView.focusTracker.focusedElement =
+						view.borderColorInput.fieldView.dropdownView.buttonView.element;
+
+					const spy = sinon.spy( view.borderWidthInput, 'focus' );
+
+					view.borderColorInput.fieldView.keystrokes.press( keyEvtData );
+					sinon.assert.calledOnce( keyEvtData.preventDefault );
+					sinon.assert.calledOnce( keyEvtData.stopPropagation );
+					sinon.assert.calledOnce( spy );
+				} );
+
+				it( 'providing seamless backward navigation over child views with their own focusable children and focus cyclers', () => {
+					const keyEvtData = {
+						keyCode: keyCodes.tab,
+						shiftKey: true,
+						preventDefault: sinon.spy(),
+						stopPropagation: sinon.spy()
+					};
+
+					// Mock the border color dropdown input is focused.
+					view.focusTracker.isFocused = view.borderColorInput.fieldView.focusTracker.isFocused = true;
+					view.focusTracker.focusedElement = view.borderColorInput.element;
+					view.borderColorInput.fieldView.focusTracker.focusedElement =
+						view.borderColorInput.fieldView.inputView.element;
+
+					const spy = sinon.spy( view.borderStyleDropdown, 'focus' );
+
+					view.borderColorInput.fieldView.keystrokes.press( keyEvtData );
 					sinon.assert.calledOnce( keyEvtData.preventDefault );
 					sinon.assert.calledOnce( keyEvtData.stopPropagation );
 					sinon.assert.calledOnce( spy );

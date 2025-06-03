@@ -1,24 +1,22 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module cloud-services/uploadgateway/fileuploader
  */
 
-/* globals XMLHttpRequest, FormData, Blob, atob */
-
-import type { UploadResponse } from 'ckeditor5/src/upload';
-import { EmitterMixin, CKEditorError } from 'ckeditor5/src/utils';
-import type { InitializedToken } from '../token/token';
+import type { UploadResponse } from 'ckeditor5/src/upload.js';
+import { EmitterMixin, CKEditorError } from 'ckeditor5/src/utils.js';
+import type { InitializedToken } from '../token/token.js';
 
 const BASE64_HEADER_REG_EXP = /^data:(\S*?);base64,/;
 
 /**
  * FileUploader class used to upload single file.
  */
-export default class FileUploader extends EmitterMixin() {
+export default class FileUploader extends /* #__PURE__ */ EmitterMixin() {
 	/**
 	 * A file that is being uploaded.
 	 */
@@ -254,7 +252,7 @@ function _base64ToBlob( base64: string, sliceSize = 512 ) {
 		}
 
 		return new Blob( byteArrays, { type: contentType } );
-	} catch ( error ) {
+	} catch {
 		/**
 		 * Problem with decoding Base64 image data.
 		 *
@@ -272,6 +270,5 @@ function _isBase64( string: string | Blob ): string is string {
 		return false;
 	}
 
-	const match = string.match( BASE64_HEADER_REG_EXP );
-	return !!( match && match.length );
+	return !!string.match( BASE64_HEADER_REG_EXP )?.length;
 }

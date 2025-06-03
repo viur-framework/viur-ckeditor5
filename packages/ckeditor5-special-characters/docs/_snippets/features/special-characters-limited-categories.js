@@ -1,27 +1,39 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* globals window, document, console, ClassicEditor, SpecialCharactersCurrency, SpecialCharactersMathematical */
+import {
+	SpecialCharactersCurrency,
+	SpecialCharactersMathematical
+} from 'ckeditor5';
+import {
+	CS_CONFIG,
+	TOKEN_URL,
+	getViewportTopOffsetConfig
+} from '@snippets/index.js';
+import { SpecialCharactersEditor } from './special-characters-source.js';
 
-import { CS_CONFIG } from '@ckeditor/ckeditor5-cloud-services/tests/_utils/cloud-services-config';
-
-ClassicEditor
+SpecialCharactersEditor
 	.create( document.querySelector( '#snippet-special-characters-limited-categories' ), {
 		extraPlugins: [ SpecialCharactersCurrency, SpecialCharactersMathematical ],
 		toolbar: {
 			items: [
 				'undo', 'redo', '|', 'heading',
 				'|', 'bold', 'italic',
-				'|', 'link', 'uploadImage', 'insertTable', 'mediaEmbed', 'specialCharacters',
+				'|', 'link', 'insertImage', 'insertTable', 'mediaEmbed', 'specialCharacters',
 				'|', 'bulletedList', 'numberedList', 'outdent', 'indent'
 			]
 		},
 		ui: {
 			viewportOffset: {
-				top: window.getViewportTopOffsetConfig()
+				top: getViewportTopOffsetConfig()
 			}
+		},
+		ckbox: {
+			tokenUrl: TOKEN_URL,
+			allowExternalImagesEditing: [ /^data:/, 'origin', /ckbox/ ],
+			forceDemoLabel: true
 		},
 		image: {
 			toolbar: [
@@ -30,7 +42,9 @@ ClassicEditor
 				'imageStyle:breakText',
 				'|',
 				'toggleImageCaption',
-				'imageTextAlternative'
+				'imageTextAlternative',
+				'|',
+				'ckboxImageEdit'
 			]
 		},
 		table: {

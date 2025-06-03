@@ -1,13 +1,11 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module paste-from-office/filters/image
  */
-
-/* globals btoa */
 
 import {
 	Matcher,
@@ -15,7 +13,7 @@ import {
 	type ViewDocumentFragment,
 	type ViewElement,
 	type ViewNode
-} from 'ckeditor5/src/engine';
+} from 'ckeditor5/src/engine.js';
 
 /**
  * Replaces source attribute of all `<img>` elements representing regular
@@ -80,9 +78,24 @@ function findAllShapesIds( documentFragment: ViewDocumentFragment, writer: Upcas
 		const el = value.item as ViewElement;
 		const previousSibling = el.previousSibling;
 		const prevSiblingName = previousSibling && previousSibling.is( 'element' ) ? previousSibling.name : null;
+		// List of ids which should not be considered as shapes.
+		// https://github.com/ckeditor/ckeditor5/pull/15847#issuecomment-1941543983
+		const exceptionIds = [ 'Chart' ];
 
-		// If shape element have 'o:gfxdata' attribute and is not directly before `<v:shapetype>` element it means it represent Word shape.
-		if ( shapeElementsMatcher.match( el ) && el.getAttribute( 'o:gfxdata' ) && prevSiblingName !== 'v:shapetype' ) {
+		const isElementAShape = shapeElementsMatcher.match( el );
+		const hasElementGfxdataAttribute = el.getAttribute( 'o:gfxdata' );
+		const isPreviousSiblingAShapeType = prevSiblingName === 'v:shapetype';
+		const isElementIdInExceptionsArray = hasElementGfxdataAttribute &&
+			exceptionIds.some( item => el.getAttribute( 'id' )!.includes( item ) );
+
+		// If shape element has 'o:gfxdata' attribute and is not directly before
+		// `<v:shapetype>` element it means that it represents a Word shape.
+		if (
+			isElementAShape &&
+			hasElementGfxdataAttribute &&
+			!isPreviousSiblingAShapeType &&
+			!isElementIdInExceptionsArray
+		) {
 			shapesIds.push( ( value.item as ViewElement ).getAttribute( 'id' )! );
 		}
 	}
@@ -218,32 +231,61 @@ function insertMissingImgs( shapeIds: Array<string>, documentFragment: ViewDocum
 
 /**
  * Finds all `<img>` elements in a given document fragment which have source pointing to local `file://` resource.
+ * This function also tracks the index position of each image in the document, which is essential for
+ * precise matching with hexadecimal representations in RTF data.
  *
  * @param documentFragment Document fragment in which to look for `<img>` elements.
- * @returns result All found images grouped by source type.
+ * @returns Array of found images along with their position index in the document.
  */
 function findAllImageElementsWithLocalSource(
 	documentFragment: ViewDocumentFragment,
 	writer: UpcastWriter
-): Array<ViewElement> {
+): Array<ImageWithIndex> {
 	const range = writer.createRangeIn( documentFragment );
 
 	const imageElementsMatcher = new Matcher( {
 		name: 'img'
 	} );
 
-	const imgs = [];
+	const imgs: Array<ImageWithIndex> = [];
+	let currentImageIndex = 0;
 
 	for ( const value of range ) {
 		if ( value.item.is( 'element' ) && imageElementsMatcher.match( value.item ) ) {
 			if ( value.item.getAttribute( 'src' )!.startsWith( 'file://' ) ) {
-				imgs.push( value.item );
+				imgs.push( {
+					element: value.item,
+					imageIndex: currentImageIndex
+				} );
 			}
+
+			currentImageIndex++;
 		}
 	}
 
 	return imgs;
 }
+
+/**
+ * Represents an image element with its index position in the document.
+ * This index is crucial for correctly matching images with their
+ * corresponding hexadecimal representations in RTF data.
+ */
+type ImageWithIndex = {
+
+	/**
+     * The position index of the image in the document.
+     * Used to map the image to its corresponding hexadecimal representation in RTF data.
+     * RTF data contains hexadecimal representations of ALL images in the document,
+     * not just those with file:// URLs.
+     */
+	imageIndex: number;
+
+	/**
+     * The image element.
+     */
+	element: ViewElement;
+};
 
 /**
  * Extracts all images HEX representations from a given RTF data.
@@ -288,21 +330,25 @@ function extractImageDataFromRtf( rtfData: string ): Array<{ hex: string; type: 
 
 /**
  * Replaces `src` attribute value of all given images with the corresponding base64 image representation.
+ * Uses the image index to precisely match with the correct hexadecimal representation from RTF data.
  *
- * @param imageElements Array of image elements which will have its source replaced.
+ * @param imageElements Array of image elements along with their indices which will have their sources replaced.
  * @param imagesHexSources Array of images hex sources (usually the result of `extractImageDataFromRtf()` function).
- * The array should be the same length as `imageElements` parameter.
+ * Contains hexadecimal representations of ALL images in the document, not just those with `file://` URLs.
+ * In XML documents, the same image might be defined both as base64 in HTML and as hexadecimal in RTF data.
  */
 function replaceImagesFileSourceWithInlineRepresentation(
-	imageElements: Array<ViewElement>,
+	imageElements: Array<ImageWithIndex>,
 	imagesHexSources: ReturnType<typeof extractImageDataFromRtf>,
 	writer: UpcastWriter
 ) {
-	// Assume there is an equal amount of image elements and images HEX sources so they can be matched accordingly based on existing order.
-	if ( imageElements.length === imagesHexSources.length ) {
-		for ( let i = 0; i < imageElements.length; i++ ) {
-			const newSrc = `data:${ imagesHexSources[ i ].type };base64,${ _convertHexToBase64( imagesHexSources[ i ].hex ) }`;
-			writer.setAttribute( 'src', newSrc, imageElements[ i ] );
+	for ( let i = 0; i < imageElements.length; i++ ) {
+		const { element, imageIndex } = imageElements[ i ];
+		const rtfHexSource = imagesHexSources[ imageIndex ];
+
+		if ( rtfHexSource ) {
+			const newSrc = `data:${ rtfHexSource.type };base64,${ _convertHexToBase64( rtfHexSource.hex ) }`;
+			writer.setAttribute( 'src', newSrc, element );
 		}
 	}
 }

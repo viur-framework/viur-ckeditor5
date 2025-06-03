@@ -1,19 +1,25 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module table/tableclipboard
  */
 
-import type {
-	ClipboardEventData,
-	ViewDocumentClipboardOutputEvent,
-	ViewDocumentCopyEvent,
-	ViewDocumentCutEvent
-} from 'ckeditor5/src/clipboard';
-import { Plugin } from 'ckeditor5/src/core';
+import type { EventInfo } from 'ckeditor5/src/utils.js';
+
+import {
+	ClipboardPipeline,
+	ClipboardMarkersUtils,
+	type ClipboardEventData,
+	type ViewDocumentCopyEvent,
+	type ViewDocumentCutEvent,
+	type ViewDocumentClipboardOutputEvent,
+	type ClipboardContentInsertionEvent
+} from 'ckeditor5/src/clipboard.js';
+
+import { Plugin } from 'ckeditor5/src/core.js';
 
 import type {
 	DocumentFragment,
@@ -26,13 +32,11 @@ import type {
 	Position,
 	Selection,
 	Writer
-} from 'ckeditor5/src/engine';
+} from 'ckeditor5/src/engine.js';
 
-import type { EventInfo } from 'ckeditor5/src/utils';
-
-import TableSelection from './tableselection';
-import TableWalker, { type TableSlot } from './tablewalker';
-import TableUtils from './tableutils';
+import TableSelection from './tableselection.js';
+import TableWalker, { type TableSlot } from './tablewalker.js';
+import TableUtils from './tableutils.js';
 import {
 	cropTableToDimensions,
 	getHorizontallyOverlappingCells,
@@ -43,7 +47,7 @@ import {
 	trimTableCellIfNeeded,
 	adjustLastRowIndex,
 	adjustLastColumnIndex
-} from './utils/structure';
+} from './utils/structure.js';
 
 /**
  * This plugin adds support for copying/cutting/pasting fragments of tables.
@@ -53,15 +57,22 @@ export default class TableClipboard extends Plugin {
 	/**
 	 * @inheritDoc
 	 */
-	public static get pluginName(): 'TableClipboard' {
-		return 'TableClipboard';
+	public static get pluginName() {
+		return 'TableClipboard' as const;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public static override get isOfficialPlugin(): true {
+		return true;
 	}
 
 	/**
 	 * @inheritDoc
 	 */
 	public static get requires() {
-		return [ TableSelection, TableUtils ] as const;
+		return [ ClipboardMarkersUtils, ClipboardPipeline, TableSelection, TableUtils ] as const;
 	}
 
 	/**
@@ -73,14 +84,46 @@ export default class TableClipboard extends Plugin {
 
 		this.listenTo<ViewDocumentCopyEvent>( viewDocument, 'copy', ( evt, data ) => this._onCopyCut( evt, data ) );
 		this.listenTo<ViewDocumentCutEvent>( viewDocument, 'cut', ( evt, data ) => this._onCopyCut( evt, data ) );
+		this._listenToContentInsertion();
+
+		this.decorate( '_replaceTableSlotCell' );
+	}
+
+	/**
+	 * Sets up listening for events from the clipboard pipeline to properly handle
+	 * table content merging during paste/drop operations.
+	 *
+	 * When a user is dragging and dropping a table, we want to insert the entire table into
+	 * a table cell instead of merging table contents. For paste and other events,
+	 * the normal table merge behavior is applied.
+	 */
+	private _listenToContentInsertion() {
+		const { editor } = this;
+		const clipboardPipeline = editor.plugins.get( ClipboardPipeline );
+		const tableSelection = editor.plugins.get( TableSelection );
+
+		let isPaste = false;
+
+		clipboardPipeline.on<ClipboardContentInsertionEvent>( 'contentInsertion', ( evt, data ) => {
+			isPaste = data.method === 'paste';
+		} );
+
 		this.listenTo<ModelInsertContentEvent>(
 			editor.model,
 			'insertContent',
-			( evt, [ content, selectable ] ) => this._onInsertContent( evt, content, selectable ),
+			( evt, [ content, selectable ] ) => {
+				// Handles drag-and-drop of tables, where tables are inserted into selected cells rather than merged.
+				// The `isPaste` flag handles scenarios where other features (e.g., Templates) insert tables into specific cells.
+				if ( isPaste || tableSelection.getSelectedTableCells() !== null ) {
+					this._onInsertContent( evt, content, selectable );
+				}
+			},
 			{ priority: 'high' }
 		);
 
-		this.decorate( '_replaceTableSlotCell' );
+		clipboardPipeline.on<ClipboardContentInsertionEvent>( 'contentInsertion', () => {
+			isPaste = false;
+		}, { priority: 'lowest' } );
 	}
 
 	/**
@@ -90,7 +133,9 @@ export default class TableClipboard extends Plugin {
 	 * @param data Clipboard event data.
 	 */
 	private _onCopyCut( evt: EventInfo<'copy' | 'cut'>, data: DomEventData<ClipboardEvent> & ClipboardEventData ) {
+		const view = this.editor.editing.view;
 		const tableSelection = this.editor.plugins.get( TableSelection );
+		const clipboardMarkersUtils = this.editor.plugins.get( ClipboardMarkersUtils );
 
 		if ( !tableSelection.getSelectedTableCells() ) {
 			return;
@@ -103,15 +148,18 @@ export default class TableClipboard extends Plugin {
 		data.preventDefault();
 		evt.stop();
 
-		const dataController = this.editor.data;
-		const viewDocument = this.editor.editing.view.document;
+		this.editor.model.enqueueChange( { isUndoable: evt.name === 'cut' }, () => {
+			const documentFragment = clipboardMarkersUtils._copySelectedFragmentWithMarkers(
+				evt.name,
+				this.editor.model.document.selection,
+				() => tableSelection.getSelectionAsFragment()!
+			);
 
-		const content = dataController.toView( tableSelection.getSelectionAsFragment()! );
-
-		viewDocument.fire<ViewDocumentClipboardOutputEvent>( 'clipboardOutput', {
-			dataTransfer: data.dataTransfer,
-			content,
-			method: evt.name
+			view.document.fire<ViewDocumentClipboardOutputEvent>( 'clipboardOutput', {
+				dataTransfer: data.dataTransfer,
+				content: this.editor.data.toView( documentFragment ),
+				method: evt.name
+			} );
 		} );
 	}
 
@@ -134,9 +182,10 @@ export default class TableClipboard extends Plugin {
 
 		const model = this.editor.model;
 		const tableUtils = this.editor.plugins.get( TableUtils );
+		const clipboardMarkersUtils = this.editor.plugins.get( ClipboardMarkersUtils );
 
 		// We might need to crop table before inserting so reference might change.
-		let pastedTable = this.getTableIfOnlyTableInContent( content, model )!;
+		const pastedTable = this.getTableIfOnlyTableInContent( content, model )!;
 
 		if ( !pastedTable ) {
 			return;
@@ -153,52 +202,70 @@ export default class TableClipboard extends Plugin {
 		// Override default model.insertContent() handling at this point.
 		evt.stop();
 
-		model.change( writer => {
-			const pastedDimensions = {
-				width: tableUtils.getColumns( pastedTable ),
-				height: tableUtils.getRows( pastedTable )
-			};
+		if ( content.is( 'documentFragment' ) ) {
+			clipboardMarkersUtils._pasteMarkersIntoTransformedElement(
+				content.markers,
+				writer => this._replaceSelectedCells( pastedTable, selectedTableCells, writer )
+			);
+		} else {
+			this.editor.model.change( writer => {
+				this._replaceSelectedCells( pastedTable, selectedTableCells, writer );
+			} );
+		}
+	}
 
-			// Prepare the table for pasting.
-			const selection = prepareTableForPasting( selectedTableCells, pastedDimensions, writer, tableUtils );
+	/**
+	 * Inserts provided `selectedTableCells` into `pastedTable`.
+	 */
+	private _replaceSelectedCells( pastedTable: Element, selectedTableCells: Array<Element>, writer: Writer ) {
+		const tableUtils = this.editor.plugins.get( TableUtils );
 
-			// Beyond this point we operate on a fixed content table with rectangular selection and proper last row/column values.
+		const pastedDimensions = {
+			width: tableUtils.getColumns( pastedTable ),
+			height: tableUtils.getRows( pastedTable )
+		};
 
-			const selectionHeight = selection.lastRow - selection.firstRow + 1;
-			const selectionWidth = selection.lastColumn - selection.firstColumn + 1;
+		// Prepare the table for pasting.
+		const selection = prepareTableForPasting( selectedTableCells, pastedDimensions, writer, tableUtils );
 
-			// Crop pasted table if:
-			// - Pasted table dimensions exceeds selection area.
-			// - Pasted table has broken layout (ie some cells sticks out by the table dimensions established by the first and last row).
-			//
-			// Note: The table dimensions are established by the width of the first row and the total number of rows.
-			// It is possible to programmatically create a table that has rows which would have cells anchored beyond first row width but
-			// such table will not be created by other editing solutions.
-			const cropDimensions = {
-				startRow: 0,
-				startColumn: 0,
-				endRow: Math.min( selectionHeight, pastedDimensions.height ) - 1,
-				endColumn: Math.min( selectionWidth, pastedDimensions.width ) - 1
-			};
+		// Beyond this point we operate on a fixed content table with rectangular selection and proper last row/column values.
 
-			pastedTable = cropTableToDimensions( pastedTable, cropDimensions, writer );
+		const selectionHeight = selection.lastRow - selection.firstRow + 1;
+		const selectionWidth = selection.lastColumn - selection.firstColumn + 1;
 
-			// Content table to which we insert a pasted table.
-			const selectedTable = selectedTableCells[ 0 ].findAncestor( 'table' )!;
+		// Crop pasted table if:
+		// - Pasted table dimensions exceeds selection area.
+		// - Pasted table has broken layout (ie some cells sticks out by the table dimensions established by the first and last row).
+		//
+		// Note: The table dimensions are established by the width of the first row and the total number of rows.
+		// It is possible to programmatically create a table that has rows which would have cells anchored beyond first row width but
+		// such table will not be created by other editing solutions.
+		const cropDimensions = {
+			startRow: 0,
+			startColumn: 0,
+			endRow: Math.min( selectionHeight, pastedDimensions.height ) - 1,
+			endColumn: Math.min( selectionWidth, pastedDimensions.width ) - 1
+		};
 
-			const cellsToSelect = this._replaceSelectedCellsWithPasted( pastedTable, pastedDimensions, selectedTable, selection, writer );
+		pastedTable = cropTableToDimensions( pastedTable, cropDimensions, writer );
 
-			if ( this.editor.plugins.get( 'TableSelection' ).isEnabled ) {
-				// Selection ranges must be sorted because the first and last selection ranges are considered
-				// as anchor/focus cell ranges for multi-cell selection.
-				const selectionRanges = tableUtils.sortRanges( cellsToSelect.map( cell => writer.createRangeOn( cell ) ) );
+		// Content table to which we insert a pasted table.
+		const selectedTable = selectedTableCells[ 0 ].findAncestor( 'table' )!;
 
-				writer.setSelection( selectionRanges );
-			} else {
-				// Set selection inside first cell if multi-cell selection is disabled.
-				writer.setSelection( cellsToSelect[ 0 ], 0 );
-			}
-		} );
+		const cellsToSelect = this._replaceSelectedCellsWithPasted( pastedTable, pastedDimensions, selectedTable, selection, writer );
+
+		if ( this.editor.plugins.get( 'TableSelection' ).isEnabled ) {
+			// Selection ranges must be sorted because the first and last selection ranges are considered
+			// as anchor/focus cell ranges for multi-cell selection.
+			const selectionRanges = tableUtils.sortRanges( cellsToSelect.map( cell => writer.createRangeOn( cell ) ) );
+
+			writer.setSelection( selectionRanges );
+		} else {
+			// Set selection inside first cell if multi-cell selection is disabled.
+			writer.setSelection( cellsToSelect[ 0 ], 0 );
+		}
+
+		return selectedTable;
 	}
 
 	/**

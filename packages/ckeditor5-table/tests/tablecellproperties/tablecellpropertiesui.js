@@ -1,28 +1,28 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* globals document, Event */
+import ClassicTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/classictesteditor.js';
+import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils.js';
+import { keyCodes } from '@ckeditor/ckeditor5-utils/src/keyboard.js';
+import { getData as getModelData, setData } from '@ckeditor/ckeditor5-engine/src/dev-utils/model.js';
 
-import ClassicTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/classictesteditor';
-import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils';
-import { keyCodes } from '@ckeditor/ckeditor5-utils/src/keyboard';
-import { getData as getModelData, setData } from '@ckeditor/ckeditor5-engine/src/dev-utils/model';
+import Undo from '@ckeditor/ckeditor5-undo/src/undo.js';
+import Batch from '@ckeditor/ckeditor5-engine/src/model/batch.js';
+import Paragraph from '@ckeditor/ckeditor5-paragraph/src/paragraph.js';
+import ButtonView from '@ckeditor/ckeditor5-ui/src/button/buttonview.js';
+import ContextualBalloon from '@ckeditor/ckeditor5-ui/src/panel/balloon/contextualballoon.js';
+import ClipboardPipeline from '@ckeditor/ckeditor5-clipboard/src/clipboardpipeline.js';
 
-import Undo from '@ckeditor/ckeditor5-undo/src/undo';
-import Batch from '@ckeditor/ckeditor5-engine/src/model/batch';
-import Paragraph from '@ckeditor/ckeditor5-paragraph/src/paragraph';
-import ButtonView from '@ckeditor/ckeditor5-ui/src/button/buttonview';
-import ContextualBalloon from '@ckeditor/ckeditor5-ui/src/panel/balloon/contextualballoon';
-
-import Table from '../../src/table';
-import TableCellPropertiesEditing from '../../src/tablecellproperties/tablecellpropertiesediting';
-import TableCellWidthEditing from '../../src/tablecellwidth/tablecellwidthediting';
-import TableCellPropertiesUI from '../../src/tablecellproperties/tablecellpropertiesui';
-import TableCellPropertiesUIView from '../../src/tablecellproperties/ui/tablecellpropertiesview';
-import { defaultColors } from '../../src/utils/ui/table-properties';
-import { modelTable } from '../_utils/utils';
+import Table from '../../src/table.js';
+import TableLayout from '../../src/tablelayout.js';
+import TableCellPropertiesEditing from '../../src/tablecellproperties/tablecellpropertiesediting.js';
+import TableCellWidthEditing from '../../src/tablecellwidth/tablecellwidthediting.js';
+import TableCellPropertiesUI from '../../src/tablecellproperties/tablecellpropertiesui.js';
+import TableCellPropertiesUIView from '../../src/tablecellproperties/ui/tablecellpropertiesview.js';
+import { defaultColors } from '../../src/utils/ui/table-properties.js';
+import { modelTable } from '../_utils/utils.js';
 
 describe( 'table cell properties', () => {
 	describe( 'TableCellPropertiesUI', () => {
@@ -39,7 +39,10 @@ describe( 'table cell properties', () => {
 
 			return ClassicTestEditor
 				.create( editorElement, {
-					plugins: [ Table, TableCellPropertiesEditing, TableCellPropertiesUI, TableCellWidthEditing, Paragraph, Undo ],
+					plugins: [
+						Table, TableCellPropertiesEditing, TableCellPropertiesUI, TableCellWidthEditing,
+						Paragraph, Undo, ClipboardPipeline
+					],
 					initialData: '<table><tr><td>foo</td></tr></table><p>bar</p>'
 				} )
 				.then( newEditor => {
@@ -65,6 +68,14 @@ describe( 'table cell properties', () => {
 
 		it( 'should be named', () => {
 			expect( TableCellPropertiesUI.pluginName ).to.equal( 'TableCellPropertiesUI' );
+		} );
+
+		it( 'should have `isOfficialPlugin` static flag set to `true`', () => {
+			expect( TableCellPropertiesUI.isOfficialPlugin ).to.be.true;
+		} );
+
+		it( 'should have `isPremiumPlugin` static flag set to `false`', () => {
+			expect( TableCellPropertiesUI.isPremiumPlugin ).to.be.false;
 		} );
 
 		it( 'should load ContextualBalloon', () => {
@@ -689,9 +700,9 @@ describe( 'table cell properties', () => {
 
 					expect( contextualBalloon.visibleView ).to.equal( tableCellPropertiesView );
 					expect( tableCellPropertiesView ).to.include( {
-						borderStyle: 'none',
-						borderColor: '',
-						borderWidth: '',
+						borderStyle: 'solid',
+						borderColor: 'hsl(0, 0%, 75%)',
+						borderWidth: '1px',
 						height: '',
 						padding: '',
 						backgroundColor: '',
@@ -763,8 +774,14 @@ describe( 'table cell properties', () => {
 
 				return ClassicTestEditor
 					.create( editorElement, {
-						plugins: [ Table, TableCellPropertiesEditing, TableCellPropertiesUI, TableCellWidthEditing, Paragraph, Undo ],
-						initialData: '<table><tr><td>foo</td></tr></table><p>bar</p>',
+						plugins: [
+							Table, TableCellPropertiesEditing, TableCellPropertiesUI, TableCellWidthEditing,
+							ClipboardPipeline, Paragraph, Undo, TableLayout
+						],
+						initialData:
+							'<table class="content-table"><tr><td>foo</td></tr></table>' +
+							'<p>bar</p>' +
+							'<table class="layout-table"><tr><td>foo</td></tr></table>',
 						table: {
 							tableCellProperties: {
 								defaultProperties: {
@@ -831,7 +848,7 @@ describe( 'table cell properties', () => {
 				} );
 			} );
 
-			describe( 'Showing the #view', () => {
+			describe( 'Showing the #view (content table)', () => {
 				beforeEach( () => {
 					editor.model.change( writer => {
 						writer.setSelection( editor.model.document.getRoot().getChild( 0 ).getChild( 0 ).getChild( 0 ), 0 );
@@ -890,6 +907,98 @@ describe( 'table cell properties', () => {
 						} );
 					} );
 				} );
+			} );
+
+			describe( 'Showing the #view (layout table)', () => {
+				beforeEach( () => {
+					editor.model.change( writer => {
+						writer.setSelection( editor.model.document.getRoot().getChild( 2 ).getChild( 0 ).getChild( 0 ), 0 );
+					} );
+
+					// Trigger lazy init.
+					tableCellPropertiesUI._showView();
+					tableCellPropertiesUI._hideView();
+
+					tableCellPropertiesView = tableCellPropertiesUI.view;
+				} );
+
+				describe( 'initial data', () => {
+					it( 'should use hardcoded defaults for layout table instead of configuration', () => {
+						editor.commands.get( 'tableCellBorderStyle' ).value = null;
+						editor.commands.get( 'tableCellBorderColor' ).value = null;
+						editor.commands.get( 'tableCellBorderWidth' ).value = null;
+						editor.commands.get( 'tableCellBackgroundColor' ).value = null;
+						editor.commands.get( 'tableCellWidth' ).value = null;
+						editor.commands.get( 'tableCellHeight' ).value = null;
+						editor.commands.get( 'tableCellPadding' ).value = null;
+						editor.commands.get( 'tableCellHorizontalAlignment' ).value = null;
+						editor.commands.get( 'tableCellVerticalAlignment' ).value = null;
+
+						tableCellPropertiesButton.fire( 'execute' );
+
+						expect( contextualBalloon.visibleView ).to.equal( tableCellPropertiesView );
+						expect( tableCellPropertiesView ).to.include( {
+							borderStyle: 'none',
+							borderColor: '',
+							borderWidth: '',
+							backgroundColor: '',
+							width: '',
+							height: '',
+							padding: '',
+							horizontalAlignment: 'left',
+							verticalAlignment: 'middle'
+						} );
+					} );
+				} );
+			} );
+		} );
+
+		describe( 'table properties without color picker', () => {
+			let editor, editorElement, contextualBalloon, tableCellPropertiesUI;
+
+			beforeEach( () => {
+				editorElement = document.createElement( 'div' );
+				document.body.appendChild( editorElement );
+
+				return ClassicTestEditor
+					.create( editorElement, {
+						plugins: [ Table, TableCellPropertiesEditing, TableCellPropertiesUI, TableCellWidthEditing, ClipboardPipeline ],
+						table: {
+							tableCellProperties: {
+								colorPicker: false
+							}
+						}
+					} )
+					.then( newEditor => {
+						editor = newEditor;
+
+						contextualBalloon = editor.plugins.get( ContextualBalloon );
+						tableCellPropertiesUI = editor.plugins.get( TableCellPropertiesUI );
+						tableCellPropertiesView = tableCellPropertiesUI.view;
+
+						// There is no point to execute BalloonPanelView attachTo and pin methods so lets override it.
+						testUtils.sinon.stub( contextualBalloon.view, 'attachTo' ).returns( {} );
+						testUtils.sinon.stub( contextualBalloon.view, 'pin' ).returns( {} );
+					} );
+			} );
+
+			afterEach( () => {
+				editorElement.remove();
+
+				return editor.destroy();
+			} );
+
+			it( 'should define table.tableCellProperties.colorPicker', () => {
+				expect( editor.config.get( 'table.tableCellProperties.colorPicker' ) ).to.be.false;
+			} );
+
+			it( 'should not have color picker in dropdown', () => {
+				tableCellPropertiesUI._showView();
+
+				const panelView = tableCellPropertiesUI.view.borderColorInput.fieldView.dropdownView.panelView;
+				const colorPicker = panelView.children.get( 0 ).colorPickerFragmentView.element;
+
+				expect( colorPicker ).to.be.null;
 			} );
 		} );
 	} );

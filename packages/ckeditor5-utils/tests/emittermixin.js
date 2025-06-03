@@ -1,14 +1,12 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* eslint-disable new-cap */
-
-import EmitterMixin, { _getEmitterListenedTo, _getEmitterId, _setEmitterId } from '../src/emittermixin';
-import EventInfo from '../src/eventinfo';
-import { expectToThrowCKEditorError } from './_utils/utils';
-import CKEditorError from '../src/ckeditorerror';
+import EmitterMixin, { _getEmitterListenedTo, _getEmitterId, _setEmitterId } from '../src/emittermixin.js';
+import EventInfo from '../src/eventinfo.js';
+import { expectToThrowCKEditorError } from './_utils/utils.js';
+import CKEditorError from '../src/ckeditorerror.js';
 
 describe( 'EmitterMixin', () => {
 	let emitter, listener;
@@ -175,7 +173,6 @@ describe( 'EmitterMixin', () => {
 
 		it( 'should rethrow the CKEditorError error', () => {
 			emitter.on( 'test', () => {
-				// eslint-disable-next-line ckeditor5-rules/ckeditor-error-message
 				throw new CKEditorError( 'foo', null );
 			} );
 

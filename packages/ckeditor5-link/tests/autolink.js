@@ -1,20 +1,22 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-import ModelTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/modeltesteditor';
-import CodeBlockEditing from '@ckeditor/ckeditor5-code-block/src/codeblockediting';
-import Enter from '@ckeditor/ckeditor5-enter/src/enter';
-import Input from '@ckeditor/ckeditor5-typing/src/input';
-import Paragraph from '@ckeditor/ckeditor5-paragraph/src/paragraph';
-import ShiftEnter from '@ckeditor/ckeditor5-enter/src/shiftenter';
-import UndoEditing from '@ckeditor/ckeditor5-undo/src/undoediting';
-import DomEventData from '@ckeditor/ckeditor5-engine/src/view/observer/domeventdata';
-import { getData, setData } from '@ckeditor/ckeditor5-engine/src/dev-utils/model';
-
-import LinkEditing from '../src/linkediting';
-import AutoLink from '../src/autolink';
+import ClipboardPipeline from '@ckeditor/ckeditor5-clipboard/src/clipboardpipeline.js';
+import ModelTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/modeltesteditor.js';
+import VirtualTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/virtualtesteditor.js';
+import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils.js';
+import CodeBlockEditing from '@ckeditor/ckeditor5-code-block/src/codeblockediting.js';
+import Enter from '@ckeditor/ckeditor5-enter/src/enter.js';
+import Input from '@ckeditor/ckeditor5-typing/src/input.js';
+import Paragraph from '@ckeditor/ckeditor5-paragraph/src/paragraph.js';
+import ShiftEnter from '@ckeditor/ckeditor5-enter/src/shiftenter.js';
+import UndoEditing from '@ckeditor/ckeditor5-undo/src/undoediting.js';
+import DomEventData from '@ckeditor/ckeditor5-engine/src/view/observer/domeventdata.js';
+import { getData, setData } from '@ckeditor/ckeditor5-engine/src/dev-utils/model.js';
+import LinkEditing from '../src/linkediting.js';
+import AutoLink from '../src/autolink.js';
 
 describe( 'AutoLink', () => {
 	let editor;
@@ -23,12 +25,207 @@ describe( 'AutoLink', () => {
 		expect( AutoLink.pluginName ).to.equal( 'AutoLink' );
 	} );
 
+	it( 'should have `isOfficialPlugin` static flag set to `true`', () => {
+		expect( AutoLink.isOfficialPlugin ).to.be.true;
+	} );
+
+	it( 'should have `isPremiumPlugin` static flag set to `false`', () => {
+		expect( AutoLink.isPremiumPlugin ).to.be.false;
+	} );
+
 	it( 'should be loaded without Enter & ShiftEnter features', async () => {
 		const editor = await ModelTestEditor.create( {
 			plugins: [ Paragraph, Input, LinkEditing, AutoLink ]
 		} );
 
 		await editor.destroy();
+	} );
+
+	describe( 'autolink on paste behavior', () => {
+		testUtils.createSinonSandbox();
+		let model, viewDocument;
+
+		beforeEach( async () => {
+			editor = await VirtualTestEditor.create( {
+				plugins: [ Paragraph, ClipboardPipeline, LinkEditing, AutoLink ]
+			} );
+
+			// VirtualTestEditor has no DOM, so this method must be stubbed for all tests.
+			// Otherwise it will throw as it accesses the DOM to do its job.
+			sinon.stub( editor.editing.view, 'scrollToTheSelection' );
+
+			model = editor.model;
+			viewDocument = editor.editing.view.document;
+		} );
+
+		describe( 'pasting on selected text', () => {
+			beforeEach( () => setData( model, '<paragraph>some [selected] text</paragraph>' ) );
+
+			it( 'paste link', () => {
+				pasteText( 'http://hello.com' );
+				expect( getData( model ) ).to.equal(
+					'<paragraph>some [<$text linkHref="http://hello.com">selected</$text>] text</paragraph>'
+				);
+			} );
+
+			it( 'paste text including a link', () => {
+				pasteText( ' http://hello.com' );
+				expect( getData( model ) ).to.equal(
+					'<paragraph>some  http://hello.com[] text</paragraph>'
+				);
+			} );
+
+			it( 'paste not a link', () => {
+				pasteText( 'hello' );
+				expect( getData( model ) ).to.equal(
+					'<paragraph>some hello[] text</paragraph>'
+				);
+			} );
+
+			it( 'paste a HTML link', () => {
+				pasteData( {
+					'text/plain': 'http://hello.com',
+					'text/html': '<a href="http://hello.com">http://hello.com</a>'
+				} );
+				expect( getData( model ) ).to.equal(
+					'<paragraph>some [<$text linkHref="http://hello.com">selected</$text>] text</paragraph>'
+				);
+			} );
+
+			it( 'paste a HTML link without a protocol', () => {
+				pasteData( {
+					'text/plain': 'hello.com',
+					'text/html': '<a href="http://hello.com">hello.com</a>'
+				} );
+				expect( getData( model ) ).to.equal(
+					'<paragraph>some <$text linkHref="http://hello.com">hello.com</$text>[] text</paragraph>'
+				);
+			} );
+
+			it( 'paste HTML with no plain text', () => {
+				pasteData( {
+					'text/html': '<span style="font-color: blue">http://hello.com</span>'
+				} );
+				expect( getData( model ) ).to.equal(
+					'<paragraph>some http://hello.com[] text</paragraph>'
+				);
+			} );
+
+			it( 'should omit the `drop` clipboard method', () => {
+				pasteText( 'http://hello.com', 'drop' );
+				expect( getData( model ) ).to.equal(
+					'<paragraph>some http://hello.com[] text</paragraph>'
+				);
+			} );
+		} );
+
+		describe( 'pasting on collapsed selection', () => {
+			beforeEach( () => setData( model, '<paragraph>some [] text</paragraph>' ) );
+
+			it( 'paste link', () => {
+				pasteText( 'http://hello.com' );
+				expect( getData( model ) ).to.equal(
+					'<paragraph>some http://hello.com[] text</paragraph>'
+				);
+			} );
+		} );
+
+		describe( 'pasting with multiple selection', () => {
+			beforeEach( () => {
+				setData( model, '<paragraph>some text</paragraph>' );
+				const paragraph = model.document.getRoot().getChild( 0 );
+				const firstRange = editor.model.createRange(
+					editor.model.createPositionAt( paragraph, 0 ),
+					editor.model.createPositionAt( paragraph, 4 )
+				);
+				const secondRange = editor.model.createRange(
+					editor.model.createPositionAt( paragraph, 5 ),
+					editor.model.createPositionAt( paragraph, 9 )
+				);
+
+				model.change( writer => {
+					writer.setSelection( [ firstRange, secondRange ] );
+				} );
+			} );
+
+			it( 'paste link', () => {
+				pasteText( 'http://hello.com' );
+				// Default behaviour: overwrites the first selection
+				expect( getData( model ) ).to.equal(
+					'<paragraph>http://hello.com[] text</paragraph>'
+				);
+			} );
+		} );
+
+		describe( 'pasting on a link', () => {
+			it( 'paste with entire link selected', () => {
+				setData( model, '<paragraph>some [<$text linkHref="http://hello.com">selected</$text>] text</paragraph>' );
+				pasteText( 'http://world.com' );
+				expect( getData( model ) ).to.equal(
+					'<paragraph>some [<$text linkHref="http://world.com">selected</$text>] text</paragraph>'
+				);
+			} );
+
+			it( 'paste with partially selected link updates and selects the entire link', () => {
+				setData( model, '<paragraph><$text linkHref="http://hello.com">some [selected] text</$text></paragraph>' );
+				pasteText( 'http://world.com' );
+				expect( getData( model ) ).to.equal(
+					'<paragraph>[<$text linkHref="http://world.com">some selected text</$text>]</paragraph>'
+				);
+			} );
+
+			it( 'paste with selection overlapping the start of the link extends the link', () => {
+				setData( model, '<paragraph>[some <$text linkHref="http://hello.com">selected] text</$text></paragraph>' );
+				pasteText( 'http://world.com' );
+				expect( getData( model ) ).to.equal(
+					'<paragraph>[<$text linkHref="http://world.com">some selected text</$text>]</paragraph>'
+				);
+			} );
+
+			it( 'paste with selection overlapping the end of the link extends the link', () => {
+				setData( model, '<paragraph><$text linkHref="http://hello.com">some [selected</$text> text]</paragraph>' );
+				pasteText( 'http://world.com' );
+				expect( getData( model ) ).to.equal(
+					'<paragraph>[<$text linkHref="http://world.com">some selected text</$text>]</paragraph>'
+				);
+			} );
+
+			it( 'paste with two partially selected links overwrites both', () => {
+				setData( model,
+					`<paragraph>
+						<$text linkHref="http://one.com">here [are</$text>
+						<$text linkHref="http://two.com">two] links</$text>
+					</paragraph>`
+				);
+				pasteText( 'http://world.com' );
+				expect( getData( model ) ).to.equal(
+					'<paragraph>[<$text linkHref="http://world.com">here are two links</$text>]</paragraph>'
+				);
+			} );
+		} );
+
+		function pasteText( text, method = 'paste' ) {
+			pasteData( {
+				'text/plain': text
+			}, method );
+		}
+
+		function pasteData( data, method = 'paste' ) {
+			const dataTransferMock = createDataTransfer( data );
+			viewDocument.fire( method, {
+				dataTransfer: dataTransferMock,
+				preventDefault() {},
+				stopPropagation() {}
+			} );
+		}
+
+		function createDataTransfer( data ) {
+			return {
+				getData( type ) {
+					return data[ type ];
+				}
+			};
+		}
 	} );
 
 	describe( 'auto link behavior', () => {
@@ -220,6 +417,53 @@ describe( 'AutoLink', () => {
 			);
 		} );
 
+		// https://github.com/ckeditor/ckeditor5/issues/15862
+		it( 'adds linkHref to a text link inside an inline limit element on enter', () => {
+			editor.model.schema.register( 'limit', {
+				isLimit: true,
+				allowIn: '$block',
+				allowChildren: '$text'
+			} );
+			editor.conversion.elementToElement( {
+				model: 'limit',
+				view: {
+					name: 'span',
+					classes: 'limit'
+				}
+			} );
+
+			setData( model,
+				'<paragraph>outer text' +
+				'<limit>inner text https://www.cksource.com[] inner text</limit>' +
+				'outer text</paragraph>'
+			);
+
+			editor.execute( 'enter' );
+
+			expect( getData( model ) ).to.equal(
+				'<paragraph>outer text' +
+				'<limit>inner text <$text linkHref="https://www.cksource.com">https://www.cksource.com[]</$text> inner text</limit>' +
+				'outer text</paragraph>'
+			);
+		} );
+
+		// https://github.com/ckeditor/ckeditor5/issues/15862
+		it( 'adds linkHref to a text link inside a block limit element on enter', () => {
+			setData( model, '<paragraph>https://www.cksource.com[]</paragraph>' );
+
+			editor.model.schema.extend( 'paragraph', {
+				isLimit: true
+			} );
+
+			editor.execute( 'enter' );
+
+			expect( getData( model ) ).to.equal(
+				'<paragraph>' +
+				'<$text linkHref="https://www.cksource.com">https://www.cksource.com[]</$text>' +
+				'</paragraph>'
+			);
+		} );
+
 		it( 'adds "mailto:" to link of detected email addresses', () => {
 			simulateTyping( 'newsletter@cksource.com ' );
 
@@ -256,6 +500,16 @@ describe( 'AutoLink', () => {
 
 			sinon.assert.notCalled( spy );
 		} );
+
+		for ( const punctuation of '!.:,;?' ) {
+			it( `does not include "${ punctuation }" at the end of the link after space`, () => {
+				simulateTyping( `https://www.cksource.com${ punctuation } ` );
+
+				expect( getData( model ) ).to.equal(
+					`<paragraph><$text linkHref="https://www.cksource.com">https://www.cksource.com</$text>${ punctuation } []</paragraph>`
+				);
+			} );
+		}
 
 		// Some examples came from https://mathiasbynens.be/demo/url-regex.
 		describe( 'supported URL', () => {
@@ -309,7 +563,9 @@ describe( 'AutoLink', () => {
 				'http://127.0.0.1:8080/ckeditor5/latest/features/link.html',
 				'http://192.168.43.58/ckeditor5/latest/features/link.html',
 				'http://83.127.13.40',
-				'http://userid@83.127.13.40'
+				'http://userid@83.127.13.40',
+				'http://localhost',
+				'http://localhost:8080'
 			];
 
 			for ( const supportedURL of supportedURLs ) {
@@ -346,7 +602,6 @@ describe( 'AutoLink', () => {
 				':// foo bar',
 				'ftps://foo.bar/',
 				'http://-error-.invalid/',
-				'http://localhost',
 				'http:/cksource.com',
 				'http://www.cksource', // https://github.com/ckeditor/ckeditor5/issues/8050.
 				'cksource.com',

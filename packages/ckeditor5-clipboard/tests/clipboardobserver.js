@@ -1,17 +1,15 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-/* globals document */
+import ClipboardObserver from '../src/clipboardobserver.js';
 
-import ClipboardObserver from '../src/clipboardobserver';
-
-import View from '@ckeditor/ckeditor5-engine/src/view/view';
-import DataTransfer from '@ckeditor/ckeditor5-engine/src/view/datatransfer';
-import DowncastWriter from '@ckeditor/ckeditor5-engine/src/view/downcastwriter';
-import createViewRoot from '@ckeditor/ckeditor5-engine/tests/view/_utils/createroot';
-import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils';
+import View from '@ckeditor/ckeditor5-engine/src/view/view.js';
+import DataTransfer from '@ckeditor/ckeditor5-engine/src/view/datatransfer.js';
+import DowncastWriter from '@ckeditor/ckeditor5-engine/src/view/downcastwriter.js';
+import createViewRoot from '@ckeditor/ckeditor5-engine/tests/view/_utils/createroot.js';
+import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils.js';
 
 describe( 'ClipboardObserver', () => {
 	let view, doc, writer, observer, root, el, range, eventSpy, preventDefaultSpy, stopPropagationSpy, mockedDomDataTransferFilesSpy;

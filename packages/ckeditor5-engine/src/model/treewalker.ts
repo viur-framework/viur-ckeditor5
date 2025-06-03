@@ -1,25 +1,24 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module engine/model/treewalker
  */
 
-import Element from './element';
+import type Element from './element.js';
 import {
 	default as Position,
 	getTextNodeAtPosition,
 	getNodeAfterPosition,
 	getNodeBeforePosition
-} from './position';
-import Text from './text';
-import TextProxy from './textproxy';
+} from './position.js';
+import TextProxy from './textproxy.js';
 
-import type DocumentFragment from './documentfragment';
-import type Item from './item';
-import type Range from './range';
+import type DocumentFragment from './documentfragment.js';
+import type Item from './item.js';
+import type Range from './range.js';
 
 import { CKEditorError } from '@ckeditor/ckeditor5-utils';
 
@@ -185,6 +184,32 @@ export default class TreeWalker implements Iterable<TreeWalkerValue> {
 	}
 
 	/**
+	 * Moves tree walker {@link #position} to provided `position`. Tree walker will
+	 * continue traversing from that position.
+	 *
+	 * Note: in contrary to {@link ~TreeWalker#skip}, this method does not iterate over the nodes along the way.
+	 * It simply sets the current tree walker position to a new one.
+	 * From the performance standpoint, it is better to use {@link ~TreeWalker#jumpTo} rather than {@link ~TreeWalker#skip}.
+	 *
+	 * If the provided position is before the start boundary, the position will be
+	 * set to the start boundary. If the provided position is after the end boundary,
+	 * the position will be set to the end boundary.
+	 * This is done to prevent the treewalker from traversing outside the boundaries.
+	 *
+	 * @param position Position to jump to.
+	 */
+	public jumpTo( position: Position ): void {
+		if ( this._boundaryStartParent && position.isBefore( this.boundaries!.start ) ) {
+			position = this.boundaries!.start;
+		} else if ( this._boundaryEndParent && position.isAfter( this.boundaries!.end ) ) {
+			position = this.boundaries!.end;
+		}
+
+		this._position = position.clone();
+		this._visitedParent = position.parent;
+	}
+
+	/**
 	 * Gets the next tree walker's value.
 	 */
 	public next(): IteratorResult<TreeWalkerValue> {
@@ -216,21 +241,28 @@ export default class TreeWalker implements Iterable<TreeWalkerValue> {
 		// Get node just after the current position.
 		// Use a highly optimized version instead of checking the text node first and then getting the node after. See #6582.
 		const textNodeAtPosition = getTextNodeAtPosition( position, parent );
-		const node = textNodeAtPosition ? textNodeAtPosition : getNodeAfterPosition( position, parent, textNodeAtPosition );
+		const node = textNodeAtPosition || getNodeAfterPosition( position, parent, textNodeAtPosition );
 
-		if ( node instanceof Element ) {
+		if ( node && node.is( 'model:element' ) ) {
 			if ( !this.shallow ) {
 				// Manual operations on path internals for optimization purposes. Here and in the rest of the method.
 				( position.path as Array<number> ).push( 0 );
 				this._visitedParent = node;
 			} else {
+				// We are past the walker boundaries.
+				if ( this.boundaries && this.boundaries.end.isBefore( position ) ) {
+					return { done: true, value: undefined };
+				}
+
 				position.offset++;
 			}
 
 			this._position = position;
 
 			return formatReturnValue( 'elementStart', node, previousPosition, position, 1 );
-		} else if ( node instanceof Text ) {
+		}
+
+		if ( node && node.is( 'model:$text' ) ) {
 			let charactersCount;
 
 			if ( this.singleCharacters ) {
@@ -252,19 +284,19 @@ export default class TreeWalker implements Iterable<TreeWalkerValue> {
 			this._position = position;
 
 			return formatReturnValue( 'text', item, previousPosition, position, charactersCount );
-		} else {
-			// `node` is not set, we reached the end of current `parent`.
-			( position.path as Array<number> ).pop();
-			position.offset++;
-			this._position = position;
-			this._visitedParent = parent.parent!;
-
-			if ( this.ignoreElementEnd ) {
-				return this._next();
-			} else {
-				return formatReturnValue( 'elementEnd', parent as Element, previousPosition, position );
-			}
 		}
+
+		// `node` is not set, we reached the end of current `parent`.
+		( position.path as Array<number> ).pop();
+		position.offset++;
+		this._position = position;
+		this._visitedParent = parent.parent!;
+
+		if ( this.ignoreElementEnd ) {
+			return this._next();
+		}
+
+		return formatReturnValue( 'elementEnd', parent as Element, previousPosition, position );
 	}
 
 	/**
@@ -289,27 +321,29 @@ export default class TreeWalker implements Iterable<TreeWalkerValue> {
 		// Use a highly optimized version instead of checking the text node first and then getting the node before. See #6582.
 		const positionParent = position.parent;
 		const textNodeAtPosition = getTextNodeAtPosition( position, positionParent );
-		const node = textNodeAtPosition ? textNodeAtPosition : getNodeBeforePosition( position, positionParent, textNodeAtPosition );
+		const node = textNodeAtPosition || getNodeBeforePosition( position, positionParent, textNodeAtPosition );
 
-		if ( node instanceof Element ) {
+		if ( node && node.is( 'model:element' ) ) {
 			position.offset--;
 
-			if ( !this.shallow ) {
-				( position.path as Array<number> ).push( node.maxOffset );
-				this._position = position;
-				this._visitedParent = node;
-
-				if ( this.ignoreElementEnd ) {
-					return this._previous();
-				} else {
-					return formatReturnValue( 'elementEnd', node, previousPosition, position );
-				}
-			} else {
+			if ( this.shallow ) {
 				this._position = position;
 
 				return formatReturnValue( 'elementStart', node, previousPosition, position, 1 );
 			}
-		} else if ( node instanceof Text ) {
+
+			( position.path as Array<number> ).push( node.maxOffset );
+			this._position = position;
+			this._visitedParent = node;
+
+			if ( this.ignoreElementEnd ) {
+				return this._previous();
+			}
+
+			return formatReturnValue( 'elementEnd', node, previousPosition, position );
+		}
+
+		if ( node && node.is( 'model:$text' ) ) {
 			let charactersCount;
 
 			if ( this.singleCharacters ) {
@@ -331,14 +365,14 @@ export default class TreeWalker implements Iterable<TreeWalkerValue> {
 			this._position = position;
 
 			return formatReturnValue( 'text', item, previousPosition, position, charactersCount );
-		} else {
-			// `node` is not set, we reached the beginning of current `parent`.
-			( position.path as Array<number> ).pop();
-			this._position = position;
-			this._visitedParent = parent.parent!;
-
-			return formatReturnValue( 'elementStart', parent as Element, previousPosition, position, 1 );
 		}
+
+		// `node` is not set, we reached the beginning of current `parent`.
+		( position.path as Array<number> ).pop();
+		this._position = position;
+		this._visitedParent = parent.parent!;
+
+		return formatReturnValue( 'elementStart', parent as Element, previousPosition, position, 1 );
 	}
 }
 

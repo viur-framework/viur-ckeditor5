@@ -1,10 +1,10 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
-import SwitchButtonView from '../../src/button/switchbuttonview';
-import View from '../../src/view';
+import SwitchButtonView from '../../src/button/switchbuttonview.js';
+import View from '../../src/view.js';
 
 describe( 'SwitchButtonView', () => {
 	let locale, view;

@@ -1,18 +1,18 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module media-embed/mediaembed
  */
 
-import { Plugin } from 'ckeditor5/src/core';
-import { Widget } from 'ckeditor5/src/widget';
+import { Plugin } from 'ckeditor5/src/core.js';
+import { Widget } from 'ckeditor5/src/widget.js';
 
-import MediaEmbedEditing from './mediaembedediting';
-import AutoMediaEmbed from './automediaembed';
-import MediaEmbedUI from './mediaembedui';
+import MediaEmbedEditing from './mediaembedediting.js';
+import AutoMediaEmbed from './automediaembed.js';
+import MediaEmbedUI from './mediaembedui.js';
 
 import '../theme/mediaembed.css';
 
@@ -38,7 +38,14 @@ export default class MediaEmbed extends Plugin {
 	/**
 	 * @inheritDoc
 	 */
-	public static get pluginName(): 'MediaEmbed' {
-		return 'MediaEmbed';
+	public static get pluginName() {
+		return 'MediaEmbed' as const;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public static override get isOfficialPlugin(): true {
+		return true;
 	}
 }

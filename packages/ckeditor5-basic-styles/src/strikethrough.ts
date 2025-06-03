@@ -1,15 +1,15 @@
 /**
- * @license Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
- * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ * @license Copyright (c) 2003-2025, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-licensing-options
  */
 
 /**
  * @module basic-styles/strikethrough
  */
 
-import { Plugin } from 'ckeditor5/src/core';
-import StrikethroughEditing from './strikethrough/strikethroughediting';
-import StrikethroughUI from './strikethrough/strikethroughui';
+import { Plugin } from 'ckeditor5/src/core.js';
+import StrikethroughEditing from './strikethrough/strikethroughediting.js';
+import StrikethroughUI from './strikethrough/strikethroughui.js';
 
 /**
  * The strikethrough feature.
@@ -31,7 +31,14 @@ export default class Strikethrough extends Plugin {
 	/**
 	 * @inheritDoc
 	 */
-	public static get pluginName(): 'Strikethrough' {
-		return 'Strikethrough';
+	public static get pluginName() {
+		return 'Strikethrough' as const;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public static override get isOfficialPlugin(): true {
+		return true;
 	}
 }
